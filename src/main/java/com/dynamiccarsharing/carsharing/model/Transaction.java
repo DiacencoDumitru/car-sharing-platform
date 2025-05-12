@@ -6,31 +6,34 @@ import com.dynamiccarsharing.carsharing.util.Validator;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
+
 @ToString
 @Getter
-public class Payment {
+public class Transaction {
     private final Long id;
-    private final Long bookingId;
     private final double amount;
-    private final TransactionStatus status; // will be something like: "pending", "approved", "completed"
+    private final TransactionStatus status;
     private final PaymentType paymentMethod;
     private final String transactionId;
+    private final LocalDateTime createdAt;
+    private final LocalDateTime updatedAt;
 
-    public Payment(Long id, Long bookingId, double amount, TransactionStatus status, PaymentType paymentMethod, String transactionId) {
+    public Transaction(Long id, double amount, TransactionStatus status, PaymentType paymentMethod, String transactionId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         Validator.validateId(id, "ID");
-        Validator.validateId(bookingId, "Booking ID");
         Validator.validateNonNull(status, "Status");
         Validator.validateNonNull(paymentMethod, "Payment method");
-        Validator.validateNonEmptyString(transactionId, "Transaction ID");
+        Validator.validateNonNull(transactionId, "Transaction ID");
+        Validator.validateNonNull(createdAt, "Created at");
+        if (status == TransactionStatus.COMPLETED) {
+            Validator.validateNonNull(status, "Resolved at");
+        }
         this.id = id;
-        this.bookingId = bookingId;
         this.amount = amount;
         this.status = status;
         this.paymentMethod = paymentMethod;
         this.transactionId = transactionId;
-    }
-
-    public Payment withStatus(TransactionStatus status) {
-        return new Payment(this.id, this.bookingId, this.amount, status, this.paymentMethod, this.transactionId);
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 }

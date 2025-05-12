@@ -1,17 +1,18 @@
 package com.dynamiccarsharing.carsharing.repository;
 
-import java.util.Map;
+import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 
-public interface Repository<T> {
-    void save(T entity);
+import java.util.Optional;
 
-    T findById(Long id);
+public interface Repository<T, ID> {
 
-    T findByField(String fieldValue);
+    T save(T entity);
 
-    void update(T entity);
+    Optional<T> findById(ID id);
 
-    void delete(Long id);
+    Iterable<T> findAll();
 
-    Map<Long, T> findAll();
+    Iterable<T> findByFilter(Filter<T> field);
+
+    void deleteById(ID id);
 }
