@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.carsharing.service;
 
 import com.dynamiccarsharing.carsharing.model.UserReview;
-import com.dynamiccarsharing.carsharing.repository.InMemoryUserReviewRepository;
+import com.dynamiccarsharing.carsharing.repository.UserReviewRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.UserReviewFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
@@ -9,34 +9,34 @@ import java.util.List;
 import java.util.Optional;
 
 public class UserReviewService {
-    private final InMemoryUserReviewRepository inMemoryUserReviewRepository;
+    private final UserReviewRepository userReviewRepository;
 
-    public UserReviewService(InMemoryUserReviewRepository inMemoryUserReviewRepository) {
-        this.inMemoryUserReviewRepository = inMemoryUserReviewRepository;
+    public UserReviewService(UserReviewRepository userReviewRepository) {
+        this.userReviewRepository = userReviewRepository;
     }
 
     public UserReview save(UserReview userReview) {
-        Validator.validateNonNull(userReview, "User Review");
-        return inMemoryUserReviewRepository.save(userReview);
+        Validator.validateNonNull(userReview, "UserReview");
+        return userReviewRepository.save(userReview);
     }
 
     public Optional<UserReview> findById(Long id) {
-        Validator.validateId(id, "ID");
-        return inMemoryUserReviewRepository.findById(id);
+        Validator.validateId(id, "UserReview ID");
+        return userReviewRepository.findById(id);
     }
 
-    public void delete(Long id) {
-        Validator.validateId(id, "ID");
-        inMemoryUserReviewRepository.deleteById(id);
+    public void deleteById(Long id) {
+        Validator.validateId(id, "UserReview ID");
+        userReviewRepository.deleteById(id);
     }
 
     public Iterable<UserReview> findAll() {
-        return inMemoryUserReviewRepository.findAll();
+        return userReviewRepository.findAll();
     }
 
     public List<UserReview> findUserReviewsByReviewerId(Long reviewerId) {
         Validator.validateId(reviewerId, "Reviewer ID");
         UserReviewFilter filter = new UserReviewFilter().setReviewerId(reviewerId);
-        return (List<UserReview>) inMemoryUserReviewRepository.findByFilter(filter);
+        return userReviewRepository.findByFilter(filter);
     }
 }

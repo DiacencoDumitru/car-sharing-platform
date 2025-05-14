@@ -1,10 +1,9 @@
 package com.dynamiccarsharing.carsharing.repository;
 
 import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
+import com.dynamiccarsharing.carsharing.repository.filter.LocationFilter;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class InMemoryLocationRepository implements LocationRepository {
     private final Map<Long, Location> locationMap = new HashMap<>();
@@ -31,7 +30,7 @@ public class InMemoryLocationRepository implements LocationRepository {
     }
 
     @Override
-    public Iterable<Location> findByFilter(Filter<Location> filter) {
-        return locationMap.values().stream().filter(filter::test).collect(Collectors.toList());
+    public List<Location> findByFilter(LocationFilter filter) {
+        return locationMap.values().stream().filter(filter::test).toList();
     }
 }

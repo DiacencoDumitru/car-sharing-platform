@@ -1,36 +1,48 @@
 package com.dynamiccarsharing.carsharing.model;
 
+import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.util.Validator;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.With;
 
-@ToString
+import java.time.LocalDateTime;
+
 @Getter
+@ToString
+@EqualsAndHashCode
 public class Payment {
     private final Long id;
     private final Long bookingId;
     private final double amount;
-    private final TransactionStatus status; // will be something like: "pending", "approved", "completed"
+    @With
+    private final TransactionStatus status;
     private final PaymentType paymentMethod;
-    private final String transactionId;
+    private final LocalDateTime createdAt;
+    @With
+    private final LocalDateTime updatedAt;
 
-    public Payment(Long id, Long bookingId, double amount, TransactionStatus status, PaymentType paymentMethod, String transactionId) {
+    public Payment(Long id, Long bookingId, double amount, TransactionStatus status, PaymentType paymentMethod, LocalDateTime createdAt, LocalDateTime updatedAt) {
         Validator.validateId(id, "ID");
         Validator.validateId(bookingId, "Booking ID");
         Validator.validateNonNull(status, "Status");
         Validator.validateNonNull(paymentMethod, "Payment method");
-        Validator.validateNonEmptyString(transactionId, "Transaction ID");
+        Validator.validateNonNull(createdAt, "Created at");
         this.id = id;
         this.bookingId = bookingId;
         this.amount = amount;
         this.status = status;
         this.paymentMethod = paymentMethod;
-        this.transactionId = transactionId;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
-    public Payment withStatus(TransactionStatus status) {
-        return new Payment(this.id, this.bookingId, this.amount, status, this.paymentMethod, this.transactionId);
+    public void validate() {
+        if (status == TransactionStatus.COMPLETED && updatedAt == null) {
+            throw new IllegalStateException("Updated at must be non-null for COMPLETED status");
+        }
     }
 }

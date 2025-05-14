@@ -16,26 +16,35 @@
 * As a renter, I want to make a secure payment through the platform so that I can complete my booking safely.
 * As a renter, I want to receive a booking confirmation and car pickup details so that I know the process for accessing the car.
 * As a renter, I want to rate and review the car and owner after my trip so that I can provide feedback for future users.
+* As a renter, I want to filter cars by verification status so that I can ensure the car is trusted and reliable.
+* As a renter, I want to file a dispute if there’s an issue with the car or booking so that I can seek resolution from the platform, with immutable dispute records.
+* As a renter, I want to track my earnings, booking, and transaction history so that I can manage my rental activity and expenses.
 ------------------------
 **Car Owner User Stories**
 * As a car owner, I want to list my car on the platform so that I can earn money by renting it out.
 * As a car owner, I want to set the availability and pricing for my car so that I can control when and how it’s rented.
 * As a car owner, I want to review renter profiles before approving a booking so that I can ensure my car is in safe hands.
 * As a car owner, I want to receive notifications about booking requests so that I can respond promptly.
-* As a car owner, I want to track my earnings and booking history so that I can manage my rental business effectively.
+* As a car owner, I want to track my earnings, booking, and transaction history so that I can manage my rental business effectively.
 * As a car owner, I want to rate and review renters after a trip so that I can provide feedback for future owners.
+* As a car owner, I want to submit my car for verification so that it can be listed as trusted on the platform.
+* As a car owner, I want to manage my list of cars (add/remove) through the platform so that I can update my offerings, with updates handled by the system to maintain immutability.
+* As a car owner, I want to update my contact information so that renters and the platform can reach me easily, with immutable contact records.
 ------------------------
 **Admin User Stories**
 * As an admin, I want to verify car owner profiles and vehicles so that I can ensure the platform’s safety and reliability.
 * As an admin, I want to resolve disputes between renters and owners so that I can maintain a fair platform.
 * As an admin, I want to monitor platform activity so that I can detect and prevent fraudulent behavior.
 * As an admin, I want to manage user accounts (e.g., suspend or ban) so that I can enforce platform rules.
+* As an admin, I want to view and manage reviews to ensure they meet platform guidelines so that users receive reliable feedback, with immutable review data.
+* As an admin, I want to access detailed user and car data for reports so that I can improve platform operations.
 ------------------------
 **Guest User Stories**
 * As a guest, I want to view available cars without registering so that I can explore the platform before committing.
 * As a guest, I want to sign up for an account so that I can start renting or listing cars.
+* As a guest, I want to view car details, including type, price, and location, so that I can assess the platform’s offerings.
 
 ### OOD Class Diagram, Divide and conquer
-1. `Cars Catalog:` Car, CarRepository, CarService _(🔵Blue border color)_
-2. `Users Management:` User, UserRepository, UserService _(🟢Green border color)_
-3. `Booking Management:` Booking, Payment, Review, BookingRepository, PaymentRepository, ReviewRepository, BookingService, PaymentService, ReviewService _(🔴Red border color)_
+1. `Cars Catalog:` Car, Location, CarRepository, LocationRepository, CarService, LocationService _(🔵Blue border color)_
+2. `Users Management:` User, ContactInfo, UserRepository, ContactInfoRepository, UserService, ContactInfoService _(🟢Green border color)_
+3. `Booking Management:` Booking, Payment, Transaction, Dispute, Review, CarReview, UserReview, BookingRepository, PaymentRepository, CarReviewRepository, UserReviewRepository, BookingService, PaymentService, CarReviewService, UserReviewService _(🔴Red border color)_

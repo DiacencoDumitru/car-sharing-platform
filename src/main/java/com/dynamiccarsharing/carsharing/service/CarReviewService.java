@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.carsharing.service;
 
 import com.dynamiccarsharing.carsharing.model.CarReview;
-import com.dynamiccarsharing.carsharing.repository.InMemoryCarReviewRepository;
+import com.dynamiccarsharing.carsharing.repository.CarReviewRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.CarReviewFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
@@ -9,34 +9,40 @@ import java.util.List;
 import java.util.Optional;
 
 public class CarReviewService {
-    private final InMemoryCarReviewRepository inMemoryCarReviewRepository;
+    private final CarReviewRepository carReviewRepository;
 
-    public CarReviewService(InMemoryCarReviewRepository inMemoryCarReviewRepository) {
-        this.inMemoryCarReviewRepository = inMemoryCarReviewRepository;
+    public CarReviewService(CarReviewRepository carReviewRepository) {
+        this.carReviewRepository = carReviewRepository;
     }
 
     public CarReview save(CarReview carReview) {
         Validator.validateNonNull(carReview, "Car Review");
-        return inMemoryCarReviewRepository.save(carReview);
+        return carReviewRepository.save(carReview);
     }
 
     public Optional<CarReview> findById(Long id) {
-        Validator.validateId(id, "ID");
-        return inMemoryCarReviewRepository.findById(id);
+        Validator.validateId(id, "CarReview ID");
+        return carReviewRepository.findById(id);
     }
 
-    public void delete(Long id) {
-        Validator.validateId(id, "ID");
-        inMemoryCarReviewRepository.deleteById(id);
+    public void deleteById(Long id) {
+        Validator.validateId(id, "CarReview ID");
+        carReviewRepository.deleteById(id);
     }
 
     public Iterable<CarReview> findAll() {
-        return inMemoryCarReviewRepository.findAll();
+        return carReviewRepository.findAll();
     }
 
     public List<CarReview> findCarReviewsByCarId(Long carId) {
         Validator.validateId(carId, "Car ID");
-        CarReviewFilter filter = new CarReviewFilter().setTargetId(carId);
-        return (List<CarReview>) inMemoryCarReviewRepository.findByFilter(filter);
+        CarReviewFilter filter = new CarReviewFilter().setId(carId);
+        return carReviewRepository.findByFilter(filter);
+    }
+
+    public List<CarReview> findCarReviewsByReviewerId(Long reviewerId) {
+        Validator.validateId(reviewerId, "Reviewer ID");
+        CarReviewFilter filter = new CarReviewFilter().setReviewerId(reviewerId);
+        return carReviewRepository.findByFilter(filter);
     }
 }

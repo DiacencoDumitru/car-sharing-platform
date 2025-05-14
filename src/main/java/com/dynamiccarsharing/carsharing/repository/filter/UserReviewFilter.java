@@ -4,15 +4,15 @@ import com.dynamiccarsharing.carsharing.model.UserReview;
 
 public class UserReviewFilter implements Filter<UserReview> {
     private Long reviewerId;
-    private Long targetId;
+    private Long id;
 
     public UserReviewFilter setReviewerId(Long reviewerId) {
         this.reviewerId = reviewerId;
         return this;
     }
 
-    public UserReviewFilter setTargetId(Long targetId) {
-        this.targetId = targetId;
+    public UserReviewFilter setId(Long id) {
+        this.id = id;
         return this;
     }
 
@@ -20,7 +20,7 @@ public class UserReviewFilter implements Filter<UserReview> {
     public boolean test(UserReview review) {
         boolean matches = true;
         if (reviewerId != null) matches &= review.getReviewerId().equals(reviewerId);
-        if (targetId != null) matches &= review.getTargetId().equals(targetId);
+        if (id != null) matches &= review.getId().equals(id);
         return matches;
     }
 }
