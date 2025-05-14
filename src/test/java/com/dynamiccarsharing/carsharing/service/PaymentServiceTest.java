@@ -100,7 +100,7 @@ class PaymentServiceTest {
     void findById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> paymentService.findById(-1L));
 
-        assertEquals("Payment ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Payment ID must be non-negative", exception.getMessage());
         verify(paymentRepository, never()).findById(any());
     }
 
@@ -115,7 +115,7 @@ class PaymentServiceTest {
     void deleteById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> paymentService.deleteById(-1L));
 
-        assertEquals("Payment ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Payment ID must be non-negative", exception.getMessage());
         verify(paymentRepository, never()).findById(any());
     }
 

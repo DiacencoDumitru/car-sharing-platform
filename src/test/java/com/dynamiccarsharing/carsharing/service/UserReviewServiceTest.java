@@ -93,7 +93,7 @@ class UserReviewServiceTest {
     void findById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userReviewService.findById(-1L));
 
-        assertEquals("UserReview ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("UserReview ID must be non-negative", exception.getMessage());
         verify(userReviewRepository, never()).findById(any());
     }
 
@@ -108,7 +108,7 @@ class UserReviewServiceTest {
     void deleteById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userReviewService.deleteById(-1L));
 
-        assertEquals("UserReview ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("UserReview ID must be non-negative", exception.getMessage());
         verify(userReviewRepository, never()).findById(any());
     }
 

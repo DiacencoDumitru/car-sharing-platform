@@ -97,7 +97,7 @@ class TransactionServiceTest {
     void findById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> transactionService.findById(-1L));
 
-        assertEquals("Transaction ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Transaction ID must be non-negative", exception.getMessage());
         verify(transactionRepository, never()).findById(any());
     }
 
@@ -112,7 +112,7 @@ class TransactionServiceTest {
     void deleteById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> transactionService.deleteById(-1L));
 
-        assertEquals("Transaction ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Transaction ID must be non-negative", exception.getMessage());
         verify(transactionRepository, never()).findById(any());
     }
 

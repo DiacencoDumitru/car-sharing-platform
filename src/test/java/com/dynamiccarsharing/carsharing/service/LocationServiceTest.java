@@ -95,7 +95,7 @@ class LocationServiceTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> locationService.findById(-1L));
 
-        assertEquals("Location ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Location ID must be non-negative", exception.getMessage());
         verify(locationRepository, never()).findById(any());
     }
 
@@ -111,7 +111,7 @@ class LocationServiceTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> locationService.deleteById(-1L));
 
-        assertEquals("Location ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Location ID must be non-negative", exception.getMessage());
         verify(locationRepository, never()).findById(any());
     }
 

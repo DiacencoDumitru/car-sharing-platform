@@ -84,7 +84,7 @@ class CarReviewServiceTest {
     void findById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> carReviewService.findById(-1L));
 
-        assertEquals("CarReview ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("CarReview ID must be non-negative", exception.getMessage());
         verify(carReviewRepository, never()).findById(any());
     }
 
@@ -99,7 +99,7 @@ class CarReviewServiceTest {
     void deleteById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> carReviewService.deleteById(-1L));
 
-        assertEquals("CarReview ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("CarReview ID must be non-negative", exception.getMessage());
         verify(carReviewRepository, never()).findById(any());
     }
 
