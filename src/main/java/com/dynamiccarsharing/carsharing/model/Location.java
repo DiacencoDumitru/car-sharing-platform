@@ -1,11 +1,13 @@
 package com.dynamiccarsharing.carsharing.model;
 
 import com.dynamiccarsharing.carsharing.util.Validator;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-@ToString
 @Getter
+@ToString
+@EqualsAndHashCode
 public class Location {
     private final Long id;
     private final String city;

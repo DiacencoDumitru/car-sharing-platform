@@ -29,7 +29,7 @@ public class UserFilter implements Filter<User> {
         boolean matches = true;
         if (role != null) matches &= user.getRole() == role;
         if (status != null) matches &= user.getStatus() == status;
-        if (email != null) matches &= user.getContactInfo().getEmail().contains(email); // Partial match
+        if (email != null) matches &= user.getContactInfo().getEmail().contains(email);
         return matches;
     }
 }

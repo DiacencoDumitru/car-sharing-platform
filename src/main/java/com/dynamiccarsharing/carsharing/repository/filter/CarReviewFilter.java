@@ -3,16 +3,16 @@ package com.dynamiccarsharing.carsharing.repository.filter;
 import com.dynamiccarsharing.carsharing.model.CarReview;
 
 public class CarReviewFilter implements Filter<CarReview> {
+    private Long id;
     private Long reviewerId;
-    private Long targetId;
 
     public CarReviewFilter setReviewerId(Long reviewerId) {
         this.reviewerId = reviewerId;
         return this;
     }
 
-    public CarReviewFilter setTargetId(Long targetId) {
-        this.targetId = targetId;
+    public CarReviewFilter setId(Long id) {
+        this.id = id;
         return this;
     }
 
@@ -20,7 +20,7 @@ public class CarReviewFilter implements Filter<CarReview> {
     public boolean test(CarReview review) {
         boolean matches = true;
         if (reviewerId != null) matches &= review.getReviewerId().equals(reviewerId);
-        if (targetId != null) matches &= review.getTargetId().equals(targetId);
+        if (id != null) matches &= review.getId().equals(id);
         return matches;
     }
 }

@@ -1,10 +1,9 @@
 package com.dynamiccarsharing.carsharing.repository;
 
 import com.dynamiccarsharing.carsharing.model.Booking;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
+import com.dynamiccarsharing.carsharing.repository.filter.BookingFilter;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class InMemoryBookingRepository implements BookingRepository {
     private final Map<Long, Booking> bookingMap = new HashMap<>();
@@ -30,7 +29,7 @@ public class InMemoryBookingRepository implements BookingRepository {
         return bookingMap.values();
     }
 
-    public Iterable<Booking> findByFilter(Filter<Booking> filter) {
-        return bookingMap.values().stream().filter(filter::test).collect(Collectors.toList());
+    public List<Booking> findByFilter(BookingFilter filter) {
+        return bookingMap.values().stream().filter(filter::test).toList();
     }
 }

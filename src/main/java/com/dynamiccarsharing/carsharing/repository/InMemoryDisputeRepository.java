@@ -1,10 +1,9 @@
 package com.dynamiccarsharing.carsharing.repository;
 
 import com.dynamiccarsharing.carsharing.model.Dispute;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
+import com.dynamiccarsharing.carsharing.repository.filter.DisputeFilter;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class InMemoryDisputeRepository implements DisputeRepository {
     private final Map<Long, Dispute> disputeMap = new HashMap<>();
@@ -31,7 +30,7 @@ public class InMemoryDisputeRepository implements DisputeRepository {
     }
 
     @Override
-    public Iterable<Dispute> findByFilter(Filter<Dispute> filter) {
-        return disputeMap.values().stream().filter(filter::test).collect(Collectors.toList());
+    public List<Dispute> findByFilter(DisputeFilter filter) {
+        return disputeMap.values().stream().filter(filter::test).toList();
     }
 }

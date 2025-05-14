@@ -3,23 +3,29 @@ package com.dynamiccarsharing.carsharing.model;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.util.Validator;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.With;
 
 import java.time.LocalDateTime;
 
-@ToString
 @Getter
+@ToString
+@EqualsAndHashCode
 public class Booking {
     private final Long id;
     private final Long renterId;
     private final Long carId;
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
-    private final TransactionStatus status; // will be something like: "pending", "approved", "completed"
+    @With
+    private final TransactionStatus status;
     private final Location pickupLocation;
-    private final String disputeDescription; // for admin
-    private final DisputeStatus disputeStatus; // "open", "resolved"
+    @With
+    private final String disputeDescription;
+    @With
+    private final DisputeStatus disputeStatus;
 
     public Booking(Long id, Long renterId, Long carId, LocalDateTime startTime, LocalDateTime endTime, TransactionStatus status, Location pickupLocation, String disputeDescription, DisputeStatus disputeStatus) {
         Validator.validateId(id, "ID");
@@ -27,8 +33,6 @@ public class Booking {
         Validator.validateId(carId, "Car ID");
         Validator.validateDates(startTime, endTime, "Start time", "End time");
         Validator.validateNonNull(pickupLocation, "Pickup location");
-//        Validator.validateOptionalString(disputeDescription, "Dispute description");
-//        Validator.validateNonNull(disputeStatus, "Dispute status");
         this.id = id;
         this.renterId = renterId;
         this.carId = carId;
@@ -38,13 +42,5 @@ public class Booking {
         this.pickupLocation = pickupLocation;
         this.disputeDescription = disputeDescription;
         this.disputeStatus = disputeStatus;
-    }
-
-    public Booking withStatus(TransactionStatus status) {
-        return new Booking(this.id, this.renterId, this.carId, this.startTime, this.endTime, status, this.pickupLocation, this.disputeDescription, this.disputeStatus);
-    }
-
-    public Booking withDispute(String disputeDescription, DisputeStatus disputeStatus) {
-        return new Booking(this.id, this.renterId, this.carId, this.startTime, this.endTime, this.status, this.pickupLocation, disputeDescription, disputeStatus);
     }
 }

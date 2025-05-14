@@ -3,72 +3,89 @@ package com.dynamiccarsharing.carsharing.service;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.model.Booking;
-import com.dynamiccarsharing.carsharing.repository.InMemoryBookingRepository;
+import com.dynamiccarsharing.carsharing.model.Dispute;
+import com.dynamiccarsharing.carsharing.model.Transaction;
+import com.dynamiccarsharing.carsharing.repository.BookingRepository;
+import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.BookingFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public class BookingService {
-    private final InMemoryBookingRepository inMemoryBookingRepository;
+    private final BookingRepository bookingRepository;
+    private final DisputeRepository disputeRepository;
 
-    public BookingService(InMemoryBookingRepository inMemoryBookingRepository) {
-        this.inMemoryBookingRepository = inMemoryBookingRepository;
+    public BookingService(BookingRepository bookingRepository, DisputeRepository disputeRepository) {
+        this.bookingRepository = bookingRepository;
+        this.disputeRepository = disputeRepository;
     }
 
     public Booking save(Booking booking) {
         Validator.validateNonNull(booking, "Booking");
-        inMemoryBookingRepository.save(booking);
+        bookingRepository.save(booking);
         return booking;
     }
 
     public Optional<Booking> findById(Long id) {
         Validator.validateId(id, "Booking ID");
-        return inMemoryBookingRepository.findById(id);
+        return bookingRepository.findById(id);
     }
 
-    public void delete(Long id) {
+    public void deleteById(Long id) {
         Validator.validateId(id, "Booking ID");
-        inMemoryBookingRepository.deleteById(id);
+        bookingRepository.deleteById(id);
     }
 
     public Iterable<Booking> findAll() {
-        return inMemoryBookingRepository.findAll();
+        return bookingRepository.findAll();
     }
 
     public Booking approveBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
-        validateBookingStatus(booking.getStatus(), TransactionStatus.PENDING, "Booking can only be approved from PENDING status");
-        return inMemoryBookingRepository.save(booking.withStatus(TransactionStatus.APPROVED));
+        validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.PENDING), "Booking can only be approved from PENDING status");
+        return bookingRepository.save(booking.withStatus(TransactionStatus.APPROVED));
     }
 
     public Booking completeBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
-        validateBookingStatus(booking.getStatus(), TransactionStatus.APPROVED, "Booking can only be completed from APPROVED status");
-        return inMemoryBookingRepository.save(booking.withStatus(TransactionStatus.COMPLETED));
+        validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.APPROVED), "Booking can only be completed from APPROVED status");
+        return bookingRepository.save(booking.withStatus(TransactionStatus.COMPLETED));
     }
 
     public Booking cancelBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
-        validateBookingStatus(booking.getStatus(), TransactionStatus.COMPLETED, "Cannot cancel a completed booking");
-        return inMemoryBookingRepository.save(booking.withStatus(TransactionStatus.CANCELED));
+        validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.PENDING, TransactionStatus.APPROVED), "Cannot cancel a completed booking");
+        return bookingRepository.save(booking.withStatus(TransactionStatus.CANCELED));
     }
 
-    public Booking raiseDispute(Long bookingId, String description) {
-        Booking booking = getBookingOrThrow(bookingId);
-        validateBookingStatus(booking.getStatus(), TransactionStatus.COMPLETED, "Dispute can only be raised for completed bookings");
-        return inMemoryBookingRepository.save(booking.withDispute(description, DisputeStatus.OPEN));
+    public Booking raiseDispute(Long id, String disputeDescription) {
+        Booking booking = findById(id).orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+        if (booking.getStatus() != TransactionStatus.COMPLETED) {
+            throw new IllegalStateException("Dispute can only raise dispute for completed bookings");
+        }
+        Dispute dispute = new Dispute(generateDisputeId(), booking.getId(), booking.getRenterId(), disputeDescription, DisputeStatus.OPEN, LocalDateTime.now(), null);
+        disputeRepository.save(dispute);
+        Booking updatedBooking = booking
+                .withDisputeDescription(disputeDescription)
+                .withDisputeStatus(DisputeStatus.OPEN);
+        return bookingRepository.save(updatedBooking);
+    }
+
+    private Long generateDisputeId() {
+        return 1L;
     }
 
     public Booking resolveDispute(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
         validateDisputeStatus(booking.getDisputeStatus(), DisputeStatus.OPEN, "Can only resolve an open dispute");
-        return inMemoryBookingRepository.save(booking.withDispute(booking.getDisputeDescription(), DisputeStatus.RESOLVED));
+        return bookingRepository.save(booking.withDisputeStatus(DisputeStatus.RESOLVED));
     }
 
-    private void validateBookingStatus(TransactionStatus currentStatus, TransactionStatus expectedStatus, String errorMessage) {
-        if (currentStatus != expectedStatus) {
+    private void validateBookingStatus(TransactionStatus currentStatus, List<TransactionStatus> allowedStatuses, String errorMessage) {
+        if (!allowedStatuses.contains(currentStatus)) {
             throw new IllegalStateException(errorMessage);
         }
     }
@@ -86,6 +103,18 @@ public class BookingService {
     public List<Booking> findBookingsByRenterId(Long renterId) {
         Validator.validateId(renterId, "Renter ID");
         BookingFilter filter = new BookingFilter().setRenterId(renterId);
-        return (List<Booking>) inMemoryBookingRepository.findByFilter(filter);
+        return bookingRepository.findByFilter(filter);
+    }
+
+    public List<Booking> findBookingsByCarId(Long carId) {
+        Validator.validateId(carId, "Car ID");
+        BookingFilter filter = new BookingFilter().setCarId(carId);
+        return bookingRepository.findByFilter(filter);
+    }
+
+    public List<Booking> findBookingsByStatus(TransactionStatus transactionStatus) {
+        Validator.validateNonNull(transactionStatus, "Transaction Status");
+        BookingFilter filter = new BookingFilter().setStatus(transactionStatus);
+        return bookingRepository.findByFilter(filter);
     }
 }

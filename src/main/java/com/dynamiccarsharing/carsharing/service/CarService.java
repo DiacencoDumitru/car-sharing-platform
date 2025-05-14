@@ -1,9 +1,11 @@
 package com.dynamiccarsharing.carsharing.service;
 
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
+import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.model.Car;
-import com.dynamiccarsharing.carsharing.repository.InMemoryCarRepository;
+import com.dynamiccarsharing.carsharing.model.Location;
+import com.dynamiccarsharing.carsharing.repository.CarRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.CarFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
@@ -12,68 +14,67 @@ import java.util.Optional;
 
 public class CarService {
 
-    private final InMemoryCarRepository inMemoryCarRepository;
+    private final CarRepository carRepository;
 
-    public CarService(InMemoryCarRepository inMemoryCarRepository) {
-        this.inMemoryCarRepository = inMemoryCarRepository;
+    public CarService(CarRepository carRepository) {
+        this.carRepository = carRepository;
     }
 
     public Car save(Car car) {
         Validator.validateNonNull(car, "Car");
-        inMemoryCarRepository.save(car);
+        carRepository.save(car);
         return car;
     }
 
     public Optional<Car> findById(Long id) {
-        Validator.validateId(id, "ID");
-        return inMemoryCarRepository.findById(id);
+        Validator.validateId(id, "Car ID");
+        return carRepository.findById(id);
     }
 
-    public void delete(Long id) {
-        Validator.validateId(id, "ID");
-        inMemoryCarRepository.deleteById(id);
+    public void deleteById(Long id) {
+        Validator.validateId(id, "Car ID");
+        carRepository.deleteById(id);
     }
 
     public Iterable<Car> findAll() {
-        return inMemoryCarRepository.findAll();
+        return carRepository.findAll();
     }
 
 
     public Car rentCar(Long carId) {
         Car car = getCarOrThrow(carId);
         validateCarStatus(car.getStatus(), CarStatus.AVAILABLE, "Car can only be rented if AVAILABLE");
-        return inMemoryCarRepository.save(car.withCarStatus(CarStatus.RENTED));
+        return carRepository.save(car.withStatus(CarStatus.RENTED));
     }
 
     public Car returnCar(Long carId) {
         Car car = getCarOrThrow(carId);
         validateCarStatus(car.getStatus(), CarStatus.RENTED, "Car can only be returned if RENTED");
-        return inMemoryCarRepository.save(car.withCarStatus(CarStatus.AVAILABLE));
+        return carRepository.save(car.withStatus(CarStatus.AVAILABLE));
     }
 
     public Car setMaintenance(Long carId) {
         Car car = getCarOrThrow(carId);
         validateCarStatus(car.getStatus(), CarStatus.AVAILABLE, "Cannot set MAINTENANCE for a RENTED car");
-        return inMemoryCarRepository.save(car.withCarStatus(CarStatus.MAINTENANCE));
+        return carRepository.save(car.withStatus(CarStatus.MAINTENANCE));
     }
 
     public Car verifyCar(Long carId) {
         Car car = getCarOrThrow(carId);
-        validateVerificationStatus(car.getVerificationStatus(), VerificationStatus.PENDING, "Car can only be verified for PENDING status");
-        return inMemoryCarRepository.save(car.withVerificationStatus(VerificationStatus.VERIFIED));
+        validateVerificationStatus(car.getVerificationStatus(), VerificationStatus.PENDING, "Car can only be verified from PENDING status");
+        return carRepository.save(car.withVerificationStatus(VerificationStatus.VERIFIED));
     }
 
     public Car rejectVerification(Long carId) {
         Car car = getCarOrThrow(carId);
-        validateVerificationStatus(car.getVerificationStatus(), VerificationStatus.REJECTED, "Car can only be rejected from PENDING status");
-        return inMemoryCarRepository.save(car.withVerificationStatus(VerificationStatus.REJECTED));
-
+        validateVerificationStatus(car.getVerificationStatus(), VerificationStatus.PENDING, "Car can only be rejected from PENDING status");
+        return carRepository.save(car.withVerificationStatus(VerificationStatus.REJECTED));
     }
 
     public Car updatePrice(Long carId, double newPrice) {
-        Validator.validateNonNegativeDouble(newPrice, "New Price"); // Validate 'newPrice'
+        Validator.validateNonNegativeDouble(newPrice, "New Price");
         Car car = getCarOrThrow(carId);
-        return inMemoryCarRepository.save(car.withPrice(newPrice));
+        return carRepository.save(car.withPrice(newPrice));
     }
 
     private void validateCarStatus(CarStatus currentStatus, CarStatus expectedStatus, String errorMessage) {
@@ -95,6 +96,36 @@ public class CarService {
     public List<Car> findCarsByMake(String make) {
         Validator.validateNonEmptyString(make, "Car Make");
         CarFilter filter = new CarFilter().setMake(make);
-        return (List<Car>) inMemoryCarRepository.findByFilter(filter);
+        return carRepository.findByFilter(filter);
+    }
+
+    public List<Car> findCarsByModel(String model) {
+        Validator.validateNonEmptyString(model, "Model");
+        CarFilter filter = new CarFilter().setModel(model);
+        return carRepository.findByFilter(filter);
+    }
+
+    public List<Car> findCarsByCarStatus(CarStatus carStatus) {
+        Validator.validateNonNull(carStatus, "Car status");
+        CarFilter filter = new CarFilter().setStatus(carStatus);
+        return carRepository.findByFilter(filter);
+    }
+
+    public List<Car> findCarsByLocation(Location location) {
+        Validator.validateNonNull(location, "Location");
+        CarFilter filter = new CarFilter().setLocation(location);
+        return carRepository.findByFilter(filter);
+    }
+
+    public List<Car> findCarsByType(CarType carType) {
+        Validator.validateNonNull(carType, "Car type");
+        CarFilter filter = new CarFilter().setType(carType);
+        return carRepository.findByFilter(filter);
+    }
+
+    public List<Car> findCarsByVerificationStatus(VerificationStatus verificationStatus) {
+        Validator.validateNonNull(verificationStatus, "Verification status");
+        CarFilter filter = new CarFilter().setVerificationStatus(verificationStatus);
+        return carRepository.findByFilter(filter);
     }
 }

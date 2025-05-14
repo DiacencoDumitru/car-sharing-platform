@@ -1,16 +1,23 @@
 package com.dynamiccarsharing.carsharing.model;
 
 import com.dynamiccarsharing.carsharing.util.Validator;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.With;
 
-@ToString
 @Getter
+@ToString
+@EqualsAndHashCode
 public class ContactInfo {
     private final Long id;
+    @With
     private final String firstName;
+    @With
     private final String lastName;
+    @With
     private final String email;
+    @With
     private final String phoneNumber;
 
     public ContactInfo(Long id, String firstName, String lastName, String email, String phoneNumber) {
