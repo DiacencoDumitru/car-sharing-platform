@@ -92,7 +92,7 @@ class UserServiceTest {
     void findById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userService.findById(-1L));
 
-        assertEquals("User ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("User ID must be non-negative", exception.getMessage());
         verify(userRepository, never()).findById(any());
     }
 
@@ -107,7 +107,7 @@ class UserServiceTest {
     void deleteById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userService.deleteById(-1L));
 
-        assertEquals("User ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("User ID must be non-negative", exception.getMessage());
         verify(userRepository, never()).findById(any());
     }
 

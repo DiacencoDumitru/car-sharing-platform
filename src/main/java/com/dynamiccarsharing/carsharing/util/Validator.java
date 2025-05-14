@@ -8,8 +8,8 @@ public class Validator {
     private Validator() {}
 
     public static void validateId(Long id, String fieldName) {
-        if (id == null || id < 0) {
-            throw new IllegalArgumentException(fieldName + " must be non-null and non-negative");
+        if (id != null && id < 0) {
+            throw new IllegalArgumentException(fieldName + " must be non-negative");
         }
     }
 

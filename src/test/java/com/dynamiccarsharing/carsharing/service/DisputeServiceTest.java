@@ -97,7 +97,7 @@ class DisputeServiceTest {
     void findById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> disputeService.findById(-1L));
 
-        assertEquals("Dispute ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Dispute ID must be non-negative", exception.getMessage());
         verify(disputeRepository, never()).findById(any());
     }
 
@@ -112,7 +112,7 @@ class DisputeServiceTest {
     void deleteById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> disputeService.deleteById(-1L));
 
-        assertEquals("Dispute ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Dispute ID must be non-negative", exception.getMessage());
         verify(disputeRepository, never()).deleteById(any());
     }
 

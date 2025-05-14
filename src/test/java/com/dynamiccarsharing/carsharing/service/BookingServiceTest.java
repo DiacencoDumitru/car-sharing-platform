@@ -87,7 +87,7 @@ class BookingServiceTest {
     void findById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> bookingService.findById(-1L));
 
-        assertEquals("Booking ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Booking ID must be non-negative", exception.getMessage());
         verify(bookingRepository, never()).findById(any());
     }
 
@@ -102,7 +102,7 @@ class BookingServiceTest {
     void deleteById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> bookingService.deleteById(-1L));
 
-        assertEquals("Booking ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Booking ID must be non-negative", exception.getMessage());
         verify(bookingRepository, never()).findById(any());
     }
 
@@ -286,7 +286,7 @@ class BookingServiceTest {
     @Test
     void findBookingsByRenterId_withInvalidRenterId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> bookingService.findBookingsByRenterId(-1L));
-        assertEquals("Renter ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Renter ID must be non-negative", exception.getMessage());
         verify(bookingRepository, never()).findById(any());
     }
 

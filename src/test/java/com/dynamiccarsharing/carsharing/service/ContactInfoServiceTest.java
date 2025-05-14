@@ -81,7 +81,7 @@ class ContactInfoServiceTest {
     void findById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> contactInfoService.findById(-1L));
 
-        assertEquals("Contact Info ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Contact Info ID must be non-negative", exception.getMessage());
         verify(contactInfoRepository, never()).findById(any());
     }
 
@@ -96,7 +96,7 @@ class ContactInfoServiceTest {
     void deleteById_withInvalidId_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> contactInfoService.deleteById(-1L));
 
-        assertEquals("Contact Info ID must be non-null and non-negative", exception.getMessage());
+        assertEquals("Contact Info ID must be non-negative", exception.getMessage());
         verify(contactInfoRepository, never()).findById(any());
     }
 
