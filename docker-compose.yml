@@ -1,0 +1,27 @@
+services:
+  db:
+    container_name: DynamicCarSharing-service-db
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4:latest
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGA_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGA_PASSWORD}
+    ports:
+      - "${PGA_PORT}:80"
+    depends_on:
+      - db
+volumes:
+  db_data:
+    name: db_data
