@@ -54,7 +54,8 @@
 2. Optional: DBeaver/pgAdmin for GUI-based database management.
 
 ### Setup Instructions
-Clone the Repository: `git clone git@gitlab.griddynamics.net:DynamicCarSharing.git`
+- Clone the Repository: `git clone git@gitlab.griddynamics.net:DynamicCarSharing.git`
+- The SQL scripts in `initdb.sql` will create the schema if the database is empty.
 
 ### Edit .env if needed:
 * DB_NAME=name_db
