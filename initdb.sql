@@ -112,3 +112,34 @@ CREATE TABLE user_review (
     FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE,
     FOREIGN KEY (reviewer_id) REFERENCES "user"(id) ON DELETE CASCADE
 );
+
+
+INSERT INTO contact_info (email, phone_number, first_name, last_name) VALUES
+('dd.prodev@gmail.com', '+37367773888', 'Dumitru', 'Diacenco'),
+('dv.prodev@gmail.com', '+37368883888', 'Vitalii', 'Diacenco'),
+('rebelion.engineer@gmail.com', '+37369993999', 'Rebelion', 'Welington');
+
+INSERT INTO "user" (contact_info_id, role, status) VALUES
+(1, 'RENTER', 'ACTIVE'),
+(2, 'CAR_OWNER', 'ACTIVE'),
+(3, 'RENTER', 'ACTIVE');
+
+INSERT INTO location (city, state, zip_code) VALUES
+('New York', 'NY', '10001'),
+('Los Angeles', 'LA', '90001'),
+('Chicago', 'IL', '60601');
+
+INSERT INTO car (registration_number, make, model, status, location_id, price_per_day, type, verification_status) VALUES
+('NY123', 'Toyota', 'Camry', 'AVAILABLE', 1, 50.00, 'SEDAN', 'VERIFIED'),
+('CA456', 'Honda', 'CR-V', 'AVAILABLE', 2, 70.00, 'SUV', 'VERIFIED'),
+('IL789', 'Ford', 'F-150', 'RENTED', 3, 90.00, 'TRUCK', 'VERIFIED');
+
+INSERT INTO user_car (user_id, car_id) VALUES(2, 1), (2, 2), (2, 3);
+
+INSERT INTO booking (renter_id, car_id, start_time, end_time, status, pickup_location_id) VALUES
+(1, 1, '2025-05-18 09:00:00', '2025-05-20 09:00:00', 'COMPLETED', 1),
+(3, 2, '2025-05-19 10:00:00', '2025-05-21 10:00:00', 'COMPLETED', 2);
+
+INSERT INTO payment (booking_id, amount, status, payment_method) VALUES
+(1, 100.00, 'COMPLETED', 'CREDIT_CARD'),
+(2, 140.00, 'COMPLETED', 'PAYPAL');
