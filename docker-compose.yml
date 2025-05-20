@@ -11,6 +11,7 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+      - ./initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
   pgadmin:
     container_name: pgadmin4_container
     image: dpage/pgadmin4:latest
