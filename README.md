@@ -3,7 +3,7 @@
 * `Car Owner:` A user who lists their car for rent.
 * `Admin:` A system administrator who manages the platform.
 * `Guest:` A non-registered user exploring the platform.
-
+-------
 ### User stories
 **Format:** `As a [type of user], I want to [perform an action] so that [benefit or goal].`
 
@@ -43,8 +43,65 @@
 * As a guest, I want to view available cars without registering so that I can explore the platform before committing.
 * As a guest, I want to sign up for an account so that I can start renting or listing cars.
 * As a guest, I want to view car details, including type, price, and location, so that I can assess the platform’s offerings.
-
+-------
 ### OOD Class Diagram, Divide and conquer
 1. `Cars Catalog:` Car, Location, CarRepository, LocationRepository, CarService, LocationService _(🔵Blue border color)_
 2. `Users Management:` User, ContactInfo, UserRepository, ContactInfoRepository, UserService, ContactInfoService _(🟢Green border color)_
 3. `Booking Management:` Booking, Payment, Transaction, Dispute, Review, CarReview, UserReview, BookingRepository, PaymentRepository, CarReviewRepository, UserReviewRepository, BookingService, PaymentService, CarReviewService, UserReviewService _(🔴Red border color)_
+---------
+## Prerequisites
+1. Docker and Docker Compose installed.
+2. Optional: DBeaver/pgAdmin for GUI-based database management.
+
+### Setup Instructions
+Clone the Repository: `git clone git@gitlab.griddynamics.net:DynamicCarSharing.git`
+
+### Edit .env if needed:
+* DB_NAME=name_db
+* DB_USER=username_db
+* DB_PASSWORD=password_db
+* DB_PORT=5432
+* PGA_EMAIL=example@gmail.com
+* PGA_PASSWORD=pgadmin_password
+* PGA_PORT=5050
+
+#### Start the Database, run Docker Compose: 
+`docker-compose up -d`
+
+#### Check the container is running:
+`docker ps`
+
+------------
+### Connect using a database client (e.g., DBeaver):
+#### Example with DBeaver:
+* Host: localhost
+* Port: 5432 (or DB_PORT from .env)
+* Database: exampledb
+* Username: exampleuser
+* Password: examplepassword
+--------
+#### Example with pgAdmin
+* URL: http://localhost:5050
+* Email: example@gmail.com
+* Password: root
+
+**Add a server with:**
+* Host: db (server name)
+* Port: 5432
+* Database: name-db
+* Username: user
+* Password: password
+------
+#### Stop the DatabaseTo stop without deleting data:
+`docker-compose down`
+
+#### To remove data:
+`docker-compose down -v`
+
+### Troubleshooting
+Port Conflict: Check if 5432 is in use
+
+--------------------------
+1. Update DB_PORT in .env if needed.
+2. Connection Issues: Verify container status (docker ps) and .env values.
+3. Permission Errors: Ensure Docker is running, and you have access (sudo systemctl start docker).
