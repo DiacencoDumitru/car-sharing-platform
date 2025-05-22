@@ -1,6 +1,6 @@
 services:
-  db:
-    container_name: DynamicCarSharing-service-db
+  db1:
+    container_name: capstone-service-db
     image: postgres:latest
     restart: always
     environment:
@@ -10,9 +10,23 @@ services:
     ports:
       - "${DB_PORT}:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db1_data:/var/lib/postgresql/data
       - ./initdb_app_db1.sql:/docker-entrypoint-initdb.d/initdb_app_db1.sql
+
+  db2:
+    container_name: db2_world_data
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB2_USER}
+      POSTGRES_PASSWORD: ${DB2_PASSWORD}
+      POSTGRES_DB: ${DB2_NAME}
+    ports:
+      - "${DB2_PORT}:5433"
+    volumes:
+      - db2_data:/var/lib/postgresql/data
       - ./initdb_app_db2.sql:/docker-entrypoint-initdb.d/initdb_app_db2.sql
+
   pgadmin:
     container_name: pgadmin4_container
     image: dpage/pgadmin4:latest
@@ -23,7 +37,10 @@ services:
     ports:
       - "${PGA_PORT}:80"
     depends_on:
-      - db
+      - db1
+      - db2
 volumes:
-  db_data:
-    name: db_data
+  db1_data:
+    name: db1_data
+  db2_data:
+    name: db2_data
