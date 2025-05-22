@@ -11,7 +11,7 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - db1_data:/var/lib/postgresql/data
-      - ./initdb_app_db1.sql:/docker-entrypoint-initdb.d/initdb_app_db1.sql
+      - ./docker/initdb_app_db1.sql:/docker-entrypoint-initdb.d/initdb_app_db1.sql
 
   db2:
     container_name: db2_world_data
@@ -25,7 +25,7 @@ services:
       - "${DB2_PORT}:5433"
     volumes:
       - db2_data:/var/lib/postgresql/data
-      - ./initdb_app_db2.sql:/docker-entrypoint-initdb.d/initdb_app_db2.sql
+      - ./docker/initdb_app_db2.sql:/docker-entrypoint-initdb.d/initdb_app_db2.sql
 
   pgadmin:
     container_name: pgadmin4_container
