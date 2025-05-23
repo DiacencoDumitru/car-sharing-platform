@@ -1,8 +1,3 @@
-create DATABASE app_db1;
-
--- SQL queries (Capstone Project)
-\c app_db1
-
 create type car_status as ENUM ('AVAILABLE', 'RENTED', 'MAINTENANCE');
 create type verification_status as ENUM ('PENDING', 'VERIFIED', 'REJECTED');
 create type user_status as ENUM ('ACTIVE', 'SUSPENDED', 'BANNED');
