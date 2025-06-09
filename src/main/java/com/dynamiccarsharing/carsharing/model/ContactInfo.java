@@ -24,7 +24,6 @@ public class ContactInfo {
         Validator.validateId(id, "ID");
         Validator.validateNonEmptyString(firstName, "First name");
         Validator.validateNonEmptyString(lastName, "Last name");
-        Validator.validateEmail(email, "Email");
         Validator.validateNonEmptyString(phoneNumber, "Phone number");
         this.id = id;
         this.firstName = firstName;

@@ -106,3 +106,61 @@ Port Conflict: Check if 5432 is in use
 1. Update DB_PORT in .env if needed.
 2. Connection Issues: Verify container status (docker ps) and .env values.
 3. Permission Errors: Ensure Docker is running, and you have access (sudo systemctl start docker).
+
+## Statement vs Prepared Statement
+### Statement
+* Used for simple SQL queries where the query is written as a full string.
+* It is used when SQL query is to be executed only once.
+* It is used for DDL statements.
+
+**Disadvantages of Statement**
+1. We need to build the query manually by adding user values to the string.
+2. Vulnerable to SQL injection if user input is included directly: 
+```java
+String username = "admin";
+String password = "' OR '1'='1"; // injected input
+
+String query = "SELECT * FROM users WHERE username = '" + username + "' AND password = '" + password + "'";
+
+Statement stmt = connection.createStatement();
+ResultSet rs = stmt.executeQuery(query);
+
+// Executes this vulnerable query: always returns true due to '1'='1', giving attackers access.
+SELECT * FROM users WHERE username = 'admin' AND password = '' OR '1'='1'
+```
+3. Not efficient — the SQL query is compiled by the database every time.
+4. Used to execute normal SQL queries.
+5. Performance is very low.
+--------
+### Prepared Statement
+* Used for parameterized queries (with ? placeholders instead of values).
+* It is used when SQL query is to be executed multiple times.
+* It is used for any SQL Query.
+
+**Advantages**
+1. Safe — protects against SQL injection.
+```java
+String username = "admin";
+String password = "' OR '1'='1"; // same input
+
+String query = "SELECT * FROM users WHERE username = ? AND password = ?";
+
+PreparedStatement pstmt = connection.prepareStatement(query);
+pstmt.setString(1, username);
+pstmt.setString(2, password);
+
+ResultSet resultSet = pstmt.executeQuery();
+
+// Query is safe: user input is treated as text, not part of the SQL command
+SELECT * FROM users WHERE username = 'admin' AND password = '\' OR \'1\'=\'1'
+```
+2. Efficient — the query is compiled once and can be reused with different values.
+3. Convenient — no need to manually build strings with values.
+4. Used to execute dynamic SQL queries.
+5. Performance is better than Statement.
+
+### Vulnerable Statement (printed with maliciousInput all user roles)
+![img.png](images/img.png)
+
+### Secure PreparedStatement (didn't work)
+![img_1.png](images/img_1.png)
