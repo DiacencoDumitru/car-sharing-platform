@@ -6,6 +6,7 @@ import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.DisputeFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -36,15 +37,15 @@ public class DisputeService {
         return disputeRepository.findAll();
     }
 
-    public List<Dispute> findDisputesByStatus(DisputeStatus status) {
+    public List<Dispute> findDisputesByStatus(DisputeStatus status) throws SQLException {
         Validator.validateNonNull(status, "Dispute Status");
-        DisputeFilter filter = new DisputeFilter().setStatus(status);
+        DisputeFilter filter = DisputeFilter.ofStatus(status);
         return disputeRepository.findByFilter(filter);
     }
 
-    public List<Dispute> findDisputesByBookingId(Long bookingId) {
+    public List<Dispute> findDisputesByBookingId(Long bookingId) throws SQLException {
         Validator.validateId(bookingId, "Booking ID");
-        DisputeFilter filter = new DisputeFilter().setBookingId(bookingId);
+        DisputeFilter filter = DisputeFilter.ofBookingId(bookingId);
         return disputeRepository.findByFilter(filter);
     }
 

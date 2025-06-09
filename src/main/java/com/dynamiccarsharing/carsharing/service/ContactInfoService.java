@@ -5,6 +5,7 @@ import com.dynamiccarsharing.carsharing.repository.ContactInfoRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.ContactInfoFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,10 +16,9 @@ public class ContactInfoService {
         this.contactInfoRepository = contactInfoRepository;
     }
 
-    public ContactInfo save(ContactInfo contactInfo) {
+    public ContactInfo save(ContactInfo contactInfo)  {
         Validator.validateNonNull(contactInfo, "Contact Info");
-        contactInfoRepository.save(contactInfo);
-        return contactInfo;
+        return contactInfoRepository.save(contactInfo);
     }
 
     public Optional<ContactInfo> findById(Long id) {
@@ -35,27 +35,27 @@ public class ContactInfoService {
         return contactInfoRepository.findAll();
     }
 
-    public List<ContactInfo> findContactInfoByEmail(String email) {
+    public List<ContactInfo> findContactInfoByEmail(String email) throws SQLException {
         Validator.validateEmail(email, "Email");
-        ContactInfoFilter filter = new ContactInfoFilter().setEmail(email);
+        ContactInfoFilter filter = ContactInfoFilter.ofEmail(email);
         return contactInfoRepository.findByFilter(filter);
     }
 
-    public List<ContactInfo> findContactInfoByPhoneNumber(String phoneNumber) {
+    public List<ContactInfo> findContactInfoByPhoneNumber(String phoneNumber) throws SQLException {
         Validator.validateNonEmptyString(phoneNumber, "Phone number");
-        ContactInfoFilter filter = new ContactInfoFilter().setPhoneNumber(phoneNumber);
+        ContactInfoFilter filter = ContactInfoFilter.ofPhoneNumber(phoneNumber);
         return contactInfoRepository.findByFilter(filter);
     }
 
-    public List<ContactInfo> findContactInfoByFirstName(String firstName) {
+    public List<ContactInfo> findContactInfoByFirstName(String firstName) throws SQLException {
         Validator.validateNonEmptyString(firstName, "Firstname");
-        ContactInfoFilter filter = new ContactInfoFilter().setFirstName(firstName);
+        ContactInfoFilter filter = ContactInfoFilter.ofFirstName(firstName);
         return contactInfoRepository.findByFilter(filter);
     }
 
-    public List<ContactInfo> findContactInfoByLastName(String lastName) {
+    public List<ContactInfo> findContactInfoByLastName(String lastName) throws SQLException {
         Validator.validateNonEmptyString(lastName, "Lastname");
-        ContactInfoFilter filter = new ContactInfoFilter().setLastName(lastName);
+        ContactInfoFilter filter = ContactInfoFilter.ofLastName(lastName);
         return contactInfoRepository.findByFilter(filter);
     }
 }

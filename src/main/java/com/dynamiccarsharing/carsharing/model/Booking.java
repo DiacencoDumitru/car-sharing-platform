@@ -9,6 +9,8 @@ import lombok.ToString;
 import lombok.With;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @ToString
@@ -26,13 +28,33 @@ public class Booking {
     private final String disputeDescription;
     @With
     private final DisputeStatus disputeStatus;
+    @With
+    private final List<Transaction> transactions;
 
-    public Booking(Long id, Long renterId, Long carId, LocalDateTime startTime, LocalDateTime endTime, TransactionStatus status, Location pickupLocation, String disputeDescription, DisputeStatus disputeStatus) {
-        Validator.validateId(id, "ID");
-        Validator.validateId(renterId, "Renter ID");
-        Validator.validateId(carId, "Car ID");
+    public Booking(Long id, Long renterId, Long carId, LocalDateTime startTime, LocalDateTime endTime, TransactionStatus status, Location pickupLocation, String disputeDescription, DisputeStatus disputeStatus, List<Transaction> transactions) {
+
+        if (id != null) {
+            Validator.validateId(id, "ID");
+        }
+
+        Validator.validateNonNull(renterId, "Renter ID");
+        Validator.validateNonNull(carId, "Car ID");
+
+        if (renterId != null && renterId <= 0) {
+            throw new IllegalArgumentException("Renter ID must be positive");
+        }
+        if (carId != null && carId <= 0) {
+            throw new IllegalArgumentException("Car ID must be positive");
+        }
+
         Validator.validateDates(startTime, endTime, "Start time", "End time");
         Validator.validateNonNull(pickupLocation, "Pickup location");
+        Validator.validateNonNull(transactions, "Transactions list");
+
+        if (transactions == null) {
+            transactions = new ArrayList<>();
+        }
+
         this.id = id;
         this.renterId = renterId;
         this.carId = carId;
@@ -42,5 +64,14 @@ public class Booking {
         this.pickupLocation = pickupLocation;
         this.disputeDescription = disputeDescription;
         this.disputeStatus = disputeStatus;
+        this.transactions = transactions;
+    }
+
+    public Booking(Long id, Long renterId, Long carId, LocalDateTime startTime, LocalDateTime endTime, TransactionStatus status, Location pickupLocation, String disputeDescription, DisputeStatus disputeStatus) {
+        this(id, renterId, carId, startTime, endTime, status, pickupLocation, disputeDescription, disputeStatus, new ArrayList<>());
+    }
+
+    public List<Transaction> getTransactions() {
+        return new ArrayList<>(transactions);
     }
 }

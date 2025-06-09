@@ -4,12 +4,12 @@ import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Dispute;
-import com.dynamiccarsharing.carsharing.model.Transaction;
 import com.dynamiccarsharing.carsharing.repository.BookingRepository;
 import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.BookingFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -100,21 +100,21 @@ public class BookingService {
         return findById(bookingId).orElseThrow(() -> new IllegalArgumentException("Booking with ID " + bookingId + " not found"));
     }
 
-    public List<Booking> findBookingsByRenterId(Long renterId) {
+    public List<Booking> findBookingsByRenterId(Long renterId) throws SQLException {
         Validator.validateId(renterId, "Renter ID");
-        BookingFilter filter = new BookingFilter().setRenterId(renterId);
+        BookingFilter filter = BookingFilter.ofRenterId(renterId);
         return bookingRepository.findByFilter(filter);
     }
 
-    public List<Booking> findBookingsByCarId(Long carId) {
+    public List<Booking> findBookingsByCarId(Long carId) throws SQLException {
         Validator.validateId(carId, "Car ID");
-        BookingFilter filter = new BookingFilter().setCarId(carId);
+        BookingFilter filter = BookingFilter.ofCarId(carId);
         return bookingRepository.findByFilter(filter);
     }
 
-    public List<Booking> findBookingsByStatus(TransactionStatus transactionStatus) {
+    public List<Booking> findBookingsByStatus(TransactionStatus transactionStatus) throws SQLException {
         Validator.validateNonNull(transactionStatus, "Transaction Status");
-        BookingFilter filter = new BookingFilter().setStatus(transactionStatus);
+        BookingFilter filter = BookingFilter.ofStatus(transactionStatus);
         return bookingRepository.findByFilter(filter);
     }
 }

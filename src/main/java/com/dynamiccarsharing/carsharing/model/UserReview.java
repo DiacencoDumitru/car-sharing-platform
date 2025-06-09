@@ -10,13 +10,15 @@ import lombok.With;
 @EqualsAndHashCode
 public class UserReview implements Review {
     private final Long id;
+    private final Long userId;
     private final Long reviewerId;
     @With
     private final String comment;
 
-    public UserReview(Long id, Long reviewerId, String comment) {
+    public UserReview(Long id, Long userId, Long reviewerId, String comment) {
         Review.validateReviewData(id, reviewerId, comment);
         this.id = id;
+        this.userId = userId;
         this.reviewerId = reviewerId;
         this.comment = comment;
     }

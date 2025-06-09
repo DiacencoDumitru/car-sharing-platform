@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.carsharing.repository;
 
 import com.dynamiccarsharing.carsharing.model.CarReview;
-import com.dynamiccarsharing.carsharing.repository.filter.CarReviewFilter;
+import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 
 import java.util.*;
 
@@ -25,12 +25,12 @@ public class InMemoryCarReviewRepository implements CarReviewRepository {
     }
 
     @Override
-    public Iterable<CarReview> findAll() {
-        return carReviewMap.values();
+    public List<CarReview> findByFilter(Filter<CarReview> filter) {
+        return carReviewMap.values().stream().filter(filter::test).toList();
     }
 
     @Override
-    public List<CarReview> findByFilter(CarReviewFilter filter) {
-        return carReviewMap.values().stream().filter(filter::test).toList();
+    public Iterable<CarReview> findAll() {
+        return carReviewMap.values();
     }
 }

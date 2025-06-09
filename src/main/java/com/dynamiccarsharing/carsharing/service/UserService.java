@@ -8,6 +8,7 @@ import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.repository.UserRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.UserFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
+import lombok.SneakyThrows;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    @SneakyThrows
     public User save(User user) {
         Validator.validateNonNull(user, "User");
         return userRepository.save(user);
@@ -46,24 +48,28 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("User with ID " + id + " not found"));
     }
 
+    @SneakyThrows
     public User suspend(Long id) {
         User user = getUserOrThrow(id);
         validateUserStatus(user.getStatus(), UserStatus.ACTIVE, "Only active users can be suspended");
         return userRepository.save(user.withStatus(UserStatus.SUSPENDED));
     }
 
+    @SneakyThrows
     public User ban(Long id) {
         User user = getUserOrThrow(id);
         validateUserStatus(user.getStatus(), UserStatus.ACTIVE, "Only active users can be banned");
         return userRepository.save(user.withStatus(UserStatus.BANNED));
     }
 
+    @SneakyThrows
     public User activate(Long id) {
         User user = getUserOrThrow(id);
         validateUserStatus(user.getStatus(), UserStatus.SUSPENDED, "Only suspended users can be activated");
         return userRepository.save(user.withStatus(UserStatus.ACTIVE));
     }
 
+    @SneakyThrows
     public User addCar(Long userId, Car car) {
         Validator.validateNonNull(car, "Car");
         User user = getUserOrThrow(userId);
@@ -72,6 +78,7 @@ public class UserService {
         return userRepository.save(user.withCars(updatedCars));
     }
 
+    @SneakyThrows
     public User removeCar(Long userId, Car car) {
         Validator.validateNonNull(car, "Car");
         User user = getUserOrThrow(userId);
@@ -82,12 +89,14 @@ public class UserService {
         return userRepository.save(user.withCars(updatedCars));
     }
 
+    @SneakyThrows
     public User updateContactInfo(Long userId, ContactInfo newContactInfo) {
         Validator.validateNonNull(newContactInfo, "Contact information");
         User user = getUserOrThrow(userId);
         return userRepository.save(user.withContactInfo(newContactInfo));
     }
 
+    @SneakyThrows
     public User signUp(String email, String password, ContactInfo contactInfo, UserRole role) {
         Validator.validateEmail(email, "Email");
         Validator.validateNonEmptyString(password, "Password");
@@ -104,21 +113,24 @@ public class UserService {
         }
     }
 
+    @SneakyThrows
     public List<User> findUsersByRole(UserRole role) {
         Validator.validateNonNull(role, "User role");
-        UserFilter filter = new UserFilter().setRole(role);
+        UserFilter filter = UserFilter.ofRole(role);
         return userRepository.findByFilter(filter);
     }
 
+    @SneakyThrows
     public List<User> findUsersByStatus(UserStatus status) {
         Validator.validateNonNull(status, "User status");
-        UserFilter filter = new UserFilter().setStatus(status);
+        UserFilter filter = UserFilter.ofStatus(status);
         return userRepository.findByFilter(filter);
     }
 
+    @SneakyThrows
     public List<User> findUsersByEmail(String email) {
         Validator.validateEmail(email, "User email");
-        UserFilter filter = new UserFilter().setEmail(email);
+        UserFilter filter = UserFilter.ofEmail(email);
         return userRepository.findByFilter(filter);
     }
 }

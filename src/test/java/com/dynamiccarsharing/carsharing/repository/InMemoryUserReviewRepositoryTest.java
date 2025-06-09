@@ -24,7 +24,7 @@ class InMemoryUserReviewRepositoryTest {
     }
 
     private UserReview createTestUserReview(Long id, String comment) {
-        return new UserReview(id, 2L, comment);
+        return new UserReview(id, 2L, 2L, comment);
     }
 
     @Test

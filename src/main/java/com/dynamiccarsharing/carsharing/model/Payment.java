@@ -1,6 +1,5 @@
 package com.dynamiccarsharing.carsharing.model;
 
-import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.util.Validator;

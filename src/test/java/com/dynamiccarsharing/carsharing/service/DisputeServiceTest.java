@@ -3,7 +3,6 @@ package com.dynamiccarsharing.carsharing.service;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.model.Dispute;
 import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.DisputeFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,7 +43,7 @@ class DisputeServiceTest {
     }
 
     @Test
-    void save_shouldCallRepository_shouldReturnSameDispute() {
+    void save_shouldCallRepository_shouldReturnSameDispute()  {
         Dispute dispute = createTestDispute(null, null);
         when(disputeRepository.save(dispute)).thenReturn(dispute);
 
@@ -61,7 +61,7 @@ class DisputeServiceTest {
     }
 
     @Test
-    void save_whenDisputeIsNull_shouldThrowException() {
+    void save_whenDisputeIsNull_shouldThrowException()  {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> disputeService.save(null));
 
         assertEquals("Dispute must be non-null", exception.getMessage());
@@ -165,7 +165,7 @@ class DisputeServiceTest {
     }
 
     @Test
-    void findDisputesByStatus_withValidStatus_shouldReturnDisputes() {
+    void findDisputesByStatus_withValidStatus_shouldReturnDisputes() throws SQLException {
         Dispute dispute = createTestDispute( null, DisputeStatus.OPEN);
         List<Dispute> disputes = List.of(dispute);
         when(disputeRepository.findByFilter(argThat(filter -> filter != null && filter.test(dispute) && dispute.getStatus().equals(DisputeStatus.OPEN)))).thenReturn(disputes);
@@ -178,7 +178,7 @@ class DisputeServiceTest {
     }
 
     @Test
-    void findDisputesByBookingId_withValidId_shouldReturnDisputes() {
+    void findDisputesByBookingId_withValidId_shouldReturnDisputes() throws SQLException {
         Dispute dispute = createTestDispute( null, DisputeStatus.OPEN);
         List<Dispute> disputes = List.of(dispute);
         when(disputeRepository.findByFilter(argThat(filter -> filter != null && filter.test(dispute) && dispute.getBookingId().equals(1L)))).thenReturn(disputes);
@@ -191,7 +191,7 @@ class DisputeServiceTest {
     }
 
     @Test
-    void resolveDispute_shouldResolveOpenDisputeAndSetResolvedAt() {
+    void resolveDispute_shouldResolveOpenDisputeAndSetResolvedAt()  {
         Dispute dispute = createTestDispute( "Some description", DisputeStatus.OPEN);
         Dispute resolvedDispute = dispute.withStatus(DisputeStatus.RESOLVED).withResolvedAt(LocalDateTime.now());
         when(disputeRepository.findById(1L)).thenReturn(Optional.of(dispute));
@@ -206,7 +206,7 @@ class DisputeServiceTest {
     }
 
     @Test
-    void resolveDispute_withInvalidStatus_shouldThrowException() {
+    void resolveDispute_withInvalidStatus_shouldThrowException()  {
         Dispute dispute = createTestDispute( "Some description", DisputeStatus.RESOLVED);
         when(disputeRepository.findById(1L)).thenReturn(Optional.of(dispute));
 

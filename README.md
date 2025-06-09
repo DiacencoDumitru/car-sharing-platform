@@ -49,7 +49,7 @@
 2. `Users Management:` User, ContactInfo, UserRepository, ContactInfoRepository, UserService, ContactInfoService _(🟢Green border color)_
 3. `Booking Management:` Booking, Payment, Transaction, Dispute, Review, CarReview, UserReview, BookingRepository, PaymentRepository, CarReviewRepository, UserReviewRepository, BookingService, PaymentService, CarReviewService, UserReviewService _(🔴Red border color)_
 ---------
-## Prerequisites
+### Prerequisites
 1. Docker and Docker Compose installed.
 2. Optional: DBeaver/pgAdmin for GUI-based database management.
 
@@ -159,8 +159,64 @@ SELECT * FROM users WHERE username = 'admin' AND password = '\' OR \'1\'=\'1'
 4. Used to execute dynamic SQL queries.
 5. Performance is better than Statement.
 
-### Vulnerable Statement (printed with maliciousInput all user roles)
+#### Vulnerable Statement (printed with maliciousInput all user roles)
 ![img.png](images/img.png)
 
-### Secure PreparedStatement (didn't work)
+#### Secure PreparedStatement (didn't work)
 ![img_1.png](images/img_1.png)
+
+------
+### Comparing Datasource and DriverManager
+#### DriverManager
+Advantages:
+- Simple to use
+- Good for small applications and quick tests
+
+Disadvantages:
+- No connection pooling (each call opens a new connection → slow)
+- Not thread-safe
+- Hard to maintain (credentials often hardcoded)
+- Less suitable for large/enterprise systems
+
+#### DataSource
+Advantages:
+- Supports connection pooling (performance boost)
+- Easier to manage in large systems
+- Can be integrated with application servers (e.g., JNDI)
+- When using DataSource, we can centrally manage transaction settings, such as:
+    - Auto-commit (default: true): Can be explicitly turned off to begin a manual transaction.
+    - Transaction isolation level: Can be configured depending on the level of data consistency and concurrency you need.
+
+Disadvantages:
+- More complex to configure
+- Requires additional setup (especially in standalone apps)
+
+### Comparing execute Methods in DatabaseUtil
+#### A) `execute(String sql, Object... args)`
+
+Pros:
+- Concise and straightforward for simple DDL/DML queries.
+- Automatically handles parameter binding with setObject.
+
+Cons:
+- Limited to setObject for parameter setting, restricting use of advanced JDBC types (e.g., arrays, custom types).
+- No support for batch operations.
+
+Use Case: Ideal for simple, one-off SQL statements where parameters are basic types (e.g., strings, numbers).
+
+#### B) `execute(String sql, Consumer<PreparedStatement>)`
+Pros:
+- Provides full access to PreparedStatement, enabling batch operations, arrays, and advanced setters.
+- Flexible for complex query requirements.
+
+Cons:
+- More verbose, requiring explicit PreparedStatement handling.
+- Exposes JDBC API details to the caller, increasing complexity.
+
+Use Case: Best for advanced scenarios requiring batch processing, custom types, or specific PreparedStatement configurations.
+
+
+
+
+
+
