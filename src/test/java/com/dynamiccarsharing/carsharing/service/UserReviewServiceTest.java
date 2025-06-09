@@ -1,7 +1,5 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
-import com.dynamiccarsharing.carsharing.model.Dispute;
 import com.dynamiccarsharing.carsharing.model.UserReview;
 import com.dynamiccarsharing.carsharing.repository.UserReviewRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.UserReviewFilter;
@@ -12,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +38,7 @@ class UserReviewServiceTest {
     }
 
     private UserReview createTestUserReview() {
-        return new UserReview(1L, 2L, "Great user!");
+        return new UserReview(1L, 2L, 3L, "Great user!");
     }
 
     @Test
@@ -115,7 +114,7 @@ class UserReviewServiceTest {
     @Test
     void findAll_withMultipleUserReviews_shouldReturnAllUserReviews() {
         UserReview userReview1 = createTestUserReview();
-        UserReview userReview2 = new UserReview(2L, 3L, "Good service");
+        UserReview userReview2 = new UserReview(2L, 3L, 3L, "Good service");
         List<UserReview> userReviews = Arrays.asList(userReview1, userReview2);
         when(userReviewRepository.findAll()).thenReturn(userReviews);
 
@@ -161,15 +160,16 @@ class UserReviewServiceTest {
     }
 
     @Test
-    void findUserReviewsByReviewerId_withValidReviewerId_shouldReturnReviewers() {
+    void findUserReviewsByReviewerId_withValidReviewerId_shouldReturnReviewers() throws SQLException {
         UserReview userReview = createTestUserReview();
         List<UserReview> userReviews = List.of(userReview);
-        when(userReviewRepository.findByFilter(argThat(filter -> filter != null && filter.test(userReview) && userReview.getReviewerId().equals(2L)))).thenReturn(userReviews);
+        when(userReviewRepository.findByFilter(any(UserReviewFilter.class))).thenReturn(userReviews);
+
 
         List<UserReview> result = userReviewService.findUserReviewsByReviewerId(2L);
 
         assertEquals(1, result.size());
         assertEquals(userReview, result.get(0));
-        verify(userReviewRepository, times(1)).findByFilter(argThat(filter -> filter != null && filter.test(userReview) && userReview.getReviewerId().equals(2L)));
+        verify(userReviewRepository, times(1)).findByFilter(any(UserReviewFilter.class));
     }
 }

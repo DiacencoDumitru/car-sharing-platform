@@ -3,23 +3,30 @@ package com.dynamiccarsharing.carsharing.repository.filter;
 import com.dynamiccarsharing.carsharing.model.Location;
 
 public class LocationFilter implements Filter<Location> {
-    private String city;
-    private String state;
-    private String zipCode;
+    private final String city;
+    private final String state;
+    private final String zipCode;
 
-    public LocationFilter setCity(String city) {
+    private LocationFilter(String city, String state, String zipCode) {
         this.city = city;
-        return this;
-    }
-
-    public LocationFilter setState(String state) {
         this.state = state;
-        return this;
+        this.zipCode = zipCode;
     }
 
-    public LocationFilter setZipCode(String zipCode) {
-        this.zipCode = zipCode;
-        return this;
+    public static LocationFilter of(String city, String state, String zipCode) {
+        return new LocationFilter(city, state, zipCode);
+    }
+
+    public static LocationFilter ofCity(String city) {
+        return new LocationFilter(city, null, null);
+    }
+
+    public static LocationFilter ofState(String state) {
+        return new LocationFilter(null, state, null);
+    }
+
+    public static LocationFilter ofZipCode(String zipCode) {
+        return new LocationFilter(null, null, zipCode);
     }
 
     @Override

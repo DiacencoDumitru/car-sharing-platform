@@ -3,23 +3,37 @@ package com.dynamiccarsharing.carsharing.repository.filter;
 import com.dynamiccarsharing.carsharing.model.CarReview;
 
 public class CarReviewFilter implements Filter<CarReview> {
-    private Long id;
-    private Long reviewerId;
+    private final Long id;
+    private final Long reviewerId;
+    private final Long carId;
 
-    public CarReviewFilter setReviewerId(Long reviewerId) {
+    private CarReviewFilter(Long id, Long reviewerId, Long carId) {
+        this.id = id;
         this.reviewerId = reviewerId;
-        return this;
+        this.carId = carId;
     }
 
-    public CarReviewFilter setId(Long id) {
-        this.id = id;
-        return this;
+    public static CarReviewFilter of(Long id, Long reviewerId, Long carId) {
+        return new CarReviewFilter(id, reviewerId, carId);
+    }
+
+    public static CarReviewFilter ofId(Long id) {
+        return new CarReviewFilter(id, null, null);
+    }
+
+    public static CarReviewFilter ofReviewerId(Long reviewerId) {
+        return new CarReviewFilter(null, reviewerId, null);
+    }
+
+    public static CarReviewFilter ofCarId(Long carId) {
+        return new CarReviewFilter(null, null, carId);
     }
 
     @Override
     public boolean test(CarReview review) {
         boolean matches = true;
         if (reviewerId != null) matches &= review.getReviewerId().equals(reviewerId);
+        if (reviewerId != null) matches &= review.getCarId().equals(carId);
         if (id != null) matches &= review.getId().equals(id);
         return matches;
     }

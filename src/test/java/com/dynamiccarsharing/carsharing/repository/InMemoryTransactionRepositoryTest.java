@@ -28,7 +28,7 @@ class InMemoryTransactionRepositoryTest {
 
     private Transaction createTestTransaction(Long id, TransactionStatus status) {
         LocalDateTime now = LocalDateTime.now();
-        return new Transaction(id, 100.0, status, PaymentType.CREDIT_CARD, now, status == TransactionStatus.COMPLETED ? now : null);
+        return new Transaction(id, 1L, 100.0, status, PaymentType.CREDIT_CARD, now, status == TransactionStatus.COMPLETED ? now : null);
     }
 
     @Test

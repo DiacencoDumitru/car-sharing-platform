@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
@@ -485,7 +486,7 @@ class UserServiceTest {
     }
 
     @Test
-    void findUsersByRole_withValidRole_shouldReturnMatchingUsers() {
+    void findUsersByRole_withValidRole_shouldReturnMatchingUsers() throws SQLException {
         User user = createTestUser();
         List<User> users = List.of(user);
         when(userRepository.findByFilter(argThat(filter -> filter != null && filter.test(user) && user.getRole().equals(UserRole.RENTER)))).thenReturn(users);
@@ -498,7 +499,7 @@ class UserServiceTest {
     }
 
     @Test
-    void findUsersByStatus_withValidStatus_shouldReturnMatchingUsers() {
+    void findUsersByStatus_withValidStatus_shouldReturnMatchingUsers() throws SQLException {
         User user = createTestUser();
         List<User> users = List.of(user);
         when(userRepository.findByFilter(argThat(filter -> filter != null && filter.test(user) && user.getStatus().equals(UserStatus.ACTIVE)))).thenReturn(users);
@@ -511,7 +512,7 @@ class UserServiceTest {
     }
 
     @Test
-    void findUsersByEmail_withValidEmail_shouldReturnMatchingUsers() {
+    void findUsersByEmail_withValidEmail_shouldReturnMatchingUsers() throws SQLException {
         User user = createTestUser();
         List<User> users = List.of(user);
         when(userRepository.findByFilter(argThat(filter -> filter != null && filter.test(user) && user.getContactInfo().getEmail().equals("dd.prodev@gmail.com")))).thenReturn(users);

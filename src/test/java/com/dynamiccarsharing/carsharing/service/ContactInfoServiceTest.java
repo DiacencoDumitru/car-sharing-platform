@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -37,8 +38,10 @@ class ContactInfoServiceTest {
     }
 
     @Test
-    void save_shouldCallRepository_shouldReturnSameContactInfo() {
+    void save_shouldCallRepository_shouldReturnSameContactInfo()  {
         ContactInfo contactInfo = createTestContactInfo();
+
+        when(contactInfoRepository.save(contactInfo)).thenReturn(contactInfo);
 
         ContactInfo savedContactInfo = contactInfoService.save(contactInfo);
 
@@ -149,7 +152,7 @@ class ContactInfoServiceTest {
     }
 
     @Test
-    void findContactInfoByEmail_withValidEmail_shouldReturnContacts() {
+    void findContactInfoByEmail_withValidEmail_shouldReturnContacts() throws SQLException {
         ContactInfo contactInfo = createTestContactInfo();
         List<ContactInfo> contactInfos = List.of(contactInfo);
         when(contactInfoRepository.findByFilter(argThat(filter -> filter != null && filter.test(contactInfo) && contactInfo.getEmail().equals("dd.prodev@gmail.com")))).thenReturn(contactInfos);
@@ -162,7 +165,7 @@ class ContactInfoServiceTest {
     }
 
     @Test
-    void findContactInfoByPhoneNumber_withValidPhoneNumber_shouldReturnContacts() {
+    void findContactInfoByPhoneNumber_withValidPhoneNumber_shouldReturnContacts() throws SQLException {
         ContactInfo contactInfo = createTestContactInfo();
         List<ContactInfo> contactInfos = List.of(contactInfo);
         when(contactInfoRepository.findByFilter(argThat(filter -> filter != null && filter.test(contactInfo) && contactInfo.getPhoneNumber().equals("37367773888")))).thenReturn(contactInfos);
@@ -175,7 +178,7 @@ class ContactInfoServiceTest {
     }
 
     @Test
-    void findContactInfoByFirstName_withValidFirstName_shouldReturnContacts() {
+    void findContactInfoByFirstName_withValidFirstName_shouldReturnContacts() throws SQLException {
         ContactInfo contactInfo = createTestContactInfo();
         List<ContactInfo> contactInfos = List.of(contactInfo);
         when(contactInfoRepository.findByFilter(argThat(filter -> filter != null && filter.test(contactInfo) && contactInfo.getFirstName().equals("Dumitru")))).thenReturn(contactInfos);
@@ -188,7 +191,7 @@ class ContactInfoServiceTest {
     }
 
     @Test
-    void findContactInfoByLastName_withValidLastName_shouldReturnContacts() {
+    void findContactInfoByLastName_withValidLastName_shouldReturnContacts() throws SQLException {
         ContactInfo contactInfo = createTestContactInfo();
         List<ContactInfo> contactInfos = List.of(contactInfo);
         when(contactInfoRepository.findByFilter(argThat(filter -> filter != null && filter.test(contactInfo) && contactInfo.getLastName().equals("Diacenco")))).thenReturn(contactInfos);

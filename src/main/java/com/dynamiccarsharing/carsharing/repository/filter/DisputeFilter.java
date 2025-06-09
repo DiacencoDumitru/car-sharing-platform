@@ -4,17 +4,24 @@ import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.model.Dispute;
 
 public class DisputeFilter implements Filter<Dispute> {
-    private Long bookingId;
-    private DisputeStatus status;
+    private final Long bookingId;
+    private final DisputeStatus status;
 
-    public DisputeFilter setBookingId(Long bookingId) {
+    private DisputeFilter(Long bookingId, DisputeStatus status) {
         this.bookingId = bookingId;
-        return this;
+        this.status = status;
     }
 
-    public DisputeFilter setStatus(DisputeStatus status) {
-        this.status = status;
-        return this;
+    public static DisputeFilter of(Long bookingId, DisputeStatus status) {
+        return new DisputeFilter(bookingId, status);
+    }
+
+    public static DisputeFilter ofBookingId(Long bookingId) {
+        return new DisputeFilter(bookingId, null);
+    }
+
+    public static DisputeFilter ofStatus(DisputeStatus status) {
+        return new DisputeFilter(null, status);
     }
 
     @Override

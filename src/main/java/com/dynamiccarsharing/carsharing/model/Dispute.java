@@ -25,7 +25,9 @@ public class Dispute {
     private final LocalDateTime resolvedAt;
 
     public Dispute(Long id, Long bookingId, Long creationUserId, String description, DisputeStatus status, LocalDateTime createdAt, LocalDateTime resolvedAt) {
-        Validator.validateId(id, "ID");
+        if (id != null) {
+            Validator.validateId(id, "ID");
+        }
         Validator.validateId(bookingId, "Booking ID");
         Validator.validateId(creationUserId, "Creation User ID");
         Validator.validateOptionalString(description, "Description");

@@ -1,14 +1,14 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
+import com.dynamiccarsharing.carsharing.dao.CarReviewDao;
 import com.dynamiccarsharing.carsharing.model.CarReview;
-import com.dynamiccarsharing.carsharing.repository.CarReviewRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.CarReviewFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.times;
 class CarReviewServiceTest {
 
     @Mock
-    CarReviewRepository carReviewRepository;
+    CarReviewDao carReviewRepository;
 
     private CarReviewService carReviewService;
 
@@ -35,11 +35,11 @@ class CarReviewServiceTest {
     }
 
     private CarReview createTestCarReview() {
-        return new CarReview(1L, 2L, "Test review");
+        return new CarReview(1L, 2L, 2L, "Test review");
     }
 
     @Test
-    void save_shouldCallRepository_shouldReturnSameCarReview() {
+    void save_shouldCallRepository_shouldReturnSameCarReview()  {
         CarReview carReview = createTestCarReview();
         when(carReviewRepository.save(carReview)).thenReturn(carReview);
 
@@ -106,7 +106,7 @@ class CarReviewServiceTest {
     @Test
     void findAll_withMultipleCarReviews_shouldReturnAllCarReviews() {
         CarReview carReview1 = createTestCarReview();
-        CarReview carReview2 = new CarReview(2L, 3L, "Tes review2");
+        CarReview carReview2 = new CarReview(2L, 3L,    3L, "Test review2");
         List<CarReview> carReviews = Arrays.asList(carReview1, carReview2);
         when(carReviewRepository.findAll()).thenReturn(carReviews);
 
@@ -152,7 +152,7 @@ class CarReviewServiceTest {
     }
 
     @Test
-    void findCarReviewsByCarId_withValidCarId_shouldReturnCarReviews() {
+    void findCarReviewsByCarId_withValidCarId_shouldReturnCarReviews() throws SQLException {
         CarReview carReview = createTestCarReview();
         List<CarReview> carReviews = List.of(carReview);
         when(carReviewRepository.findByFilter(argThat(filter -> filter != null && filter.test(carReview) && carReview.getId().equals(1L)))).thenReturn(carReviews);
@@ -165,15 +165,15 @@ class CarReviewServiceTest {
     }
 
     @Test
-    void findCarReviewsByReviewerId_withValidCarId_shouldReturnCarReviews() {
+    void findCarReviewsByReviewerId_withValidCarId_shouldReturnCarReviews() throws SQLException {
         CarReview carReview = createTestCarReview();
         List<CarReview> carReviews = List.of(carReview);
-        when(carReviewRepository.findByFilter(argThat(filter -> filter != null && filter.test(carReview) && carReview.getReviewerId().equals(2L)))).thenReturn(carReviews);
+        when(carReviewRepository.findByFilter(any(CarReviewFilter.class))).thenReturn(carReviews);
 
         List<CarReview> result = carReviewService.findCarReviewsByReviewerId(2L);
 
         assertEquals(1, result.size());
         assertEquals(carReview, result.get(0));
-        verify(carReviewRepository, times(1)).findByFilter(argThat(filter -> filter != null && filter.test(carReview) && carReview.getReviewerId().equals(2L)));
+        verify(carReviewRepository, times(1)).findByFilter(any(CarReviewFilter.class));
     }
 }

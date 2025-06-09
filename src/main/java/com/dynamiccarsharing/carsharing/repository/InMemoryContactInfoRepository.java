@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.carsharing.repository;
 
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
-import com.dynamiccarsharing.carsharing.repository.filter.ContactInfoFilter;
+import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 
 import java.util.*;
 
@@ -25,13 +25,13 @@ public class InMemoryContactInfoRepository implements ContactInfoRepository {
     }
 
     @Override
-    public Iterable<ContactInfo> findAll() {
-        return contactInfoMap.values();
+    public List<ContactInfo> findByFilter(Filter<ContactInfo> filter) {
+        return contactInfoMap.values().stream().filter(filter::test).toList();
     }
 
     @Override
-    public List<ContactInfo> findByFilter(ContactInfoFilter filter) {
-        return contactInfoMap.values().stream().filter(filter::test).toList();
+    public Iterable<ContactInfo> findAll() {
+        return contactInfoMap.values();
     }
 }
 

@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.carsharing.repository;
 
 import com.dynamiccarsharing.carsharing.model.Payment;
-import com.dynamiccarsharing.carsharing.repository.filter.PaymentFilter;
+import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 
 import java.util.*;
 
@@ -25,11 +25,12 @@ public class InMemoryPaymentRepository implements PaymentRepository {
     }
 
     @Override
-    public Iterable<Payment> findAll() {
-        return paymentMap.values();
+    public List<Payment> findByFilter(Filter<Payment> filter) {
+        return paymentMap.values().stream().filter(filter::test).toList();
     }
 
-    public List<Payment> findByFilter(PaymentFilter filter) {
-        return paymentMap.values().stream().filter(filter::test).toList();
+    @Override
+    public Iterable<Payment> findAll() {
+        return paymentMap.values();
     }
 }
