@@ -1,22 +1,25 @@
 package com.dynamiccarsharing.carsharing.dao;
 
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
+import com.dynamiccarsharing.carsharing.dao.jdbc.UserReviewSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.model.UserReview;
 import com.dynamiccarsharing.carsharing.repository.UserReviewRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
-import com.dynamiccarsharing.carsharing.util.FilterUtil;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class UserReviewDao implements UserReviewRepository {
     private final DatabaseUtil databaseUtil;
+    private final SqlFilterMapper<UserReview, Filter<UserReview>> sqlFilterMapper;
 
     public UserReviewDao(DatabaseUtil databaseUtil) {
         this.databaseUtil = databaseUtil;
+        this.sqlFilterMapper = new UserReviewSqlFilterMapper();
     }
 
     @Override
@@ -50,7 +53,7 @@ public class UserReviewDao implements UserReviewRepository {
                 databaseUtil.execute(updateSql, userReview.getUserId(), userReview.getReviewerId(), userReview.getComment(), userReview.getId());
                 return userReview;
             }
-        } catch (SQLException e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException("Failed to save UserReview", e);
         }
     }
@@ -58,64 +61,30 @@ public class UserReviewDao implements UserReviewRepository {
     @Override
     public Optional<UserReview> findById(Long id) {
         String query = "SELECT * FROM user_reviews WHERE id = ?";
-        try {
-            UserReview review = databaseUtil.findOne(query, rs -> {
-                try {
-                    return mapToUserReview(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }, id);
-            return Optional.ofNullable(review);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find UserReview by ID", e);
-        }
+        UserReview review = databaseUtil.findOne(query, this::mapToUserReview, id);
+        return Optional.ofNullable(review);
     }
 
     @Override
     public Iterable<UserReview> findAll() {
         String query = "SELECT * FROM user_reviews";
-        try {
-            return databaseUtil.findMany(query, rs -> {
-                try {
-                    return mapToUserReview(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all UserReviews", e);
-        }
+        return databaseUtil.findMany(query, this::mapToUserReview);
     }
 
     @Override
     public void deleteById(Long id) {
         String deleteSql = "DELETE FROM user_reviews WHERE id = ?";
-        try {
-            databaseUtil.execute(deleteSql, id);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to delete UserReview", e);
-        }
+        databaseUtil.execute(deleteSql, id);
     }
 
     @Override
     public List<UserReview> findByFilter(Filter<UserReview> filter) throws SQLException {
-        StringBuilder query = new StringBuilder("SELECT * FROM user_reviews WHERE 1=1");
-        List<Object> params = new ArrayList<>();
-        try {
-            FilterUtil.buildQuery(filter, "user_reviews", query, params, "id", "userId", "reviewerId", "comment");
-        } catch (IllegalAccessException e) {
-            throw new SQLException("Failed to build filter query", e);
-        }
-        Object[] processedParams = params.stream().map(param -> param instanceof Enum<?> ? ((Enum<?>) param).name() : param).toArray();
+        String baseQuery = "SELECT * FROM user_reviews WHERE 1=1";
+        SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
 
-        return databaseUtil.findMany(query.toString(), rs -> {
-            try {
-                return mapToUserReview(rs);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }, processedParams);
+        String fullQuery = baseQuery + sqlFilter.filterQuery();
+
+        return databaseUtil.findMany(fullQuery, this::mapToUserReview, sqlFilter.parametersArray());
     }
 
     private UserReview mapToUserReview(ResultSet rs) throws SQLException {

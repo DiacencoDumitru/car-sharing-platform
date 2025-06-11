@@ -1,7 +1,9 @@
 package com.dynamiccarsharing.carsharing.repository.filter;
 
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
+import lombok.Getter;
 
+@Getter
 public class ContactInfoFilter implements Filter<ContactInfo> {
     private final String email;
     private final String phoneNumber;

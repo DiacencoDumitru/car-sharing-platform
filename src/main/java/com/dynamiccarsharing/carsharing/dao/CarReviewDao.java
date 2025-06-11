@@ -1,22 +1,25 @@
 package com.dynamiccarsharing.carsharing.dao;
 
+import com.dynamiccarsharing.carsharing.dao.jdbc.CarReviewSqlFilterMapper;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.model.CarReview;
 import com.dynamiccarsharing.carsharing.repository.CarReviewRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
-import com.dynamiccarsharing.carsharing.util.FilterUtil;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class CarReviewDao implements CarReviewRepository {
     private final DatabaseUtil databaseUtil;
+    private final SqlFilterMapper<CarReview, Filter<CarReview>> sqlFilterMapper;
 
     public CarReviewDao(DatabaseUtil databaseUtil) {
         this.databaseUtil = databaseUtil;
+        this.sqlFilterMapper = new CarReviewSqlFilterMapper();
     }
 
     @Override
@@ -58,55 +61,38 @@ public class CarReviewDao implements CarReviewRepository {
                 return carReview;
             }
 
-        } catch (SQLException e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException("Failed to save CarReview", e);
         }
     }
 
-
     @Override
     public Optional<CarReview> findById(Long id) {
         String query = "SELECT * FROM car_reviews WHERE id = ?";
-        try {
-            CarReview review = databaseUtil.findOne(query, this::mapToCarReview, id);
-            return Optional.ofNullable(review);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find CarReview by ID", e);
-        }
+        CarReview review = databaseUtil.findOne(query, this::mapToCarReview, id);
+        return Optional.ofNullable(review);
     }
 
     @Override
     public Iterable<CarReview> findAll() {
         String query = "SELECT * FROM car_reviews";
-        try {
-            return databaseUtil.findMany(query, this::mapToCarReview);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all CarReviews", e);
-        }
+        return databaseUtil.findMany(query, this::mapToCarReview);
     }
 
     @Override
     public void deleteById(Long id) {
         String deleteSql = "DELETE FROM car_reviews WHERE id = ?";
-        try {
-            databaseUtil.execute(deleteSql, id);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to delete CarReview", e);
-        }
+        databaseUtil.execute(deleteSql, id);
     }
 
     @Override
     public List<CarReview> findByFilter(Filter<CarReview> filter) throws SQLException {
-        StringBuilder query = new StringBuilder("SELECT * FROM car_reviews WHERE 1=1");
-        List<Object> params = new ArrayList<>();
-        try {
-            FilterUtil.buildQuery(filter, "car_reviews", query, params, "id", "reviewerId", "carId");
-        } catch (IllegalAccessException e) {
-            throw new SQLException("Failed to build filter query", e);
-        }
-        Object[] processedParams = params.stream().map(param -> param instanceof Enum<?> ? ((Enum<?>) param).name() : param).toArray();
+        String baseQuery = "SELECT * FROM car_reviews WHERE 1=1";
+        SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
 
-        return databaseUtil.findMany(query.toString(), this::mapToCarReview, processedParams);
+        String fullQuery = baseQuery + sqlFilter.filterQuery();
+
+        return databaseUtil.findMany(fullQuery, this::mapToCarReview, sqlFilter.parametersArray());
     }
 
     private CarReview mapToCarReview(ResultSet rs) {

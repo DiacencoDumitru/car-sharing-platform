@@ -1,25 +1,28 @@
 package com.dynamiccarsharing.carsharing.dao;
 
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
+import com.dynamiccarsharing.carsharing.dao.jdbc.TransactionSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.model.Transaction;
 import com.dynamiccarsharing.carsharing.repository.TransactionRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
-import com.dynamiccarsharing.carsharing.util.FilterUtil;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class TransactionDao implements TransactionRepository {
     private final DatabaseUtil databaseUtil;
+    private final SqlFilterMapper<Transaction, Filter<Transaction>> sqlFilterMapper;
 
     public TransactionDao(DatabaseUtil databaseUtil) {
         this.databaseUtil = databaseUtil;
+        this.sqlFilterMapper = new TransactionSqlFilterMapper();
     }
 
     @Override
@@ -55,7 +58,7 @@ public class TransactionDao implements TransactionRepository {
                 databaseUtil.execute(updateSql, transaction.getBooking_id(), transaction.getAmount(), transaction.getStatus().name(), transaction.getPaymentMethod().name(), Timestamp.valueOf(transaction.getCreatedAt()), transaction.getUpdatedAt() != null ? Timestamp.valueOf(transaction.getUpdatedAt()) : null, transaction.getId());
                 return transaction;
             }
-        } catch (SQLException e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException("Failed to save Transaction", e);
         }
     }
@@ -63,64 +66,30 @@ public class TransactionDao implements TransactionRepository {
     @Override
     public Optional<Transaction> findById(Long id) {
         String query = "SELECT * FROM transactions WHERE id = ?";
-        try {
-            Transaction transaction = databaseUtil.findOne(query, rs -> {
-                try {
-                    return mapToTransaction(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }, id);
-            return Optional.ofNullable(transaction);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find Transaction by ID", e);
-        }
+        Transaction transaction = databaseUtil.findOne(query, this::mapToTransaction, id);
+        return Optional.ofNullable(transaction);
     }
 
     @Override
     public Iterable<Transaction> findAll() {
         String query = "SELECT * FROM transactions";
-        try {
-            return databaseUtil.findMany(query, rs -> {
-                try {
-                    return mapToTransaction(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all Transactions", e);
-        }
+        return databaseUtil.findMany(query, this::mapToTransaction);
     }
 
     @Override
     public void deleteById(Long id) {
         String deleteSql = "DELETE FROM transactions WHERE id = ?";
-        try {
-            databaseUtil.execute(deleteSql, id);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to delete Transaction", e);
-        }
+        databaseUtil.execute(deleteSql, id);
     }
 
     @Override
     public List<Transaction> findByFilter(Filter<Transaction> filter) throws SQLException {
-        StringBuilder query = new StringBuilder("SELECT * FROM transactions WHERE 1=1");
-        List<Object> params = new ArrayList<>();
-        try {
-            FilterUtil.buildQuery(filter, "transactions", query, params, "id", "bookingId", "status", "paymentMethod");
-        } catch (IllegalAccessException e) {
-            throw new SQLException("Failed to build filter query", e);
-        }
-        Object[] processedParams = params.stream().map(param -> param instanceof Enum<?> ? ((Enum<?>) param).name() : param).toArray();
+        String baseQuery = "SELECT * FROM transactions WHERE 1=1";
+        SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
 
-        return databaseUtil.findMany(query.toString(), rs -> {
-            try {
-                return mapToTransaction(rs);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }, processedParams);
+        String fullQuery = baseQuery + sqlFilter.filterQuery();
+
+        return databaseUtil.findMany(fullQuery, this::mapToTransaction, sqlFilter.parametersArray());
     }
 
     private Transaction mapToTransaction(ResultSet rs) throws SQLException {

@@ -2,7 +2,9 @@ package com.dynamiccarsharing.carsharing.repository.filter;
 
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.model.Dispute;
+import lombok.Getter;
 
+@Getter
 public class DisputeFilter implements Filter<Dispute> {
     private final Long bookingId;
     private final DisputeStatus status;

@@ -3,7 +3,9 @@ package com.dynamiccarsharing.carsharing.repository.filter;
 import com.dynamiccarsharing.carsharing.enums.UserRole;
 import com.dynamiccarsharing.carsharing.enums.UserStatus;
 import com.dynamiccarsharing.carsharing.model.User;
+import lombok.Getter;
 
+@Getter
 public class UserFilter implements Filter<User> {
     private final UserRole role;
     private final UserStatus status;

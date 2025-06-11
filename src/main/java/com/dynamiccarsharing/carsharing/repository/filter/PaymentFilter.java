@@ -3,7 +3,9 @@ package com.dynamiccarsharing.carsharing.repository.filter;
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.model.Payment;
+import lombok.Getter;
 
+@Getter
 public class PaymentFilter implements Filter<Payment> {
     private final Long id;
     private final Long bookingId;

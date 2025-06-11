@@ -44,8 +44,7 @@ public class UserService {
     }
 
     private User getUserOrThrow(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User with ID " + id + " not found"));
+        return userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User with ID " + id + " not found"));
     }
 
     @SneakyThrows

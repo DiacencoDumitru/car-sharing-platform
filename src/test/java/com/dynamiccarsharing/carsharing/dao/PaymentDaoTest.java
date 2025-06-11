@@ -2,7 +2,6 @@ package com.dynamiccarsharing.carsharing.dao;
 
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
-import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.model.Payment;
 import com.dynamiccarsharing.carsharing.repository.filter.PaymentFilter;
 import org.junit.jupiter.api.*;

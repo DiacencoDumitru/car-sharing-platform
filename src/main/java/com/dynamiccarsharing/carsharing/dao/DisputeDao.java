@@ -1,11 +1,13 @@
 package com.dynamiccarsharing.carsharing.dao;
 
+import com.dynamiccarsharing.carsharing.dao.jdbc.DisputeSqlFilterMapper;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.model.Dispute;
 import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
-import com.dynamiccarsharing.carsharing.util.FilterUtil;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,9 +18,11 @@ import java.util.Optional;
 
 public class DisputeDao implements DisputeRepository {
     private final DatabaseUtil databaseUtil;
+    private final SqlFilterMapper<Dispute, Filter<Dispute>> sqlFilterMapper;
 
     public DisputeDao(DatabaseUtil databaseUtil) {
         this.databaseUtil = databaseUtil;
+        this.sqlFilterMapper = new DisputeSqlFilterMapper();
     }
 
     @Override
@@ -53,7 +57,7 @@ public class DisputeDao implements DisputeRepository {
                 databaseUtil.execute(updateSql, dispute.getBookingId(), dispute.getCreationUserId(), dispute.getDescription(), dispute.getStatus().name(), Timestamp.valueOf(dispute.getCreatedAt()), dispute.getResolvedAt() != null ? Timestamp.valueOf(dispute.getResolvedAt()) : null, dispute.getId());
                 return dispute;
             }
-        } catch (SQLException e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException("Failed to save Dispute", e);
         }
     }
@@ -61,66 +65,30 @@ public class DisputeDao implements DisputeRepository {
     @Override
     public Optional<Dispute> findById(Long id) {
         String query = "SELECT * FROM disputes WHERE id = ?";
-        try {
-            Dispute dispute = databaseUtil.findOne(query, rs -> {
-                try {
-                    return mapToDispute(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }, id);
-            return Optional.ofNullable(dispute);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find Dispute by ID", e);
-        }
+        Dispute dispute = databaseUtil.findOne(query, this::mapToDispute, id);
+        return Optional.ofNullable(dispute);
     }
 
     @Override
     public Iterable<Dispute> findAll() {
         String query = "SELECT * FROM disputes";
-        try {
-            return databaseUtil.findMany(query, rs -> {
-                try {
-                    return mapToDispute(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all Disputes", e);
-        }
+        return databaseUtil.findMany(query, this::mapToDispute);
     }
 
     @Override
     public void deleteById(Long id) {
         String deleteSql = "DELETE FROM disputes WHERE id = ?";
-        try {
-            databaseUtil.execute(deleteSql, id);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to delete Dispute", e);
-        }
+        databaseUtil.execute(deleteSql, id);
     }
 
     @Override
     public List<Dispute> findByFilter(Filter<Dispute> filter) throws SQLException {
-        StringBuilder query = new StringBuilder("SELECT * FROM disputes WHERE 1=1");
-        List<Object> params = new ArrayList<>();
+        String baseQuery = "SELECT * FROM disputes WHERE 1=1";
+        SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
 
-        try {
-            FilterUtil.buildQuery(filter, "disputes", query, params, "bookingId", "status");
-        } catch (IllegalAccessException e) {
-            throw new SQLException("Failed to build filter query", e);
-        }
+        String fullQuery = baseQuery + sqlFilter.filterQuery();
 
-        Object[] processedParams = params.stream().map(param -> param instanceof Enum<?> ? ((Enum<?>) param).name() : param).toArray();
-
-        return databaseUtil.findMany(query.toString(), rs -> {
-            try {
-                return mapToDispute(rs);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }, processedParams);
+        return databaseUtil.findMany(fullQuery, this::mapToDispute, sqlFilter.parametersArray());
     }
 
     private Dispute mapToDispute(ResultSet rs) throws SQLException {

@@ -1,23 +1,25 @@
 package com.dynamiccarsharing.carsharing.dao;
 
+import com.dynamiccarsharing.carsharing.dao.jdbc.LocationSqlFilterMapper;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.repository.LocationRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
-import com.dynamiccarsharing.carsharing.util.FilterUtil;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class LocationDao implements LocationRepository {
     private final DatabaseUtil databaseUtil;
+    private final SqlFilterMapper<Location, Filter<Location>> sqlFilterMapper;
 
     public LocationDao(DatabaseUtil databaseUtil) {
         this.databaseUtil = databaseUtil;
+        this.sqlFilterMapper = new LocationSqlFilterMapper();
     }
 
     @Override
@@ -54,7 +56,7 @@ public class LocationDao implements LocationRepository {
                 databaseUtil.execute(updateSql, location.getCity(), location.getState(), location.getZipCode(), location.getId());
                 return location;
             }
-        } catch (SQLException e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException("Failed to save Location", e);
         }
     }
@@ -62,64 +64,30 @@ public class LocationDao implements LocationRepository {
     @Override
     public Optional<Location> findById(Long id) {
         String query = "SELECT * FROM locations WHERE id = ?";
-        try {
-            Location location = databaseUtil.findOne(query, rs -> {
-                try {
-                    return mapToLocation(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }, id);
-            return Optional.ofNullable(location);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find Location by ID", e);
-        }
+        Location location = databaseUtil.findOne(query, this::mapToLocation, id);
+        return Optional.ofNullable(location);
     }
 
     @Override
     public Iterable<Location> findAll() {
         String query = "SELECT * FROM locations";
-        try {
-            return databaseUtil.findMany(query, rs -> {
-                try {
-                    return mapToLocation(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all Locations", e);
-        }
+        return databaseUtil.findMany(query, this::mapToLocation);
     }
 
     @Override
     public void deleteById(Long id) {
         String deleteSql = "DELETE FROM locations WHERE id = ?";
-        try {
-            databaseUtil.execute(deleteSql, id);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to delete Location", e);
-        }
+        databaseUtil.execute(deleteSql, id);
     }
 
     @Override
     public List<Location> findByFilter(Filter<Location> filter) throws SQLException {
-        StringBuilder query = new StringBuilder("SELECT * FROM locations WHERE 1=1");
-        List<Object> params = new ArrayList<>();
-        try {
-            FilterUtil.buildQuery(filter, "locations", query, params,"city", "state", "zipCode");
-        } catch (IllegalAccessException e) {
-            throw new SQLException("Failed to build filter query", e);
-        }
-        Object[] processedParams = params.stream().map(param -> param instanceof Enum<?> ? ((Enum<?>) param).name() : param).toArray();
+        String baseQuery = "SELECT * FROM locations WHERE 1=1";
+        SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
 
-        return databaseUtil.findMany(query.toString(), rs -> {
-            try {
-                return mapToLocation(rs);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }, processedParams);
+        String fullQuery = baseQuery + sqlFilter.filterQuery();
+
+        return databaseUtil.findMany(fullQuery, this::mapToLocation, sqlFilter.parametersArray());
     }
 
 

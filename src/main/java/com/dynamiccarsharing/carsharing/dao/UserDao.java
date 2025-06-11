@@ -1,5 +1,8 @@
 package com.dynamiccarsharing.carsharing.dao;
 
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
+import com.dynamiccarsharing.carsharing.dao.jdbc.UserSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.enums.*;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
@@ -8,7 +11,6 @@ import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.repository.UserRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
-import com.dynamiccarsharing.carsharing.util.FilterUtil;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,13 +20,17 @@ import java.util.Optional;
 
 public class UserDao implements UserRepository {
     private final DatabaseUtil databaseUtil;
+    private final SqlFilterMapper<User, Filter<User>> sqlFilterMapper;
     private static final String USER_CONTACT_JOIN_QUERY = "SELECT u.*, c.id as contact_id, c.email, c.phone_number, c.first_name, c.last_name FROM users u JOIN contact_infos c ON u.contact_info_id = c.id";
+
 
     public UserDao(DatabaseUtil databaseUtil) {
         this.databaseUtil = databaseUtil;
+        this.sqlFilterMapper = new UserSqlFilterMapper();
     }
 
     @Override
+
     public User save(User user) {
         try {
             if (user.getId() == null) {
@@ -65,79 +71,35 @@ public class UserDao implements UserRepository {
     @Override
     public Optional<User> findById(Long id) {
         String query = USER_CONTACT_JOIN_QUERY + " WHERE u.id = ?";
-        try {
-            User user = databaseUtil.findOne(query, rs -> {
-                try {
-                    return mapToUser(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }, id);
-            return Optional.ofNullable(user);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find User by ID", e);
-        }
+        User user = databaseUtil.findOne(query, this::mapToUser, id);
+        return Optional.ofNullable(user);
     }
 
     @Override
     public Iterable<User> findAll() {
-        try {
-            return databaseUtil.findMany(USER_CONTACT_JOIN_QUERY, rs -> {
-                try {
-                    return mapToUser(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all Users", e);
-        }
+        return databaseUtil.findMany(USER_CONTACT_JOIN_QUERY, this::mapToUser);
     }
 
     @Override
     public void deleteById(Long id) {
         String deleteSql = "DELETE FROM users WHERE id = ?";
-        try {
-            databaseUtil.execute(deleteSql, id);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to delete User", e);
-        }
+        databaseUtil.execute(deleteSql, id);
     }
 
     @Override
     public List<User> findByFilter(Filter<User> filter) throws SQLException {
-        StringBuilder query = new StringBuilder(USER_CONTACT_JOIN_QUERY + " WHERE 1=1");
-        List<Object> params = new ArrayList<>();
-        try {
-            FilterUtil.buildQuery(filter, "u", query, params, "role", "status", "email");
-        } catch (IllegalAccessException e) {
-            throw new SQLException("Failed to build filter query", e);
-        }
-        Object[] processedParams = params.stream().map(param -> param instanceof Enum<?> ? ((Enum<?>) param).name() : param).toArray();
+        String baseQuery = USER_CONTACT_JOIN_QUERY + " WHERE 1=1";
+        SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
 
-        return databaseUtil.findMany(query.toString(), rs -> {
-            try {
-                return mapToUser(rs);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }, processedParams);
+        String fullQuery = baseQuery + sqlFilter.filterQuery();
+
+        return databaseUtil.findMany(fullQuery, this::mapToUser, sqlFilter.parametersArray());
     }
 
     public Optional<User> findByIdWithCars(Long id) {
         String query = USER_CONTACT_JOIN_QUERY + " WHERE u.id = ?";
-        try {
-            User user = databaseUtil.findOne(query, rs -> {
-                try {
-                    return mapToUser(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }, id);
-            return Optional.ofNullable(user);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        User user = databaseUtil.findOne(query, this::mapToUser, id);
+        return Optional.ofNullable(user);
     }
 
     private void updateUserCars(Long userId, List<Car> cars) throws SQLException {

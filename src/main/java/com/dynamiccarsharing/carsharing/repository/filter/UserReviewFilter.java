@@ -2,7 +2,6 @@ package com.dynamiccarsharing.carsharing.repository.filter;
 
 import com.dynamiccarsharing.carsharing.model.UserReview;
 import lombok.Getter;
-import lombok.With;
 
 @Getter
 public class UserReviewFilter implements Filter<UserReview> {
