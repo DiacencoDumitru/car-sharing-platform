@@ -13,14 +13,14 @@ class DatabaseUtilTest {
     static DatabaseUtil db;
 
     @BeforeAll
-    static void setup() throws SQLException {
+    static void setup() {
         db = new DatabaseUtil("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1", "user", "password");
         db.execute("CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100))");
         db.execute("INSERT INTO users (id, name) VALUES (?, ?)", 1, "Dumitru");
     }
 
     @Test
-    void findOne_withValidId_shouldReturnsExpectedName() throws SQLException {
+    void findOne_withValidId_shouldReturnsExpectedName() {
         String name = db.findOne("SELECT name FROM users WHERE id = ?", resultSet -> {
             try {
                 return resultSet.getString("name");
@@ -32,7 +32,7 @@ class DatabaseUtilTest {
     }
 
     @Test
-    void findOne_withNonExistingId_returnsNull() throws SQLException {
+    void findOne_withNonExistingId_returnsNull() {
         String name = db.findOne("SELECT name FROM users WHERE id = ?", resultSet -> {
             try {
                 return resultSet.getString("name");
@@ -45,7 +45,7 @@ class DatabaseUtilTest {
     }
 
     @Test
-    void findMany_withMultipleUsers_shouldReturnsAllNames() throws SQLException {
+    void findMany_withMultipleUsers_shouldReturnsAllNames() {
         db.execute("INSERT INTO users (id, name) VALUES (?, ?)", 2, "Vitalii");
 
         List<String> names = db.findMany("SELECT name FROM users", resultSet -> {

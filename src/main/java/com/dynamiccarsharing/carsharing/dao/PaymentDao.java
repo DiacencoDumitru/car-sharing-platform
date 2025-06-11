@@ -1,25 +1,28 @@
 package com.dynamiccarsharing.carsharing.dao;
 
+import com.dynamiccarsharing.carsharing.dao.jdbc.PaymentSqlFilterMapper;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.model.Payment;
 import com.dynamiccarsharing.carsharing.repository.PaymentRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
-import com.dynamiccarsharing.carsharing.util.FilterUtil;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class PaymentDao implements PaymentRepository {
     private final DatabaseUtil databaseUtil;
+    private final SqlFilterMapper<Payment, Filter<Payment>> sqlFilterMapper;
 
     public PaymentDao(DatabaseUtil databaseUtil) {
         this.databaseUtil = databaseUtil;
+        this.sqlFilterMapper = new PaymentSqlFilterMapper();
     }
 
     @Override
@@ -54,7 +57,7 @@ public class PaymentDao implements PaymentRepository {
                 databaseUtil.execute(updateSql, payment.getBookingId(), payment.getAmount(), payment.getStatus().name(), payment.getPaymentMethod().name(), Timestamp.valueOf(payment.getCreatedAt()), payment.getUpdatedAt() != null ? Timestamp.valueOf(payment.getUpdatedAt()) : null, payment.getId());
                 return payment;
             }
-        } catch (SQLException e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException("Failed to save Payment", e);
         }
     }
@@ -62,64 +65,30 @@ public class PaymentDao implements PaymentRepository {
     @Override
     public Optional<Payment> findById(Long id) {
         String query = "SELECT * FROM payments WHERE id = ?";
-        try {
-            Payment payment = databaseUtil.findOne(query, rs -> {
-                try {
-                    return mapToPayment(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }, id);
-            return Optional.ofNullable(payment);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find Payment by ID", e);
-        }
+        Payment payment = databaseUtil.findOne(query, this::mapToPayment, id);
+        return Optional.ofNullable(payment);
     }
 
     @Override
     public Iterable<Payment> findAll() {
         String query = "SELECT * FROM payments";
-        try {
-            return databaseUtil.findMany(query, rs -> {
-                try {
-                    return mapToPayment(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all Payments", e);
-        }
+        return databaseUtil.findMany(query, this::mapToPayment);
     }
 
     @Override
     public void deleteById(Long id) {
         String deleteSql = "DELETE FROM payments WHERE id = ?";
-        try {
-            databaseUtil.execute(deleteSql, id);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to delete Payment", e);
-        }
+        databaseUtil.execute(deleteSql, id);
     }
 
     @Override
     public List<Payment> findByFilter(Filter<Payment> filter) throws SQLException {
-        StringBuilder query = new StringBuilder("SELECT * FROM payments WHERE 1=1");
-        List<Object> params = new ArrayList<>();
-        try {
-            FilterUtil.buildQuery(filter, "payments", query, params, "id", "bookingId", "amount", "status", "paymentMethod");
-        } catch (IllegalAccessException e) {
-            throw new SQLException("Failed to build filter query", e);
-        }
-        Object[] processedParams = params.stream().map(param -> param instanceof Enum<?> ? ((Enum<?>) param).name() : param).toArray();
+        String baseQuery = "SELECT * FROM payments WHERE 1=1";
+        SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
 
-        return databaseUtil.findMany(query.toString(), rs -> {
-            try {
-                return mapToPayment(rs);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }, processedParams);
+        String fullQuery = baseQuery + sqlFilter.filterQuery();
+
+        return databaseUtil.findMany(fullQuery, this::mapToPayment, sqlFilter.parametersArray());
     }
 
     private Payment mapToPayment(ResultSet rs) throws SQLException {

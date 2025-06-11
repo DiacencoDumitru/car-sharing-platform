@@ -1,10 +1,10 @@
-## Users of Car Sharing Platform
+### Users of Car Sharing Platform
 * `Renter:` A user who wants to rent a car.
 * `Car Owner:` A user who lists their car for rent.
 * `Admin:` A system administrator who manages the platform.
 * `Guest:` A non-registered user exploring the platform.
 -------
-### User stories
+#### User stories
 **Format:** `As a [type of user], I want to [perform an action] so that [benefit or goal].`
 
 ------------------------
@@ -44,7 +44,7 @@
 * As a guest, I want to sign up for an account so that I can start renting or listing cars.
 * As a guest, I want to view car details, including type, price, and location, so that I can assess the platform’s offerings.
 -------
-### OOD Class Diagram, Divide and conquer
+#### OOD Class Diagram, Divide and conquer
 1. `Cars Catalog:` Car, Location, CarRepository, LocationRepository, CarService, LocationService _(🔵Blue border color)_
 2. `Users Management:` User, ContactInfo, UserRepository, ContactInfoRepository, UserService, ContactInfoService _(🟢Green border color)_
 3. `Booking Management:` Booking, Payment, Transaction, Dispute, Review, CarReview, UserReview, BookingRepository, PaymentRepository, CarReviewRepository, UserReviewRepository, BookingService, PaymentService, CarReviewService, UserReviewService _(🔴Red border color)_
@@ -107,8 +107,8 @@ Port Conflict: Check if 5432 is in use
 2. Connection Issues: Verify container status (docker ps) and .env values.
 3. Permission Errors: Ensure Docker is running, and you have access (sudo systemctl start docker).
 
-## Statement vs Prepared Statement
-### Statement
+### Statement vs Prepared Statement
+#### Statement
 * Used for simple SQL queries where the query is written as a full string.
 * It is used when SQL query is to be executed only once.
 * It is used for DDL statements.
@@ -191,6 +191,8 @@ Disadvantages:
 - More complex to configure
 - Requires additional setup (especially in standalone apps)
 
+-------
+
 ### Comparing execute Methods in DatabaseUtil
 #### A) `execute(String sql, Object... args)`
 
@@ -215,8 +217,27 @@ Cons:
 
 Use Case: Best for advanced scenarios requiring batch processing, custom types, or specific PreparedStatement configurations.
 
+--------
 
+### Performance Comparison: Single Connection (DataSource) vs Connection Pooling (Hikari)
+**Single Connection (DataSource)**
+* All threads share a single database connection. They will have to wait for the connection to be free, executing their queries sequentially.
+* The total time will be roughly the sum of the individual query times. For 20 threads each sleeping for 1 second, the total time should be around 20 seconds.
 
+**Connection Pool (Hikari)**
+* Each thread requests a connection from the pool. With a pool size of 20, each thread can get its own connection and execute its query in parallel.
+* The total time will be roughly the time of the longest query. For 20 threads each sleeping for 1 second, the total time should be just over 1 second.
+-------
+**Advantages of Connection Pooling**
+* Improved Performance: Drastically speeds up applications by eliminating the high cost of creating a new database connection for every request.
 
+* Resource Management: Prevents the database server from being overloaded by limiting and managing the number of concurrent connections.
 
+* Increased Stability: Modern pools can test connections before use and handle dropped connections, making the application more resilient to network issues.
 
+**Disadvantages of Connection Pooling**
+* Configuration Complexity: Requires careful tuning of parameters (e.g., pool size, timeouts) to achieve optimal performance.
+
+* Resource Overhead: The pool itself consumes application memory to hold open connections. An improperly sized pool can be wasteful.
+
+* Connection State Risk: If a connection is returned to the pool in a bad state (e.g., with an unclosed transaction), it can cause unpredictable behavior when reused.

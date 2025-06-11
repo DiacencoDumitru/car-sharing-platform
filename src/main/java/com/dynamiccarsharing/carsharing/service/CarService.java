@@ -1,11 +1,11 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.dao.CarDao;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
+import com.dynamiccarsharing.carsharing.repository.CarRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.CarFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
@@ -15,9 +15,9 @@ import java.util.Optional;
 
 public class CarService {
 
-    private final CarDao carRepository;
+    private final CarRepository carRepository;
 
-    public CarService(CarDao carRepository) {
+    public CarService(CarRepository carRepository) {
         this.carRepository = carRepository;
     }
 

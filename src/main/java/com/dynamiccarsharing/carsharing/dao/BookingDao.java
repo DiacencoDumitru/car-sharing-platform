@@ -1,5 +1,8 @@
 package com.dynamiccarsharing.carsharing.dao;
 
+import com.dynamiccarsharing.carsharing.dao.jdbc.BookingSqlFilterMapper;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
+import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
@@ -9,7 +12,6 @@ import com.dynamiccarsharing.carsharing.model.Transaction;
 import com.dynamiccarsharing.carsharing.repository.BookingRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
-import com.dynamiccarsharing.carsharing.util.FilterUtil;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,9 +22,11 @@ import java.util.Optional;
 
 public class BookingDao implements BookingRepository {
     private final DatabaseUtil databaseUtil;
+    private final SqlFilterMapper<Booking, Filter<Booking>> sqlFilterMapper;
 
     public BookingDao(DatabaseUtil databaseUtil) {
         this.databaseUtil = databaseUtil;
+        this.sqlFilterMapper = new BookingSqlFilterMapper();
     }
 
     @Override
@@ -59,7 +63,7 @@ public class BookingDao implements BookingRepository {
                 databaseUtil.execute(updateSql, booking.getRenterId(), booking.getCarId(), Timestamp.valueOf(booking.getStartTime()), Timestamp.valueOf(booking.getEndTime()), booking.getStatus().name(), booking.getPickupLocation().getId(), booking.getDisputeDescription(), booking.getDisputeStatus() != null ? booking.getDisputeStatus().name() : null, booking.getId());
                 return booking;
             }
-        } catch (SQLException e) {
+        } catch (RuntimeException e) {
             throw new RuntimeException("Failed to save Booking", e);
         }
     }
@@ -68,92 +72,47 @@ public class BookingDao implements BookingRepository {
     public Optional<Booking> findById(Long id) {
         String query = "SELECT b.*, l.city, l.state, l.zip_code FROM bookings b " +
                 "JOIN locations l ON b.pickup_location_id = l.id WHERE b.id = ?";
-        try {
-            Booking booking = databaseUtil.findOne(query, rs -> {
-                try {
-                    return mapToBooking(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            }, id);
-            return Optional.ofNullable(booking);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find Booking by ID", e);
-        }
+        Booking booking = databaseUtil.findOne(query, this::mapToBooking, id);
+        return Optional.ofNullable(booking);
     }
 
     @Override
     public Iterable<Booking> findAll() {
         String query = "SELECT b.*, l.city, l.state, l.zip_code FROM bookings b " +
                 "JOIN locations l ON b.pickup_location_id = l.id";
-        try {
-            return databaseUtil.findMany(query, rs -> {
-                try {
-                    return mapToBooking(rs);
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all Bookings", e);
-        }
+        return databaseUtil.findMany(query, this::mapToBooking);
     }
 
     @Override
     public void deleteById(Long id) {
         String deleteSql = "DELETE FROM bookings WHERE id = ?";
-        try {
-            databaseUtil.execute(deleteSql, id);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to delete Booking", e);
-        }
+        databaseUtil.execute(deleteSql, id);
     }
 
     @Override
     public List<Booking> findByFilter(Filter<Booking> filter) throws SQLException {
-        StringBuilder query = new StringBuilder("SELECT b.*, l.city, l.state, l.zip_code FROM bookings b JOIN locations l ON b.pickup_location_id = l.id WHERE 1=1");
-        List<Object> params = new ArrayList<>();
+        String baseQuery = "SELECT b.*, l.city, l.state, l.zip_code FROM bookings b JOIN locations l ON b.pickup_location_id = l.id WHERE 1=1";
+        SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
 
-        try {
-            FilterUtil.buildQuery(filter, "b", query, params, "renterId", "carId", "status");
-        } catch (IllegalAccessException e) {
-            throw new SQLException("Failed to build filter query", e);
-        }
-        Object[] processedParams = params.stream().map(param -> param instanceof Enum<?> ? ((Enum<?>) param).name() : param).toArray();
+        String fullQuery = baseQuery + sqlFilter.filterQuery();
 
-        return databaseUtil.findMany(query.toString(), rs -> {
-            try {
-                return mapToBooking(rs);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }, processedParams);
+        return databaseUtil.findMany(fullQuery, this::mapToBooking, sqlFilter.parametersArray());
     }
 
     public Optional<Booking> findByIdWithTransactions(Long id) {
-         String query = "SELECT b.*, l.city, l.state, l.zip_code, l.booking_id " +
-                 "FROM bookings b " +
-                 "JOIN locations l ON b.pickup_location_id = l.id " +
-                 "WHERE b.id = ?";
-         try {
-             Booking booking = databaseUtil.findOne(query, rs -> {
-                 try {
-                     return mapToBooking(rs);
-                 } catch (SQLException e) {
-                     throw new RuntimeException(e);
-                 }
-             }, id);
-             if (booking != null) {
-                 List<Transaction> transactions = getTransactionsForBooking(id);
-                 booking.withTransactions(transactions);
-             }
-             return Optional.ofNullable(booking);
-         } catch (SQLException e) {
-             throw new RuntimeException(e);
-         }
+        String query = "SELECT b.*, l.city, l.state, l.zip_code, l.booking_id " +
+                "FROM bookings b " +
+                "JOIN locations l ON b.pickup_location_id = l.id " +
+                "WHERE b.id = ?";
+        Booking booking = databaseUtil.findOne(query, this::mapToBooking, id);
+        if (booking != null) {
+            List<Transaction> transactions = getTransactionsForBooking(id);
+            booking.withTransactions(transactions);
+        }
+        return Optional.ofNullable(booking);
     }
 
-    private List<Transaction> getTransactionsForBooking(Long bookingId) throws SQLException {
+    private List<Transaction> getTransactionsForBooking(Long bookingId) {
         String transactionQuery = "SELECT * FROM transactions WHERE booking_id = ?";
         return databaseUtil.findMany(transactionQuery, rs -> {
             try {

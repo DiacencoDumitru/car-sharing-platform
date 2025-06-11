@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.dao.CarReviewDao;
 import com.dynamiccarsharing.carsharing.model.CarReview;
+import com.dynamiccarsharing.carsharing.repository.CarReviewRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.CarReviewFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Optional;
 
 public class CarReviewService {
-    private final CarReviewDao carReviewRepository;
+    private final CarReviewRepository carReviewRepository;
 
-    public CarReviewService(CarReviewDao carReviewRepository) {
+    public CarReviewService(CarReviewRepository carReviewRepository) {
         this.carReviewRepository = carReviewRepository;
     }
 

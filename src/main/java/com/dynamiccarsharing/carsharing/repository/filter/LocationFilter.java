@@ -1,7 +1,9 @@
 package com.dynamiccarsharing.carsharing.repository.filter;
 
 import com.dynamiccarsharing.carsharing.model.Location;
+import lombok.Getter;
 
+@Getter
 public class LocationFilter implements Filter<Location> {
     private final String city;
     private final String state;

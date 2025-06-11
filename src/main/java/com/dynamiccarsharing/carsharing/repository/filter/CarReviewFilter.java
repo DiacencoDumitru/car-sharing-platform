@@ -1,7 +1,9 @@
 package com.dynamiccarsharing.carsharing.repository.filter;
 
 import com.dynamiccarsharing.carsharing.model.CarReview;
+import lombok.Getter;
 
+@Getter
 public class CarReviewFilter implements Filter<CarReview> {
     private final Long id;
     private final Long reviewerId;
