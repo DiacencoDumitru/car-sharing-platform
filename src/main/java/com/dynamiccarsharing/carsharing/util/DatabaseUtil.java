@@ -23,10 +23,6 @@ public class DatabaseUtil {
         this.dataSource = new HikariDataSource(config);
     }
 
-    public DatabaseUtil(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-
     public Connection getConnection() throws SQLException {
         return dataSource.getConnection();
     }
@@ -97,9 +93,5 @@ public class DatabaseUtil {
         } catch (SQLException e) {
             throw new RuntimeException("Database executeWithGeneratedKeys failed for query: " + query, e);
         }
-    }
-
-    public DataSource getDataSource() {
-        return this.dataSource;
     }
 }
