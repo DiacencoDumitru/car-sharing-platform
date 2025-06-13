@@ -1,15 +1,15 @@
 package com.dynamiccarsharing.carsharing.service;
 
+import com.dynamiccarsharing.carsharing.dao.CarDao;
 import com.dynamiccarsharing.carsharing.enums.*;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.repository.CarRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.CarFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 class CarServiceTest {
 
     @Mock
-    CarRepository carRepository;
+    CarDao carRepository;
 
     private CarService carService;
 
@@ -227,7 +227,7 @@ class CarServiceTest {
     }
 
     @Test
-    void updatePrice_withValidPrice_shouldUpdatePrice() {
+    void updatePrice_withValidPrice_shouldUpdatePrice()  {
         Car car = createTestCar(CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
         Car newPriceCar = car.withPrice(110);
         when(carRepository.findById(1L)).thenReturn(Optional.of(car));
@@ -263,7 +263,7 @@ class CarServiceTest {
     }
 
     @Test
-    void findCarsByMake_withValidMake_shouldReturnMatchingCars() {
+    void findCarsByMake_withValidMake_shouldReturnMatchingCars() throws SQLException {
         Car car = createTestCar(CarStatus.AVAILABLE, VerificationStatus.PENDING);
         List<Car> cars = List.of(car);
         when(carRepository.findByFilter(argThat(filter -> filter != null && filter.test(car) && car.getMake().equals("Toyota")))).thenReturn(cars);
@@ -276,7 +276,7 @@ class CarServiceTest {
     }
 
     @Test
-    void findCarsByModel_withValidModel_shouldReturnMatchingCars() {
+    void findCarsByModel_withValidModel_shouldReturnMatchingCars() throws SQLException {
         Car car = createTestCar(CarStatus.AVAILABLE, VerificationStatus.PENDING);
         List<Car> cars = List.of(car);
         when(carRepository.findByFilter(argThat(filter -> filter != null && filter.test(car) && car.getModel().equals("Camry")))).thenReturn(cars);
@@ -289,7 +289,7 @@ class CarServiceTest {
     }
 
     @Test
-    void findCarsByCarStatus_withValidStatus_shouldReturnMatchingCars() {
+    void findCarsByCarStatus_withValidStatus_shouldReturnMatchingCars() throws SQLException {
         Car car = createTestCar(CarStatus.AVAILABLE, VerificationStatus.PENDING);
         List<Car> cars = List.of(car);
         when(carRepository.findByFilter(argThat(filter -> filter != null && filter.test(car) && car.getStatus().equals(CarStatus.AVAILABLE)))).thenReturn(cars);
@@ -302,7 +302,7 @@ class CarServiceTest {
     }
 
     @Test
-    void findCarsByLocation_withValidLocation_shouldReturnMatchingCars() {
+    void findCarsByLocation_withValidLocation_shouldReturnMatchingCars() throws SQLException {
         Car car = createTestCar(CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
         Location location = new Location(1L, "New York", "New York", "10001");
         List<Car> cars = List.of(car);
@@ -320,7 +320,7 @@ class CarServiceTest {
     }
 
     @Test
-    void findCarsByType_withValidType_shouldReturnMatchingCars() {
+    void findCarsByType_withValidType_shouldReturnMatchingCars() throws SQLException {
         Car car = createTestCar(CarStatus.AVAILABLE, VerificationStatus.PENDING);
         List<Car> cars = List.of(car);
         when(carRepository.findByFilter(argThat(filter -> filter != null && filter.test(car) && car.getType().equals(CarType.SEDAN)))).thenReturn(cars);
@@ -333,7 +333,7 @@ class CarServiceTest {
     }
 
     @Test
-    void findCarsByVerificationStatus_withValidVerificationStatus_shouldReturnMatchingCars() {
+    void findCarsByVerificationStatus_withValidVerificationStatus_shouldReturnMatchingCars() throws SQLException {
         Car car = createTestCar(CarStatus.AVAILABLE, VerificationStatus.PENDING);
         List<Car> cars = List.of(car);
         when(carRepository.findByFilter(argThat(filter -> filter != null && filter.test(car) && car.getVerificationStatus().equals(VerificationStatus.PENDING)))).thenReturn(cars);

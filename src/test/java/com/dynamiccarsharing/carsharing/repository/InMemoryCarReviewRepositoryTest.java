@@ -24,7 +24,7 @@ class InMemoryCarReviewRepositoryTest {
     }
 
     private CarReview createTestCarReview(Long id, String comment) {
-        return new CarReview(id, 2L, comment);
+        return new CarReview(id, 2L, 2L, comment);
     }
 
     @Test

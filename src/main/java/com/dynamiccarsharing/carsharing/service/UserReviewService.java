@@ -5,6 +5,7 @@ import com.dynamiccarsharing.carsharing.repository.UserReviewRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.UserReviewFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,7 +16,7 @@ public class UserReviewService {
         this.userReviewRepository = userReviewRepository;
     }
 
-    public UserReview save(UserReview userReview) {
+    public UserReview save(UserReview userReview)  {
         Validator.validateNonNull(userReview, "UserReview");
         return userReviewRepository.save(userReview);
     }
@@ -34,9 +35,9 @@ public class UserReviewService {
         return userReviewRepository.findAll();
     }
 
-    public List<UserReview> findUserReviewsByReviewerId(Long reviewerId) {
+    public List<UserReview> findUserReviewsByReviewerId(Long reviewerId) throws SQLException {
         Validator.validateId(reviewerId, "Reviewer ID");
-        UserReviewFilter filter = new UserReviewFilter().setReviewerId(reviewerId);
+        UserReviewFilter filter = UserReviewFilter.ofReviewerId(reviewerId);
         return userReviewRepository.findByFilter(filter);
     }
 }

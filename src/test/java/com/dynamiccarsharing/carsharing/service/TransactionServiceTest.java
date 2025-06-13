@@ -2,9 +2,9 @@ package com.dynamiccarsharing.carsharing.service;
 
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
-import com.dynamiccarsharing.carsharing.model.Payment;
 import com.dynamiccarsharing.carsharing.model.Transaction;
 import com.dynamiccarsharing.carsharing.repository.TransactionRepository;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,9 +40,10 @@ class TransactionServiceTest {
     }
 
     private Transaction createTestTransaction(TransactionStatus status) {
-        return new Transaction(1L, 100.0, status != null ? status : TransactionStatus.PENDING, PaymentType.CREDIT_CARD, LocalDateTime.now(), null);
+        return new Transaction(1L, 1L, 100.0, status != null ? status : TransactionStatus.PENDING, PaymentType.CREDIT_CARD, LocalDateTime.now(), null);
     }
 
+    @SneakyThrows
     @Test
     void save_shouldCallRepository_shouldReturnSameTransaction() {
         Transaction transaction = createTestTransaction(TransactionStatus.PENDING);
@@ -60,6 +61,7 @@ class TransactionServiceTest {
         assertEquals(transaction.getUpdatedAt(), savedTransaction.getUpdatedAt());
     }
 
+    @SneakyThrows
     @Test
     void save_whenTransactionIsNull_shouldThrowException() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> transactionService.save(null));
@@ -120,7 +122,7 @@ class TransactionServiceTest {
     void findAll_withMultipleTransactions_shouldReturnAllTransactions() {
         Transaction transaction1 = createTestTransaction(TransactionStatus.PENDING);
         Transaction transaction2 = new Transaction(
-                2L, 200.0, TransactionStatus.APPROVED, PaymentType.PAYPAL,
+                2L, 1L, 200.0, TransactionStatus.APPROVED, PaymentType.PAYPAL,
                 LocalDateTime.now().minusHours(1), null
         );
         List<Transaction> transactions = Arrays.asList(transaction1, transaction2);
@@ -167,6 +169,7 @@ class TransactionServiceTest {
         assertEquals(0, resultList.size());
     }
 
+    @SneakyThrows
     @Test
     void findTransactionsByStatus_withStatus_shouldReturnTransactions() {
         Transaction transaction = createTestTransaction(TransactionStatus.APPROVED);

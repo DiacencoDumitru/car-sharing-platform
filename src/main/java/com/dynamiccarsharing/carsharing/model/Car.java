@@ -27,7 +27,11 @@ public class Car {
     private final VerificationStatus verificationStatus;
 
     public Car(Long id, String registrationNumber, String make, String model, CarStatus status, Location location, double price, CarType type, VerificationStatus verificationStatus) {
-        Validator.validateId(id, "ID");
+
+        if (id != null) {
+            Validator.validateId(id, "ID");
+        }
+
         Validator.validateNonEmptyString(registrationNumber, "Registration number");
         Validator.validateNonEmptyString(make, "Make");
         Validator.validateNonEmptyString(model, "Model");
