@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode
 public class Transaction {
     private final Long id;
+    private final Long booking_id;
     private final double amount;
     @With
     private final TransactionStatus status;
@@ -23,15 +24,14 @@ public class Transaction {
     @With
     private final LocalDateTime updatedAt;
 
-    public Transaction(Long id, double amount, TransactionStatus status, PaymentType paymentMethod, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public Transaction(Long id, Long booking_id, double amount, TransactionStatus status, PaymentType paymentMethod, LocalDateTime createdAt, LocalDateTime updatedAt) {
         Validator.validateId(id, "ID");
+        Validator.validateId(booking_id, "Booking ID");
         Validator.validateNonNull(status, "Status");
         Validator.validateNonNull(paymentMethod, "Payment method");
         Validator.validateNonNull(createdAt, "Created at");
-        if (status == TransactionStatus.COMPLETED) {
-            Validator.validateNonNull(updatedAt, "Updated at");
-        }
         this.id = id;
+        this.booking_id = booking_id;
         this.amount = amount;
         this.status = status;
         this.paymentMethod = paymentMethod;

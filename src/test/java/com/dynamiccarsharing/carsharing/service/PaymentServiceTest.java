@@ -2,10 +2,8 @@ package com.dynamiccarsharing.carsharing.service;
 
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
-import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.model.Payment;
 import com.dynamiccarsharing.carsharing.repository.PaymentRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.PaymentFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -262,7 +261,7 @@ class PaymentServiceTest {
     }
 
     @Test
-    void findPaymentsByBookingId_withValidId_shouldReturnBookings() {
+    void findPaymentsByBookingId_withValidId_shouldReturnBookings() throws SQLException {
         Payment payment = createTestPayment(TransactionStatus.APPROVED);
         List<Payment> payments = List.of(payment);
         when(paymentRepository.findByFilter(argThat(filter -> filter != null && filter.test(payment) && payment.getBookingId().equals(1L)))).thenReturn(payments);
@@ -275,7 +274,7 @@ class PaymentServiceTest {
     }
 
     @Test
-    void findPaymentsByTransactionStatus_withValidStatus_shouldReturnPayments() {
+    void findPaymentsByTransactionStatus_withValidStatus_shouldReturnPayments() throws SQLException {
         Payment payment = createTestPayment(TransactionStatus.PENDING);
         List<Payment> payments = List.of(payment);
         when(paymentRepository.findByFilter(argThat(filter -> filter != null && filter.test(payment) && payment.getStatus().equals(TransactionStatus.PENDING)))).thenReturn(payments);

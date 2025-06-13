@@ -1,6 +1,5 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.repository.LocationRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -41,7 +41,7 @@ class LocationServiceTest {
     }
 
     @Test
-    void save_shouldCallRepository_shouldReturnSameLocation() {
+    void save_shouldCallRepository_shouldReturnSameLocation()  {
         Location location = createTestLocation();
         when(locationRepository.save(location)).thenReturn(location);
 
@@ -56,7 +56,7 @@ class LocationServiceTest {
     }
 
     @Test
-    void save_whenLocationIsNull_shouldThrowException() {
+    void save_whenLocationIsNull_shouldThrowException()  {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> locationService.save(null));
 
@@ -166,7 +166,7 @@ class LocationServiceTest {
     }
 
     @Test
-    void findLocationsByCity_withValidCity_shouldReturnLocations() {
+    void findLocationsByCity_withValidCity_shouldReturnLocations() throws SQLException {
         Location location = createTestLocation();
         List<Location> locations = List.of(location);
         when(locationRepository.findByFilter(argThat(filter -> filter != null && filter.test(location) && location.getCity().equals("New York")))).thenReturn(locations);
@@ -179,7 +179,7 @@ class LocationServiceTest {
     }
 
     @Test
-    void findLocationsByState_withValidState_shouldReturnLocations() {
+    void findLocationsByState_withValidState_shouldReturnLocations() throws SQLException {
         Location location = createTestLocation();
         List<Location> locations = List.of(location);
         when(locationRepository.findByFilter(argThat(filter -> filter != null && filter.test(location) && location.getState().equals("New York")))).thenReturn(locations);
@@ -192,7 +192,7 @@ class LocationServiceTest {
     }
 
     @Test
-    void findLocationsByZipCode_withValidZipCode_shouldReturnLocations() {
+    void findLocationsByZipCode_withValidZipCode_shouldReturnLocations() throws SQLException {
         Location location = createTestLocation();
         List<Location> locations = List.of(location);
         when(locationRepository.findByFilter(argThat(filter -> filter != null && filter.test(location) && location.getZipCode().equals("10001")))).thenReturn(locations);

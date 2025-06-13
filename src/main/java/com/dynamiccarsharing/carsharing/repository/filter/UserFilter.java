@@ -3,25 +3,34 @@ package com.dynamiccarsharing.carsharing.repository.filter;
 import com.dynamiccarsharing.carsharing.enums.UserRole;
 import com.dynamiccarsharing.carsharing.enums.UserStatus;
 import com.dynamiccarsharing.carsharing.model.User;
+import lombok.Getter;
 
+@Getter
 public class UserFilter implements Filter<User> {
-    private UserRole role;
-    private UserStatus status;
-    private String email;
+    private final UserRole role;
+    private final UserStatus status;
+    private final String email;
 
-    public UserFilter setRole(UserRole role) {
+    private UserFilter(UserRole role, UserStatus status, String email) {
         this.role = role;
-        return this;
-    }
-
-    public UserFilter setStatus(UserStatus status) {
         this.status = status;
-        return this;
+        this.email = email;
     }
 
-    public UserFilter setEmail(String email) {
-        this.email = email;
-        return this;
+    public static UserFilter of(UserRole role, UserStatus status, String email) {
+        return new UserFilter(role, status, email);
+    }
+
+    public static UserFilter ofRole(UserRole role) {
+        return new UserFilter(role, null, null);
+    }
+
+    public static UserFilter ofStatus(UserStatus status) {
+        return new UserFilter(null, status, null);
+    }
+
+    public static UserFilter ofEmail(String email) {
+        return new UserFilter(null, null, email);
     }
 
     @Override

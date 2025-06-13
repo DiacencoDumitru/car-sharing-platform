@@ -5,43 +5,52 @@ import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
+import lombok.Getter;
 
+@Getter
 public class CarFilter implements Filter<Car> {
-    private String make;
-    private String model;
-    private CarStatus status;
-    private Location location;
-    private CarType type;
-    private VerificationStatus verificationStatus;
+    private final String make;
+    private final String model;
+    private final CarStatus status;
+    private final Location location;
+    private final CarType type;
+    private final VerificationStatus verificationStatus;
 
-    public CarFilter setMake(String make) {
+    private CarFilter(String make, String model, CarStatus status, Location location, CarType type, VerificationStatus verificationStatus) {
         this.make = make;
-        return this;
-    }
-
-    public CarFilter setModel(String model) {
         this.model = model;
-        return this;
-    }
-
-    public CarFilter setStatus(CarStatus status) {
         this.status = status;
-        return this;
-    }
-
-    public CarFilter setLocation(Location location) {
         this.location = location;
-        return this;
-    }
-
-    public CarFilter setType(CarType type) {
         this.type = type;
-        return this;
+        this.verificationStatus = verificationStatus;
     }
 
-    public CarFilter setVerificationStatus(VerificationStatus verificationStatus) {
-        this.verificationStatus = verificationStatus;
-        return this;
+    public static CarFilter of(String make, String model, CarStatus status, Location location, CarType type, VerificationStatus verificationStatus) {
+        return new CarFilter(make, model, status, location, type, verificationStatus);
+    }
+
+    public static CarFilter ofMake(String make) {
+        return new CarFilter(make, null, null, null, null, null);
+    }
+
+    public static CarFilter ofModel(String model) {
+        return new CarFilter(null, model, null, null, null, null);
+    }
+
+    public static CarFilter ofStatus(CarStatus status) {
+        return new CarFilter(null, null, status, null, null, null);
+    }
+
+    public static CarFilter ofLocation(Location location) {
+        return new CarFilter(null, null, null, location, null, null);
+    }
+
+    public static CarFilter ofType(CarType type) {
+        return new CarFilter(null, null, null, null, type, null);
+    }
+
+    public static CarFilter ofVerificationStatus(VerificationStatus verificationStatus) {
+        return new CarFilter(null, null, null, null, null, verificationStatus);
     }
 
     @Override

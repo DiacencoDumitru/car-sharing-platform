@@ -1,31 +1,40 @@
 package com.dynamiccarsharing.carsharing.repository.filter;
 
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
+import lombok.Getter;
 
+@Getter
 public class ContactInfoFilter implements Filter<ContactInfo> {
-    private String email;
-    private String phoneNumber;
-    private String firstName;
-    private String lastName;
+    private final String email;
+    private final String phoneNumber;
+    private final String firstName;
+    private final String lastName;
 
-    public ContactInfoFilter setEmail(String email) {
+    private ContactInfoFilter(String email, String phoneNumber, String firstName, String lastName) {
         this.email = email;
-        return this;
-    }
-
-    public ContactInfoFilter setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
-        return this;
-    }
-
-    public ContactInfoFilter setFirstName(String firstName) {
         this.firstName = firstName;
-        return this;
+        this.lastName = lastName;
     }
 
-    public ContactInfoFilter setLastName(String lastName) {
-        this.lastName = lastName;
-        return this;
+    public static ContactInfoFilter of(String email, String phoneNumber, String firstName, String lastName) {
+        return new ContactInfoFilter(email, phoneNumber, firstName, lastName);
+    }
+
+    public static ContactInfoFilter ofEmail(String email) {
+        return new ContactInfoFilter(email, null, null, null);
+    }
+
+    public static ContactInfoFilter ofPhoneNumber(String phoneNumber) {
+        return new ContactInfoFilter(null, phoneNumber, null, null);
+    }
+
+    public static ContactInfoFilter ofFirstName(String firstName) {
+        return new ContactInfoFilter(null, null, firstName, null);
+    }
+
+    public static ContactInfoFilter ofLastName(String lastName) {
+        return new ContactInfoFilter(null, null, null, lastName);
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.dynamiccarsharing.carsharing.repository.PaymentRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.PaymentFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +19,7 @@ public class PaymentService {
         this.paymentRepository = paymentRepository;
     }
 
-    public Payment save(Payment payment) {
+    public Payment save(Payment payment)  {
         Validator.validateNonNull(payment, "Payment");
         return paymentRepository.save(payment);
     }
@@ -41,19 +42,19 @@ public class PaymentService {
         return paymentRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Payment with ID " + id + " not found"));
     }
 
-    public Payment approvePayment(Long id) {
+    public Payment approvePayment(Long id)  {
         Payment payment = getPaymentOrThrow(id);
         validatePaymentStatus(payment.getStatus(), List.of(TransactionStatus.PENDING), "Payment can only be approved from PENDING status");
         return paymentRepository.save(payment.withStatus(TransactionStatus.APPROVED));
     }
 
-    public Payment completePayment(Long id) {
+    public Payment completePayment(Long id)  {
         Payment payment = getPaymentOrThrow(id);
         validatePaymentStatus(payment.getStatus(), List.of(TransactionStatus.APPROVED), "Payment can only be completed from APPROVED status");
         return paymentRepository.save(payment.withUpdatedAt(LocalDateTime.now()).withStatus(TransactionStatus.COMPLETED));
     }
 
-    public Payment cancelPayment(Long id) {
+    public Payment cancelPayment(Long id)  {
         Payment payment = getPaymentOrThrow(id);
         validatePaymentStatus(payment.getStatus(), List.of(TransactionStatus.PENDING, TransactionStatus.APPROVED), "Cannot cancel a completed payment");
         return paymentRepository.save(payment.withStatus(TransactionStatus.CANCELED));
@@ -65,15 +66,15 @@ public class PaymentService {
         }
     }
 
-    public List<Payment> findPaymentsByBookingId(Long bookingId) {
+    public List<Payment> findPaymentsByBookingId(Long bookingId) throws SQLException {
         Validator.validateId(bookingId, "Booking ID");
-        PaymentFilter filter = new PaymentFilter().setBookingId(bookingId);
+        PaymentFilter filter = PaymentFilter.ofBookingId(bookingId);
         return paymentRepository.findByFilter(filter);
     }
 
-    public List<Payment> findPaymentsByTransactionStatus(TransactionStatus transactionStatus) {
+    public List<Payment> findPaymentsByTransactionStatus(TransactionStatus transactionStatus) throws SQLException {
         Validator.validateNonNull(transactionStatus, "Transaction status");
-        PaymentFilter filter = new PaymentFilter().setStatus(transactionStatus);
+        PaymentFilter filter = PaymentFilter.ofStatus(transactionStatus);
         return paymentRepository.findByFilter(filter);
     }
 }

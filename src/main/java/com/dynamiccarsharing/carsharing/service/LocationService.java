@@ -5,6 +5,7 @@ import com.dynamiccarsharing.carsharing.repository.LocationRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.LocationFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,7 +16,7 @@ public class LocationService {
         this.locationRepository = locationRepository;
     }
 
-    public Location save(Location location) {
+    public Location save(Location location)  {
         Validator.validateNonNull(location, "Location");
         return locationRepository.save(location);
     }
@@ -34,21 +35,21 @@ public class LocationService {
         return locationRepository.findAll();
     }
 
-    public List<Location> findLocationsByCity(String city) {
+    public List<Location> findLocationsByCity(String city) throws SQLException {
         Validator.validateNonEmptyString(city, "City");
-        LocationFilter filter = new LocationFilter().setCity(city);
+        LocationFilter filter = LocationFilter.ofCity(city);
         return locationRepository.findByFilter(filter);
     }
 
-    public List<Location> findLocationsByState(String state) {
+    public List<Location> findLocationsByState(String state) throws SQLException {
         Validator.validateNonEmptyString(state, "State");
-        LocationFilter filter = new LocationFilter().setState(state);
+        LocationFilter filter = LocationFilter.ofState(state);
         return locationRepository.findByFilter(filter);
     }
 
-    public List<Location> findLocationsByZipCode(String zipCode) {
+    public List<Location> findLocationsByZipCode(String zipCode) throws SQLException {
         Validator.validateNonEmptyString(zipCode, "City");
-        LocationFilter filter = new LocationFilter().setZipCode(zipCode);
+        LocationFilter filter = LocationFilter.ofZipCode(zipCode);
         return locationRepository.findByFilter(filter);
     }
 }

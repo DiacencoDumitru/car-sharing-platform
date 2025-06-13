@@ -6,6 +6,7 @@ import com.dynamiccarsharing.carsharing.repository.TransactionRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.TransactionFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +17,7 @@ public class TransactionService {
         this.transactionRepository = transactionRepository;
     }
 
-    public Transaction save(Transaction transaction) {
+    public Transaction save(Transaction transaction)  {
         Validator.validateNonNull(transaction, "Transaction");
         return transactionRepository.save(transaction);
     }
@@ -35,9 +36,9 @@ public class TransactionService {
         return transactionRepository.findAll();
     }
 
-    public List<Transaction> findTransactionsByStatus(TransactionStatus status) {
+    public List<Transaction> findTransactionsByStatus(TransactionStatus status) throws SQLException {
         Validator.validateNonNull(status, "Transaction Status");
-        TransactionFilter filter = new TransactionFilter().setStatus(status);
+        TransactionFilter filter = TransactionFilter.ofStatus(status);
         return transactionRepository.findByFilter(filter);
     }
 }

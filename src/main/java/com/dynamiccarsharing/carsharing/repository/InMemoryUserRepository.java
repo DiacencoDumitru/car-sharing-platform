@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.carsharing.repository;
 
 import com.dynamiccarsharing.carsharing.model.User;
-import com.dynamiccarsharing.carsharing.repository.filter.UserFilter;
+import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 
 import java.util.*;
 
@@ -25,11 +25,12 @@ public class InMemoryUserRepository implements UserRepository {
     }
 
     @Override
-    public Iterable<User> findAll() {
-        return userMap.values();
+    public List<User> findByFilter(Filter<User> filter) {
+        return userMap.values().stream().filter(filter::test).toList();
     }
 
-    public List<User> findByFilter(UserFilter filter) {
-        return userMap.values().stream().filter(filter::test).toList();
+    @Override
+    public Iterable<User> findAll() {
+        return userMap.values();
     }
 }

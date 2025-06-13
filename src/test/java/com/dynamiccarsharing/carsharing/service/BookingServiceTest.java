@@ -6,6 +6,7 @@ import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.repository.BookingRepository;
 import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,7 +48,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void save_shouldCallRepository_shouldReturnSameBooking() {
+    void save_shouldCallRepository_shouldReturnSameBooking()  {
         Booking booking = createTestBooking(TransactionStatus.PENDING, null, null);
 
         Booking savedBooking = bookingService.save(booking);
@@ -155,7 +157,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void approveBooking_withPendingStatus_shouldApprove() {
+    void approveBooking_withPendingStatus_shouldApprove()  {
         Booking booking = createTestBooking(TransactionStatus.PENDING, null, null);
         Booking approvedBooking = booking.withStatus(TransactionStatus.APPROVED);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
@@ -169,7 +171,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void completeBooking_withApprovedStatus_shouldComplete() {
+    void completeBooking_withApprovedStatus_shouldComplete()  {
         Booking booking = createTestBooking(TransactionStatus.APPROVED, null, null);
         Booking completedBooking = booking.withStatus(TransactionStatus.COMPLETED);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
@@ -185,7 +187,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void cancelBooking_withPendingStatus_shouldCancel() {
+    void cancelBooking_withPendingStatus_shouldCancel()  {
         Booking booking = createTestBooking(TransactionStatus.PENDING, null, null);
         Booking cancelBooking = booking.withStatus(TransactionStatus.CANCELED);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
@@ -199,7 +201,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void raiseDispute_withCompletedStatusAndValidDescription_shouldRaiseDispute() {
+    void raiseDispute_withCompletedStatusAndValidDescription_shouldRaiseDispute()  {
         Booking booking = createTestBooking(TransactionStatus.COMPLETED, null, null);
         Booking updatedBooking = booking
                 .withDisputeDescription("Problem description")
@@ -217,7 +219,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void raiseDispute_withEmptyDescription_shouldThrowException() {
+    void raiseDispute_withEmptyDescription_shouldThrowException()  {
         Booking booking = createTestBooking(TransactionStatus.COMPLETED, null, null);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
@@ -229,7 +231,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void resolveDispute_withOpenStatus_shouldResolve() {
+    void resolveDispute_withOpenStatus_shouldResolve()  {
         Booking booking = createTestBooking(TransactionStatus.COMPLETED, "Problem description", DisputeStatus.OPEN);
         Booking resolvedBooking = booking.withDisputeStatus(DisputeStatus.RESOLVED);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
@@ -244,7 +246,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void validateBookingStatus_withInvalidStatus_shouldThrowException() {
+    void validateBookingStatus_withInvalidStatus_shouldThrowException()  {
         Booking booking = createTestBooking(TransactionStatus.APPROVED, null, null);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
@@ -256,7 +258,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void validateDisputeStatus_withInvalidStatus_shouldThrowException() {
+    void validateDisputeStatus_withInvalidStatus_shouldThrowException()  {
         Booking booking = createTestBooking(TransactionStatus.COMPLETED, "Problem description", DisputeStatus.RESOLVED);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
@@ -267,6 +269,7 @@ class BookingServiceTest {
         verify(bookingRepository, never()).save(any());
     }
 
+    @SneakyThrows
     @Test
     void findBookingsByRenterId_withValidRenterId_shouldReturnBookings() {
         Booking booking = createTestBooking(TransactionStatus.COMPLETED, null, null);
@@ -290,6 +293,7 @@ class BookingServiceTest {
         verify(bookingRepository, never()).findById(any());
     }
 
+    @SneakyThrows
     @Test
     void findBookingsByCarId_withValidCarId_shouldReturnBookings() {
         Booking booking = createTestBooking(TransactionStatus.COMPLETED, null, null);
@@ -304,7 +308,7 @@ class BookingServiceTest {
     }
 
     @Test
-    void findBookingsByStatus_withStatus_shouldReturnBookings() {
+    void findBookingsByStatus_withStatus_shouldReturnBookings() throws SQLException {
         Booking booking = createTestBooking(TransactionStatus.COMPLETED, null, null);
         List<Booking> bookings = List.of(booking);
         when(bookingRepository.findByFilter(argThat(filter -> filter != null && filter.test(booking) && booking.getStatus().equals(TransactionStatus.COMPLETED)))).thenReturn(bookings);

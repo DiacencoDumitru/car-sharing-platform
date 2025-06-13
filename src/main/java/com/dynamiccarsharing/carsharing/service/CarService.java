@@ -9,6 +9,7 @@ import com.dynamiccarsharing.carsharing.repository.CarRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.CarFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -93,39 +94,39 @@ public class CarService {
         return findById(carId).orElseThrow(() -> new IllegalArgumentException("Car with ID " + carId + " not found"));
     }
 
-    public List<Car> findCarsByMake(String make) {
+    public List<Car> findCarsByMake(String make) throws SQLException {
         Validator.validateNonEmptyString(make, "Car Make");
-        CarFilter filter = new CarFilter().setMake(make);
+        CarFilter filter = CarFilter.ofMake(make);
         return carRepository.findByFilter(filter);
     }
 
-    public List<Car> findCarsByModel(String model) {
+    public List<Car> findCarsByModel(String model) throws SQLException {
         Validator.validateNonEmptyString(model, "Model");
-        CarFilter filter = new CarFilter().setModel(model);
+        CarFilter filter = CarFilter.ofModel(model);
         return carRepository.findByFilter(filter);
     }
 
-    public List<Car> findCarsByCarStatus(CarStatus carStatus) {
+    public List<Car> findCarsByCarStatus(CarStatus carStatus) throws SQLException {
         Validator.validateNonNull(carStatus, "Car status");
-        CarFilter filter = new CarFilter().setStatus(carStatus);
+        CarFilter filter = CarFilter.ofStatus(carStatus);
         return carRepository.findByFilter(filter);
     }
 
-    public List<Car> findCarsByLocation(Location location) {
+    public List<Car> findCarsByLocation(Location location) throws SQLException {
         Validator.validateNonNull(location, "Location");
-        CarFilter filter = new CarFilter().setLocation(location);
+        CarFilter filter = CarFilter.ofLocation(location);
         return carRepository.findByFilter(filter);
     }
 
-    public List<Car> findCarsByType(CarType carType) {
+    public List<Car> findCarsByType(CarType carType) throws SQLException {
         Validator.validateNonNull(carType, "Car type");
-        CarFilter filter = new CarFilter().setType(carType);
+        CarFilter filter = CarFilter.ofType(carType);
         return carRepository.findByFilter(filter);
     }
 
-    public List<Car> findCarsByVerificationStatus(VerificationStatus verificationStatus) {
+    public List<Car> findCarsByVerificationStatus(VerificationStatus verificationStatus) throws SQLException {
         Validator.validateNonNull(verificationStatus, "Verification status");
-        CarFilter filter = new CarFilter().setVerificationStatus(verificationStatus);
+        CarFilter filter = CarFilter.ofVerificationStatus(verificationStatus);
         return carRepository.findByFilter(filter);
     }
 }

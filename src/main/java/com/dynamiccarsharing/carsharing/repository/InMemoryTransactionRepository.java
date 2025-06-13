@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.carsharing.repository;
 
 import com.dynamiccarsharing.carsharing.model.Transaction;
-import com.dynamiccarsharing.carsharing.repository.filter.TransactionFilter;
+import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 
 import java.util.*;
 
@@ -25,11 +25,12 @@ public class InMemoryTransactionRepository implements TransactionRepository {
     }
 
     @Override
-    public Iterable<Transaction> findAll() {
-        return transactionMap.values();
+    public List<Transaction> findByFilter(Filter<Transaction> filter) {
+        return transactionMap.values().stream().filter(filter::test).toList();
     }
 
-    public List<Transaction> findByFilter(TransactionFilter filter) {
-        return transactionMap.values().stream().filter(filter::test).toList();
+    @Override
+    public Iterable<Transaction> findAll() {
+        return transactionMap.values();
     }
 }
