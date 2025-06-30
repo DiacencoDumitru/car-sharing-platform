@@ -2,46 +2,20 @@ package com.dynamiccarsharing.carsharing.dao;
 
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.stream.Collectors;
 
+@SpringBootTest
+@ActiveProfiles("test")
 public abstract class BaseDaoTest {
-    protected static DatabaseUtil databaseUtil;
 
-    @BeforeAll
-    static void setUpDatabase() throws SQLException, IOException {
-        String url = "jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_ON_EXIT=FALSE";
-        String user = "sa";
-        String password = "";
-
-        databaseUtil = new DatabaseUtil(url, user, password);
-
-        initializeSchema();
-    }
-
-    @AfterAll
-    static void tearDownDatabase() throws SQLException {
-        if (databaseUtil != null) {
-            try (Connection conn = databaseUtil.getConnection();
-                 Statement stmt = conn.createStatement()) {
-
-                if (!conn.isClosed()) {
-                    stmt.execute("SHUTDOWN");
-                }
-            } catch (SQLException e) {
-                System.err.println("Warning: Could not shutdown database cleanly: " + e.getMessage());
-            }
-        }
-    }
+    @Autowired
+    protected DatabaseUtil databaseUtil;
 
     @BeforeEach
     void cleanDatabase() throws SQLException {
@@ -74,34 +48,6 @@ public abstract class BaseDaoTest {
             stmt.execute("ALTER TABLE transactions ALTER COLUMN id RESTART WITH 1");
             stmt.execute("ALTER TABLE car_reviews ALTER COLUMN id RESTART WITH 1");
             stmt.execute("ALTER TABLE user_reviews ALTER COLUMN id RESTART WITH 1");
-        }
-    }
-
-    private static void initializeSchema() throws SQLException, IOException {
-        String schema = loadSchemaFromFile();
-
-        try (Connection conn = databaseUtil.getConnection();
-             Statement stmt = conn.createStatement()) {
-
-            String[] statements = schema.split(";");
-            for (String sql : statements) {
-                sql = sql.trim();
-                if (!sql.isEmpty()) {
-                    stmt.execute(sql);
-                }
-            }
-        }
-    }
-
-    private static String loadSchemaFromFile() throws IOException {
-        try (InputStream is = BaseDaoTest.class.getClassLoader().getResourceAsStream("initdb.sql")) {
-            if (is == null) {
-                throw new IOException("Schema file 'initdb.sql' not found in resources");
-            }
-
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
-                return reader.lines().collect(Collectors.joining("\n"));
-            }
         }
     }
 

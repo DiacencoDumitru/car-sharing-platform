@@ -3,6 +3,7 @@ package com.dynamiccarsharing.carsharing.dao;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.repository.filter.ContactInfoFilter;
 import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -11,12 +12,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContactInfoDaoTest extends BaseDaoTest {
+    @Autowired
     private ContactInfoDao contactInfoDao;
-
-    @BeforeEach
-    void setUp() {
-        contactInfoDao = new ContactInfoDao(databaseUtil);
-    }
 
     @Nested
     @DisplayName("Save Operations")

@@ -11,7 +11,22 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./src/test/resources/initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
+      - ./src/test/resources/schema.sql:/docker-entrypoint-initdb.d/initdb.sql
+
+  app:
+    container_name: dynamiccarsharing_app
+    build: .
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - dynamiccarsharing_db
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+
+      DATABASE_URL: jdbc:postgresql://dynamiccarsharing_db:5432/${DB_NAME}
+      DATABASE_USER: ${DB_USER}
+      DATABASE_PASSWORD: ${DB_PASSWORD}
 
   pgadmin:
     container_name: pgadmin4_container
