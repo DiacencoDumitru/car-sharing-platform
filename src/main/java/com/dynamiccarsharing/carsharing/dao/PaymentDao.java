@@ -9,6 +9,7 @@ import com.dynamiccarsharing.carsharing.model.Payment;
 import com.dynamiccarsharing.carsharing.repository.PaymentRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
+import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,6 +17,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public class PaymentDao implements PaymentRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<Payment, Filter<Payment>> sqlFilterMapper;

@@ -4,11 +4,13 @@ import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.repository.ContactInfoRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.ContactInfoFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
+import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class ContactInfoService {
     private final ContactInfoRepository contactInfoRepository;
 

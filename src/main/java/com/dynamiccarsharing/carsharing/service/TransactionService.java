@@ -5,11 +5,13 @@ import com.dynamiccarsharing.carsharing.model.Transaction;
 import com.dynamiccarsharing.carsharing.repository.TransactionRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.TransactionFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
+import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class TransactionService {
     private final TransactionRepository transactionRepository;
 
