@@ -15,9 +15,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.springframework.beans.factory.annotation.Autowired;
 
 class DisputeDaoTest extends BaseDaoTest {
+    @Autowired
     private DisputeDao disputeDao;
+
     private Long bookingId;
     private Long userId;
     private Long carId;
@@ -26,14 +29,6 @@ class DisputeDaoTest extends BaseDaoTest {
 
     @BeforeEach
     void setUp() throws SQLException {
-        databaseUtil.execute("DELETE FROM disputes");
-        databaseUtil.execute("DELETE FROM bookings");
-        databaseUtil.execute("DELETE FROM cars");
-        databaseUtil.execute("DELETE FROM locations");
-        databaseUtil.execute("DELETE FROM users");
-        databaseUtil.execute("DELETE FROM contact_infos");
-
-        disputeDao = new DisputeDao(databaseUtil);
         createTestDependencies();
     }
 
