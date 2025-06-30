@@ -1,6 +1,8 @@
 package com.dynamiccarsharing.carsharing;
 
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,12 +12,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class App {
+@SpringBootApplication
+public class DynamicCarSharingApplication {
     private static final String DB_URL = "jdbc:postgresql://localhost:5432/dynamiccarsharing_db";
     private static final String DB_USER = "user";
     private static final String DB_PASSWORD = "password";
 
     public static void main(String[] args) throws SQLException, InterruptedException {
+        SpringApplication.run(DynamicCarSharingApplication.class, args);
+
         DatabaseUtil dbUtil = new DatabaseUtil(DB_URL, DB_USER, DB_PASSWORD);
 
         setupInitialData(dbUtil);
