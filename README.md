@@ -1,4 +1,39 @@
 ### Users of Car Sharing Platform
+
+### Technologies Used
+
+* Java 17
+* Spring Boot 3.2.6
+* Maven
+* PostgreSQL (for dev/prod)
+* H2 Database (for local/testing)
+
+### How to Run
+
+#### Prerequisites
+
+* Java Development Kit (JDK) 17 or later
+* Apache Maven
+
+
+### Running from the Command Line
+
+1.  Clone the repository from GitLab.
+2.  Navigate to the project's root directory.
+3.  Build the project using Maven:
+    ```bash
+    mvn clean package
+    ```
+4.  Run the application:
+    ```bash
+    java -jar target/DynamicCarSharing-1.0-SNAPSHOT.jar
+    ```
+
+The application will start and be accessible at `http://localhost:8080`.
+
+
+---------------
+
 * `Renter:` A user who wants to rent a car.
 * `Car Owner:` A user who lists their car for rent.
 * `Admin:` A system administrator who manages the platform.
