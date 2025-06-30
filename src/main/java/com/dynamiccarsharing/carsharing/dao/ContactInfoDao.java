@@ -7,12 +7,14 @@ import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.repository.ContactInfoRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
+import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public class ContactInfoDao implements ContactInfoRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<ContactInfo, Filter<ContactInfo>> sqlFilterMapper;

@@ -5,12 +5,14 @@ import com.dynamiccarsharing.carsharing.model.Dispute;
 import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.DisputeFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
+import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class DisputeService {
     private final DisputeRepository disputeRepository;
 

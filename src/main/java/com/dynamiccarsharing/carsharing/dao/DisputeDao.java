@@ -8,14 +8,15 @@ import com.dynamiccarsharing.carsharing.model.Dispute;
 import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.Filter;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
+import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public class DisputeDao implements DisputeRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<Dispute, Filter<Dispute>> sqlFilterMapper;

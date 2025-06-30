@@ -4,11 +4,13 @@ import com.dynamiccarsharing.carsharing.model.UserReview;
 import com.dynamiccarsharing.carsharing.repository.UserReviewRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.UserReviewFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
+import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class UserReviewService {
     private final UserReviewRepository userReviewRepository;
 
