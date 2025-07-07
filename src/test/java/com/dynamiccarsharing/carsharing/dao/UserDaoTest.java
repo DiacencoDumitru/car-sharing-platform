@@ -7,6 +7,7 @@ import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.repository.filter.UserFilter;
 import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -16,13 +17,14 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserDaoTest extends BaseDaoTest {
+    @Autowired
     private UserDao userDao;
+
     private ContactInfo contactInfo1;
     private ContactInfo contactInfo2;
 
     @BeforeEach
     void setUp() throws SQLException {
-        userDao = new UserDao(databaseUtil);
         createTestDependencies();
     }
 

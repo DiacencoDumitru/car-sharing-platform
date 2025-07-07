@@ -9,12 +9,13 @@ import com.dynamiccarsharing.carsharing.repository.UserRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.UserFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
 import lombok.SneakyThrows;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-
+@Service
 public class UserService {
 
     private final UserRepository userRepository;

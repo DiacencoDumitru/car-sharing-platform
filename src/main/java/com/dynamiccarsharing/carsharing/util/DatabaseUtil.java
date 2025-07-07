@@ -2,6 +2,7 @@ package com.dynamiccarsharing.carsharing.util;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -9,18 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+@Component
 public class DatabaseUtil {
     private final DataSource dataSource;
 
-    public DatabaseUtil(String url, String user, String password) {
-        HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(url);
-        config.setUsername(user);
-        config.setPassword(password);
-        config.setMaximumPoolSize(20);
-        config.setMinimumIdle(2);
-        config.setIdleTimeout(30000);
-        this.dataSource = new HikariDataSource(config);
+    public DatabaseUtil(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public Connection getConnection() throws SQLException {

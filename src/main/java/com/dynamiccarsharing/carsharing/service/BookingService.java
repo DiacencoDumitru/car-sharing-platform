@@ -8,12 +8,14 @@ import com.dynamiccarsharing.carsharing.repository.BookingRepository;
 import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.BookingFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
+import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class BookingService {
     private final BookingRepository bookingRepository;
     private final DisputeRepository disputeRepository;

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -18,7 +19,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BookingDaoTest extends BaseDaoTest {
+    @Autowired
     private BookingDao bookingDao;
+
     private Long userId;
     private Long carId;
     private Long locationId;
@@ -26,14 +29,6 @@ class BookingDaoTest extends BaseDaoTest {
 
     @BeforeEach
     void setUp() throws SQLException {
-        databaseUtil.execute("DELETE FROM disputes");
-        databaseUtil.execute("DELETE FROM bookings");
-        databaseUtil.execute("DELETE FROM cars");
-        databaseUtil.execute("DELETE FROM locations");
-        databaseUtil.execute("DELETE FROM users");
-        databaseUtil.execute("DELETE FROM contact_infos");
-
-        bookingDao = new BookingDao(databaseUtil);
         createTestDependencies();
     }
 
