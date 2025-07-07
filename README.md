@@ -241,3 +241,76 @@ Use Case: Best for advanced scenarios requiring batch processing, custom types, 
 * Resource Overhead: The pool itself consumes application memory to hold open connections. An improperly sized pool can be wasteful.
 
 * Connection State Risk: If a connection is returned to the pool in a bad state (e.g., with an unclosed transaction), it can cause unpredictable behavior when reused.
+---------
+### RDBMS Concepts
+1. `ACID Consistency with Transactions` The 'C' in ACID stands for Consistency, which guarantees that any transaction will bring the database from one valid state to another. An operation that consists of multiple steps (e.g., creating a user and their contact info) must either complete entirely or fail entirely (rollback). If it only partially completes, the database is left in an inconsistent state. 
+2. `Transaction Isolation Levels` Isolation determines how and when changes made by one transaction become visible to others. The default level in PostgreSQL is READ COMMITTED, which prevents one transaction from reading the uncommitted ("dirty") data of another.
+2. `Single-Column Indexes` An index is a special lookup table that the database search engine can use to speed up data retrieval. Without an index, the database must perform a "Sequential Scan," reading every single row to find the data it needs. With an index, it can find the data much faster.
+3. `Compound (Multi-Column) Indexes` A compound index is an index on two or more columns. The order of columns in the index definition is critical. PostgreSQL can use a compound index to satisfy queries that reference a prefix of the indexed columns (this is known as the "Left-Hand Prefix Rule").
+
+Step 1-2:
+
+`Running WITHOUT transaction...`
+
+* The code: successfully inserted a new booking record into the database. Then, the program immediately "crashed" (threw a simulated error) before it could update the car's status to RENTED.
+* Result: Car Status: AVAILABLE, Booking Count: 19
+* Difference: The database is now in an inconsistent state. A booking exists for the car (the count went up by one), but the car is still listed as AVAILABLE. Another user could try to book this already-booked car. This is a serious data error.
+
+`Running WITH transaction...`
+* The code: started a transaction. It inserted the new booking, and then the program "crashed" in the same way. However, the catch block executed connection.rollback().
+* Result: Car Status: AVAILABLE, Booking Count: 0
+* Difference: The rollback command acts like an "undo" for everything that happened inside the transaction. It erased the new booking as if it never happened. The database is left in a perfectly consistent state. This is the core purpose of a transaction: to guarantee that a set of operations either all succeed or all fail together.
+
+
+![img_14.png](images/img_14.png)
+
+Step 3-4:
+`Running with default isolation (READ COMMITTED)...`
+
+* The code: transaction A updated a car's price to 999.99 but did not commit the change. While it was paused, Transaction B (using the default READ COMMITTED level) tried to read the price.
+* Result: Transaction B read the car price as 100.00.
+* The Difference: It read the original, committed price. It was not allowed to see the "dirty" (uncommitted) change that Transaction A was holding. This is the safe, default behavior.
+
+`Running with low isolation (READ UNCOMMITTED)...`
+* The code: same scenario ran, but this time Transaction B was set to a lower, less safe isolation level: READ UNCOMMITTED.
+* Result: Transaction B read the car price as 100.00.
+* Difference: You might expect it to read 999.99 (the dirty data). However, PostgreSQL is safer than other databases. For this specific case, it automatically upgrades READ UNCOMMITTED to behave exactly like READ COMMITTED. It does not allow dirty reads.
+
+
+![img_2.png](images/img_2.png)
+
+`Single-Column Index Test`
+
+* Test WITHOUT index
+
+![img_12.png](images/img_12.png)
+
+* Create the index
+
+![img_15.png](images/img_15.png)
+
+* Test WITH index
+
+![img_3.png](images/img_3.png)
+
+
+`Compound Index Test`
+
+* Clean up previous index and prepare for new test
+
+![img_4.png](images/img_4.png)
+
+* Create the compound index
+
+![img_5.png](images/img_5.png)
+
+* Test with full prefix (car_id and start_time)
+
+![img_6.png](images/img_6.png)
+* Test with left-prefix only (car_id)
+
+![img_7.png](images/img_7.png)
+
+* Test with non-prefix column (start_time)
+
+![img_8.png](images/img_8.png)
