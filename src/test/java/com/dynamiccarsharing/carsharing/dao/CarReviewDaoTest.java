@@ -3,6 +3,7 @@ package com.dynamiccarsharing.carsharing.dao;
 import com.dynamiccarsharing.carsharing.model.CarReview;
 import com.dynamiccarsharing.carsharing.repository.filter.CarReviewFilter;
 import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.*;
 import java.util.List;
@@ -11,7 +12,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CarReviewDaoTest extends BaseDaoTest {
+    @Autowired
     private CarReviewDao carReviewDao;
+
     private Long carId1;
     private Long carId2;
     private Long reviewerId1;
@@ -19,7 +22,6 @@ class CarReviewDaoTest extends BaseDaoTest {
 
     @BeforeEach
     void setUp() throws SQLException {
-        carReviewDao = new CarReviewDao(databaseUtil);
         createTestDependencies();
     }
 

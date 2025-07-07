@@ -5,6 +5,7 @@ import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.model.Transaction;
 import com.dynamiccarsharing.carsharing.repository.filter.TransactionFilter;
 import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -14,13 +15,14 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TransactionDaoTest extends BaseDaoTest {
+    @Autowired
     private TransactionDao transactionDao;
+
     private Long bookingId1;
     private Long bookingId2;
 
     @BeforeEach
     void setUp() throws SQLException {
-        transactionDao = new TransactionDao(databaseUtil);
         createTestDependencies();
     }
 

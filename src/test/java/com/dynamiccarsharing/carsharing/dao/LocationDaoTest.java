@@ -3,6 +3,7 @@ package com.dynamiccarsharing.carsharing.dao;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.repository.filter.LocationFilter;
 import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -11,12 +12,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 class LocationDaoTest extends BaseDaoTest {
+    @Autowired
     private LocationDao locationDao;
-
-    @BeforeEach
-    void setUp() {
-        locationDao = new LocationDao(databaseUtil);
-    }
 
     @Nested
     @DisplayName("Save Operations")

@@ -5,12 +5,14 @@ import com.dynamiccarsharing.carsharing.model.Payment;
 import com.dynamiccarsharing.carsharing.repository.PaymentRepository;
 import com.dynamiccarsharing.carsharing.repository.filter.PaymentFilter;
 import com.dynamiccarsharing.carsharing.util.Validator;
+import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
