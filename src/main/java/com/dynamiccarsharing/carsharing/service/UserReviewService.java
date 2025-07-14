@@ -1,45 +1,59 @@
 package com.dynamiccarsharing.carsharing.service;
 
+import com.dynamiccarsharing.carsharing.exception.UserReviewNotFoundException;
 import com.dynamiccarsharing.carsharing.model.UserReview;
 import com.dynamiccarsharing.carsharing.repository.UserReviewRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.UserReviewFilter;
-import com.dynamiccarsharing.carsharing.util.Validator;
+import com.dynamiccarsharing.carsharing.repository.specification.UserReviewSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
+@Transactional
 public class UserReviewService {
+
     private final UserReviewRepository userReviewRepository;
 
     public UserReviewService(UserReviewRepository userReviewRepository) {
         this.userReviewRepository = userReviewRepository;
     }
 
-    public UserReview save(UserReview userReview)  {
-        Validator.validateNonNull(userReview, "UserReview");
+    public UserReview save(UserReview userReview) {
         return userReviewRepository.save(userReview);
     }
 
-    public Optional<UserReview> findById(Long id) {
-        Validator.validateId(id, "UserReview ID");
+    public Optional<UserReview> findById(UUID id) {
         return userReviewRepository.findById(id);
     }
 
-    public void deleteById(Long id) {
-        Validator.validateId(id, "UserReview ID");
+    public void deleteById(UUID id) {
+        if (!userReviewRepository.existsById(id)) {
+            throw new UserReviewNotFoundException("UserReview with ID " + id + " not found.");
+        }
         userReviewRepository.deleteById(id);
     }
 
-    public Iterable<UserReview> findAll() {
+    public List<UserReview> findAll() {
         return userReviewRepository.findAll();
     }
 
-    public List<UserReview> findUserReviewsByReviewerId(Long reviewerId) throws SQLException {
-        Validator.validateId(reviewerId, "Reviewer ID");
-        UserReviewFilter filter = UserReviewFilter.ofReviewerId(reviewerId);
-        return userReviewRepository.findByFilter(filter);
+    public List<UserReview> findUserReviewsByReviewerId(UUID reviewerId) {
+        return userReviewRepository.findByReviewerId(reviewerId);
+    }
+
+    public List<UserReview> findUserReviewsAboutUser(UUID userId) {
+        return userReviewRepository.findByUserId(userId);
+    }
+
+    public List<UserReview> searchReviews(UUID userId, UUID reviewerId) {
+        Specification<UserReview> spec = Specification
+                .where(userId != null ? UserReviewSpecification.hasUserId(userId) : null)
+                .and(reviewerId != null ? UserReviewSpecification.hasReviewerId(reviewerId) : null);
+
+        return userReviewRepository.findAll(spec);
     }
 }

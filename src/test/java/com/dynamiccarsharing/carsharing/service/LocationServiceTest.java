@@ -1,20 +1,16 @@
 package com.dynamiccarsharing.carsharing.service;
 
+import com.dynamiccarsharing.carsharing.exception.LocationNotFoundException;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.repository.LocationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.StreamSupport;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,182 +21,129 @@ import static org.mockito.Mockito.times;
 class LocationServiceTest {
 
     @Mock
-    LocationRepository locationRepository;
+    private LocationRepository locationRepository;
 
     private LocationService locationService;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        reset(locationRepository);
         locationService = new LocationService(locationRepository);
     }
 
-    private Location createTestLocation() {
-        return new Location(1L, "New York", "New York", "10001");
+    private Location createTestLocation(UUID id) {
+        return Location.builder()
+                .id(id)
+                .city("New York")
+                .state("New York")
+                .zipCode("10001")
+                .build();
     }
 
     @Test
-    void save_shouldCallRepository_shouldReturnSameLocation()  {
-        Location location = createTestLocation();
-        when(locationRepository.save(location)).thenReturn(location);
+    void save_shouldCallRepositoryAndReturnLocation() {
+        Location locationToSave = createTestLocation(null);
+        Location savedLocation = createTestLocation(UUID.randomUUID());
+        when(locationRepository.save(locationToSave)).thenReturn(savedLocation);
 
-        Location savedLocation = locationService.save(location);
+        Location result = locationService.save(locationToSave);
 
-        verify(locationRepository, times(1)).save(location);
-        assertSame(location, savedLocation);
-        assertEquals(location.getId(), savedLocation.getId());
-        assertEquals(location.getCity(), savedLocation.getCity());
-        assertEquals(location.getState(), savedLocation.getState());
-        assertEquals(location.getZipCode(), savedLocation.getZipCode());
+        assertNotNull(result);
+        assertNotNull(result.getId());
+        assertEquals("New York", result.getCity());
+        verify(locationRepository).save(locationToSave);
     }
 
     @Test
-    void save_whenLocationIsNull_shouldThrowException()  {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> locationService.save(null));
+    void findById_whenLocationExists_shouldReturnOptionalOfLocation() {
+        UUID locationId = UUID.randomUUID();
+        Location testLocation = createTestLocation(locationId);
 
-        assertEquals("Location must be non-null", exception.getMessage());
-        verify(locationRepository, never()).save(any());
+        when(locationRepository.findById(locationId)).thenReturn(Optional.of(testLocation));
+
+        Optional<Location> result = locationService.findById(locationId);
+
+        assertTrue(result.isPresent());
+        assertEquals(locationId, result.get().getId());
+        verify(locationRepository).findById(locationId);
     }
 
     @Test
-    void findById_whenLocationIsPresent_shouldReturnLocation() {
-        Location location = createTestLocation();
-        when(locationRepository.findById(1L)).thenReturn(Optional.of(location));
+    void findById_whenLocationDoesNotExist_shouldReturnEmptyOptional() {
+        UUID locationId = UUID.randomUUID();
+        when(locationRepository.findById(locationId)).thenReturn(Optional.empty());
 
-        Optional<Location> foundLocation = locationService.findById(1L);
+        Optional<Location> result = locationService.findById(locationId);
 
-        verify(locationRepository, times(1)).findById(1L);
-        assertTrue(foundLocation.isPresent());
-        assertSame(location, foundLocation.get());
-        assertEquals(location.getId(), foundLocation.get().getId());
-        assertEquals(location.getCity(), foundLocation.get().getCity());
-        assertEquals(location.getState(), foundLocation.get().getState());
-        assertEquals(location.getZipCode(), foundLocation.get().getZipCode());
+        assertFalse(result.isPresent());
     }
 
     @Test
-    void findById_whenLocationNotFound_shouldReturnEmpty() {
-        when(locationRepository.findById(1L)).thenReturn(Optional.empty());
+    void deleteById_whenLocationExists_shouldSucceed() {
+        UUID locationId = UUID.randomUUID();
+        when(locationRepository.existsById(locationId)).thenReturn(true);
+        doNothing().when(locationRepository).deleteById(locationId);
 
-        Optional<Location> foundLocation = locationService.findById(1L);
+        locationService.deleteById(locationId);
 
-        verify(locationRepository, times(1)).findById(1L);
-        assertFalse(foundLocation.isPresent());
+        verify(locationRepository).deleteById(locationId);
     }
 
     @Test
-    void findById_withInvalidId_shouldThrowException() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> locationService.findById(-1L));
+    void deleteById_whenLocationDoesNotExist_shouldThrowLocationNotFoundException() {
+        UUID locationId = UUID.randomUUID();
+        when(locationRepository.existsById(locationId)).thenReturn(false);
 
-        assertEquals("Location ID must be non-negative", exception.getMessage());
-        verify(locationRepository, never()).findById(any());
+        assertThrows(LocationNotFoundException.class, () -> {
+            locationService.deleteById(locationId);
+        });
     }
 
     @Test
-    void deleteById_withValidId_shouldDeleteLocation() {
-        locationService.deleteById(1L);
+    void findAll_shouldReturnListOfLocations() {
+        when(locationRepository.findAll()).thenReturn(List.of(createTestLocation(UUID.randomUUID())));
 
-        verify(locationRepository, times(1)).deleteById(1L);
+        List<Location> results = locationService.findAll();
+
+        assertEquals(1, results.size());
     }
 
     @Test
-    void deleteById_withInvalidId_shouldThrowException() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> locationService.deleteById(-1L));
+    void findLocationsByCity_shouldCallRepository() {
+        String city = "New York";
+        when(locationRepository.findByCityIgnoreCase(city)).thenReturn(List.of(createTestLocation(UUID.randomUUID())));
 
-        assertEquals("Location ID must be non-negative", exception.getMessage());
-        verify(locationRepository, never()).findById(any());
+        locationService.findLocationsByCity(city);
+
+        verify(locationRepository).findByCityIgnoreCase(city);
     }
 
     @Test
-    void findAll_withMultipleLocations_shouldReturnAllLocations() {
-        Location location1 = createTestLocation();
-        Location location2 = new Location(2L, "Chisinau", "Chisinau", "1001");
-        List<Location> locations = Arrays.asList(location1, location2);
-        when(locationRepository.findAll()).thenReturn(locations);
+    void findLocationsByState_shouldCallRepository() {
+        String state = "New York";
+        when(locationRepository.findByStateIgnoreCase(state)).thenReturn(List.of(createTestLocation(UUID.randomUUID())));
 
-        Iterable<Location> result = locationService.findAll();
+        locationService.findLocationsByState(state);
 
-        verify(locationRepository, times(1)).findAll();
-        List<Location> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertEquals(2, resultList.size());
-        assertTrue(resultList.contains(location1));
-        assertTrue(resultList.contains(location2));
-        assertEquals(location1.getId(), resultList.get(0).getId());
-        assertEquals(location1.getCity(), resultList.get(0).getCity());
-        assertEquals(location1.getState(), resultList.get(0).getState());
-        assertEquals(location1.getZipCode(), resultList.get(0).getZipCode());
+        verify(locationRepository).findByStateIgnoreCase(state);
     }
 
     @Test
-    void findAll_withSingleLocation_shouldReturnSingleLocation() {
-        Location location = createTestLocation();
-        List<Location> locations = Collections.singletonList(location);
-        when(locationRepository.findAll()).thenReturn(locations);
+    void findLocationsByZipCode_shouldCallRepository() {
+        String zipCode = "10001";
+        when(locationRepository.findByZipCode(zipCode)).thenReturn(List.of(createTestLocation(UUID.randomUUID())));
 
-        Iterable<Location> result = locationService.findAll();
+        locationService.findLocationsByZipCode(zipCode);
 
-        verify(locationRepository, times(1)).findAll();
-        List<Location> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertEquals(1, resultList.size());
-        assertSame(location, resultList.get(0));
-        assertEquals(location.getId(), resultList.get(0).getId());
-        assertEquals(location.getCity(), resultList.get(0).getCity());
-        assertEquals(location.getState(), resultList.get(0).getState());
-        assertEquals(location.getZipCode(), resultList.get(0).getZipCode());
+        verify(locationRepository).findByZipCode(zipCode);
     }
 
     @Test
-    void findAll_withNoLocations_shouldReturnEmptyIterable() {
-        List<Location> locations = Collections.emptyList();
-        when(locationRepository.findAll()).thenReturn(locations);
+    void searchLocations_withCriteria_shouldCallRepositoryWithSpecification() {
+        String city = "New York";
+        when(locationRepository.findAll(any(Specification.class))).thenReturn(List.of(createTestLocation(UUID.randomUUID())));
+        List<Location> results = locationService.searchLocations(city, null);
 
-        Iterable<Location> result = locationService.findAll();
-
-        verify(locationRepository, times(1)).findAll();
-        List<Location> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertEquals(0, resultList.size());
-    }
-
-    @Test
-    void findLocationsByCity_withValidCity_shouldReturnLocations() throws SQLException {
-        Location location = createTestLocation();
-        List<Location> locations = List.of(location);
-        when(locationRepository.findByFilter(argThat(filter -> filter != null && filter.test(location) && location.getCity().equals("New York")))).thenReturn(locations);
-
-        List<Location> result = locationService.findLocationsByCity("New York");
-
-        assertEquals(1, result.size());
-        assertEquals(location, result.get(0));
-        verify(locationRepository, times(1)).findByFilter(argThat(filter -> filter != null && filter.test(location) && location.getCity().equals("New York")));
-    }
-
-    @Test
-    void findLocationsByState_withValidState_shouldReturnLocations() throws SQLException {
-        Location location = createTestLocation();
-        List<Location> locations = List.of(location);
-        when(locationRepository.findByFilter(argThat(filter -> filter != null && filter.test(location) && location.getState().equals("New York")))).thenReturn(locations);
-
-        List<Location> result = locationService.findLocationsByState("New York");
-
-        assertEquals(1, result.size());
-        assertEquals(location, result.get(0));
-        verify(locationRepository, times(1)).findByFilter(argThat(filter -> filter != null && filter.test(location) && location.getState().equals("New York")));
-    }
-
-    @Test
-    void findLocationsByZipCode_withValidZipCode_shouldReturnLocations() throws SQLException {
-        Location location = createTestLocation();
-        List<Location> locations = List.of(location);
-        when(locationRepository.findByFilter(argThat(filter -> filter != null && filter.test(location) && location.getZipCode().equals("10001")))).thenReturn(locations);
-
-        List<Location> result = locationService.findLocationsByZipCode("10001");
-
-        assertEquals(1, result.size());
-        assertEquals(location, result.get(0));
-        verify(locationRepository, times(1)).findByFilter(argThat(filter -> filter != null && filter.test(location) && location.getZipCode().equals("10001")));
+        assertFalse(results.isEmpty());
+        verify(locationRepository, times(1)).findAll(any(Specification.class));
     }
 }

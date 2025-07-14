@@ -3,18 +3,24 @@ package com.dynamiccarsharing.carsharing.service;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
+import com.dynamiccarsharing.carsharing.exception.CarNotFoundException;
+import com.dynamiccarsharing.carsharing.exception.CarReviewNotFoundException;
+import com.dynamiccarsharing.carsharing.exception.InvalidCarStatusException;
+import com.dynamiccarsharing.carsharing.exception.InvalidVerificationStatusException;
 import com.dynamiccarsharing.carsharing.model.Car;
-import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.repository.CarRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.CarFilter;
-import com.dynamiccarsharing.carsharing.util.Validator;
+import com.dynamiccarsharing.carsharing.repository.specification.CarSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
+@Transactional
 public class CarService {
 
     private final CarRepository carRepository;
@@ -24,18 +30,18 @@ public class CarService {
     }
 
     public Car save(Car car) {
-        Validator.validateNonNull(car, "Car");
-        carRepository.save(car);
-        return car;
+        return carRepository.save(car);
     }
 
-    public Optional<Car> findById(Long id) {
-        Validator.validateId(id, "Car ID");
+    public Optional<Car> findById(UUID id) {
         return carRepository.findById(id);
     }
 
-    public void deleteById(Long id) {
-        Validator.validateId(id, "Car ID");
+    public void deleteById(UUID id) {
+        if (!carRepository.existsById(id)) {
+            throw new CarNotFoundException("Car with ID " + id + " not found.");
+        }
+
         carRepository.deleteById(id);
     }
 
@@ -43,92 +49,73 @@ public class CarService {
         return carRepository.findAll();
     }
 
-
-    public Car rentCar(Long carId) {
+    public Car rentCar(UUID carId) {
         Car car = getCarOrThrow(carId);
-        validateCarStatus(car.getStatus(), CarStatus.AVAILABLE, "Car can only be rented if AVAILABLE");
+        if (car.getStatus() != CarStatus.AVAILABLE) {
+            throw new InvalidCarStatusException("Car can only be rented if AVAILABLE");
+        }
         return carRepository.save(car.withStatus(CarStatus.RENTED));
     }
 
-    public Car returnCar(Long carId) {
+    public Car returnCar(UUID carId) {
         Car car = getCarOrThrow(carId);
         validateCarStatus(car.getStatus(), CarStatus.RENTED, "Car can only be returned if RENTED");
         return carRepository.save(car.withStatus(CarStatus.AVAILABLE));
     }
 
-    public Car setMaintenance(Long carId) {
+    public Car setMaintenance(UUID carId) {
         Car car = getCarOrThrow(carId);
         validateCarStatus(car.getStatus(), CarStatus.AVAILABLE, "Cannot set MAINTENANCE for a RENTED car");
         return carRepository.save(car.withStatus(CarStatus.MAINTENANCE));
     }
 
-    public Car verifyCar(Long carId) {
+    public Car verifyCar(UUID carId) {
         Car car = getCarOrThrow(carId);
-        validateVerificationStatus(car.getVerificationStatus(), VerificationStatus.PENDING, "Car can only be verified from PENDING status");
+        validateVerificationStatus(car.getVerificationStatus(), "Car can only be verified from PENDING status");
         return carRepository.save(car.withVerificationStatus(VerificationStatus.VERIFIED));
     }
 
-    public Car rejectVerification(Long carId) {
+    public Car rejectVerification(UUID carId) {
         Car car = getCarOrThrow(carId);
-        validateVerificationStatus(car.getVerificationStatus(), VerificationStatus.PENDING, "Car can only be rejected from PENDING status");
+        validateVerificationStatus(car.getVerificationStatus(), "Car can only be rejected from PENDING status");
         return carRepository.save(car.withVerificationStatus(VerificationStatus.REJECTED));
     }
 
-    public Car updatePrice(Long carId, double newPrice) {
-        Validator.validateNonNegativeDouble(newPrice, "New Price");
+
+    public Car updatePrice(UUID carId, BigDecimal newPrice) {
+        if (newPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("New Price must not be negative.");
+        }
         Car car = getCarOrThrow(carId);
         return carRepository.save(car.withPrice(newPrice));
     }
 
-    private void validateCarStatus(CarStatus currentStatus, CarStatus expectedStatus, String errorMessage) {
+    public List<Car> searchCars(String make, String model, CarStatus status, UUID locationId, CarType type, VerificationStatus verificationStatus) {
+        Specification<Car> spec = Specification
+                .where(make != null ? CarSpecification.hasMake(make) : null)
+                .and(model != null ? CarSpecification.hasModel(model) : null)
+                .and(status != null ? CarSpecification.hasStatus(status) : null)
+                .and(locationId != null ? CarSpecification.hasLocationId(locationId) : null)
+                .and(type != null ? CarSpecification.hasType(type) : null)
+                .and(verificationStatus != null ? CarSpecification.hasVerificationStatus(verificationStatus) : null);
+
+        return carRepository.findAll(spec);
+    }
+
+    private Car getCarOrThrow(UUID carId) {
+        return carRepository.findById(carId).orElseThrow(() -> new CarNotFoundException("Car with ID " + carId + " not found"));
+
+    }
+
+    private void validateCarStatus(CarStatus currentStatus, CarStatus expectedStatus, String message) {
         if (currentStatus != expectedStatus) {
-            throw new IllegalStateException(errorMessage);
+            throw new InvalidCarStatusException(message);
         }
     }
 
-    private void validateVerificationStatus(VerificationStatus currentStatus, VerificationStatus expectedStatus, String errorMessage) {
-        if (currentStatus != expectedStatus) {
-            throw new IllegalStateException(errorMessage);
+    private void validateVerificationStatus(VerificationStatus currentStatus, String message) {
+        if (currentStatus != VerificationStatus.PENDING) {
+            throw new InvalidVerificationStatusException(message);
         }
-    }
-
-    private Car getCarOrThrow(Long carId) {
-        return findById(carId).orElseThrow(() -> new IllegalArgumentException("Car with ID " + carId + " not found"));
-    }
-
-    public List<Car> findCarsByMake(String make) throws SQLException {
-        Validator.validateNonEmptyString(make, "Car Make");
-        CarFilter filter = CarFilter.ofMake(make);
-        return carRepository.findByFilter(filter);
-    }
-
-    public List<Car> findCarsByModel(String model) throws SQLException {
-        Validator.validateNonEmptyString(model, "Model");
-        CarFilter filter = CarFilter.ofModel(model);
-        return carRepository.findByFilter(filter);
-    }
-
-    public List<Car> findCarsByCarStatus(CarStatus carStatus) throws SQLException {
-        Validator.validateNonNull(carStatus, "Car status");
-        CarFilter filter = CarFilter.ofStatus(carStatus);
-        return carRepository.findByFilter(filter);
-    }
-
-    public List<Car> findCarsByLocation(Location location) throws SQLException {
-        Validator.validateNonNull(location, "Location");
-        CarFilter filter = CarFilter.ofLocation(location);
-        return carRepository.findByFilter(filter);
-    }
-
-    public List<Car> findCarsByType(CarType carType) throws SQLException {
-        Validator.validateNonNull(carType, "Car type");
-        CarFilter filter = CarFilter.ofType(carType);
-        return carRepository.findByFilter(filter);
-    }
-
-    public List<Car> findCarsByVerificationStatus(VerificationStatus verificationStatus) throws SQLException {
-        Validator.validateNonNull(verificationStatus, "Verification status");
-        CarFilter filter = CarFilter.ofVerificationStatus(verificationStatus);
-        return carRepository.findByFilter(filter);
     }
 }

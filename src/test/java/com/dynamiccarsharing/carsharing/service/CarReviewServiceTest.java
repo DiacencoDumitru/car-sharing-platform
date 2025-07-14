@@ -1,18 +1,20 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.dao.CarReviewDao;
+import com.dynamiccarsharing.carsharing.exception.CarReviewNotFoundException;
+import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.CarReview;
-import com.dynamiccarsharing.carsharing.repository.filter.CarReviewFilter;
+import com.dynamiccarsharing.carsharing.model.User;
+import com.dynamiccarsharing.carsharing.repository.CarReviewRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,160 +22,109 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
 
+
+@ExtendWith(MockitoExtension.class)
 class CarReviewServiceTest {
 
     @Mock
-    CarReviewDao carReviewRepository;
+    private CarReviewRepository carReviewRepository;
 
     private CarReviewService carReviewService;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        reset(carReviewRepository);
         carReviewService = new CarReviewService(carReviewRepository);
     }
 
-    private CarReview createTestCarReview() {
-        return new CarReview(1L, 2L, 2L, "Test review");
+    private CarReview createTestCarReview(UUID id) {
+        return CarReview.builder()
+                .id(id)
+                .car(Car.builder().id(UUID.randomUUID()).build())
+                .reviewer(User.builder().id(UUID.randomUUID()).build())
+                .comment("Excellent car!")
+                .build();
     }
 
     @Test
-    void save_shouldCallRepository_shouldReturnSameCarReview()  {
-        CarReview carReview = createTestCarReview();
-        when(carReviewRepository.save(carReview)).thenReturn(carReview);
+    void save_shouldCallRepositoryAndReturnReview() {
+        CarReview reviewToSave = createTestCarReview(null);
+        CarReview savedReview = createTestCarReview(UUID.randomUUID());
+        when(carReviewRepository.save(reviewToSave)).thenReturn(savedReview);
 
-        CarReview savedCarReview = carReviewService.save(carReview);
+        CarReview result = carReviewService.save(reviewToSave);
 
-        verify(carReviewRepository, times(1)).save(carReview);
-        assertNotNull(savedCarReview);
-        assertEquals(carReview.getId(), savedCarReview.getId());
-        assertEquals(carReview.getReviewerId(), savedCarReview.getReviewerId());
-        assertEquals(carReview.getComment(), savedCarReview.getComment());
+        assertNotNull(result);
+        assertNotNull(result.getId());
+        assertEquals("Excellent car!", result.getComment());
+        verify(carReviewRepository).save(reviewToSave);
     }
 
     @Test
-    void save_whenCarReviewIsNull_shouldThrowException() {
-        assertThrows(IllegalArgumentException.class, () -> carReviewService.save(null));
+    void findById_whenReviewExists_shouldReturnOptionalOfReview() {
+        UUID reviewId = UUID.randomUUID();
+        CarReview testReview = createTestCarReview(reviewId);
+        when(carReviewRepository.findById(reviewId)).thenReturn(Optional.of(testReview));
+
+        Optional<CarReview> result = carReviewService.findById(reviewId);
+
+        assertTrue(result.isPresent());
+        assertEquals(reviewId, result.get().getId());
+        verify(carReviewRepository).findById(reviewId);
     }
 
     @Test
-    void findById_whenCarReviewIsPresent_shouldReturnCarReview() {
-        CarReview carReview = createTestCarReview();
-        when(carReviewRepository.findById(1L)).thenReturn(Optional.of(carReview));
+    void findById_whenReviewDoesNotExist_shouldReturnEmptyOptional() {
+        UUID reviewId = UUID.randomUUID();
+        when(carReviewRepository.findById(reviewId)).thenReturn(Optional.empty());
 
-        Optional<CarReview> foundCarReview = carReviewService.findById(1L);
+        Optional<CarReview> result = carReviewService.findById(reviewId);
 
-        verify(carReviewRepository, times(1)).findById(1L);
-        assertTrue(foundCarReview.isPresent());
-        assertEquals(carReview, foundCarReview.get());
-        assertEquals("Test review", foundCarReview.get().getComment());
+        assertFalse(result.isPresent());
     }
 
     @Test
-    void findById_whenCarReviewNotFound_shouldReturnEmpty() {
-        when(carReviewRepository.findById(1L)).thenReturn(Optional.empty());
+    void findAll_shouldReturnListOfReviews() {
+        CarReview review1 = createTestCarReview(UUID.randomUUID());
+        CarReview review2 = createTestCarReview(UUID.randomUUID());
+        when(carReviewRepository.findAll()).thenReturn(List.of(review1, review2));
 
-        Optional<CarReview> foundBook = carReviewService.findById(1L);
+        List<CarReview> results = carReviewService.findAll();
 
-        verify(carReviewRepository, times(1)).findById(1L);
-        assertFalse(foundBook.isPresent());
+        assertEquals(2, results.size());
+        verify(carReviewRepository).findAll();
     }
 
     @Test
-    void findById_withInvalidId_shouldThrowException() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> carReviewService.findById(-1L));
+    void deleteById_whenReviewExists_shouldCallRepositoryDelete() {
+        UUID reviewId = UUID.randomUUID();
+        when(carReviewRepository.existsById(reviewId)).thenReturn(true);
+        doNothing().when(carReviewRepository).deleteById(reviewId);
 
-        assertEquals("CarReview ID must be non-negative", exception.getMessage());
-        verify(carReviewRepository, never()).findById(any());
+        carReviewService.deleteById(reviewId);
+
+        verify(carReviewRepository).deleteById(reviewId);
     }
 
     @Test
-    void deleteById_withValidId_shouldDeleteCarReview() {
-        carReviewService.deleteById(1L);
+    void deleteById_whenReviewDoesNotExist_shouldThrowCarReviewNotFoundException() {
+        UUID reviewId = UUID.randomUUID();
+        when(carReviewRepository.existsById(reviewId)).thenReturn(false);
 
-        verify(carReviewRepository, times(1)).deleteById(1L);
+        assertThrows(CarReviewNotFoundException.class, () -> {
+            carReviewService.deleteById(reviewId);
+        });
+        verify(carReviewRepository, never()).deleteById(any());
     }
 
     @Test
-    void deleteById_withInvalidId_shouldThrowException() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> carReviewService.deleteById(-1L));
+    void searchReviews_withCriteria_shouldCallRepositoryWithSpecification() {
+        UUID carId = UUID.randomUUID();
+        List<CarReview> expectedReviews = List.of(createTestCarReview(UUID.randomUUID()));
+        when(carReviewRepository.findAll(any(Specification.class))).thenReturn(expectedReviews);
 
-        assertEquals("CarReview ID must be non-negative", exception.getMessage());
-        verify(carReviewRepository, never()).findById(any());
-    }
+        List<CarReview> results = carReviewService.searchReviews(carId, null);
 
-    @Test
-    void findAll_withMultipleCarReviews_shouldReturnAllCarReviews() {
-        CarReview carReview1 = createTestCarReview();
-        CarReview carReview2 = new CarReview(2L, 3L,    3L, "Test review2");
-        List<CarReview> carReviews = Arrays.asList(carReview1, carReview2);
-        when(carReviewRepository.findAll()).thenReturn(carReviews);
-
-        Iterable<CarReview> result = carReviewService.findAll();
-
-        verify(carReviewRepository, times(1)).findAll();
-        assertEquals(carReviews, result);
-        List<CarReview> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertIterableEquals(carReviews, result);
-        assertEquals(2, resultList.size());
-        assertTrue(resultList.contains(carReview1));
-        assertTrue(resultList.contains(carReview2));
-    }
-
-    @Test
-    void findAll_withSingleCarReview_shouldReturnSingleCarReview() {
-        CarReview carReview = createTestCarReview();
-        List<CarReview> carReviews = Collections.singletonList(carReview);
-        when(carReviewRepository.findAll()).thenReturn(carReviews);
-
-        Iterable<CarReview> result = carReviewService.findAll();
-
-        verify(carReviewRepository, times(1)).findAll();
-        assertEquals(carReviews, result);
-        List<CarReview> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertIterableEquals(carReviews, result);
-        assertEquals(1, resultList.size());
-        assertEquals(carReview, resultList.get(0));
-    }
-
-    @Test
-    void findAll_withNoCarReviews_shouldReturnEmptyIterable() {
-        List<CarReview> carReviews = Collections.emptyList();
-        when(carReviewRepository.findAll()).thenReturn(carReviews);
-
-        Iterable<CarReview> result = carReviewService.findAll();
-
-        verify(carReviewRepository, times(1)).findAll();
-        assertEquals(carReviews, result);
-        List<CarReview> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertIterableEquals(carReviews, result);
-        assertEquals(0, resultList.size());
-    }
-
-    @Test
-    void findCarReviewsByCarId_withValidCarId_shouldReturnCarReviews() throws SQLException {
-        CarReview carReview = createTestCarReview();
-        List<CarReview> carReviews = List.of(carReview);
-        when(carReviewRepository.findByFilter(argThat(filter -> filter != null && filter.test(carReview) && carReview.getId().equals(1L)))).thenReturn(carReviews);
-
-        List<CarReview> result = carReviewService.findCarReviewsByCarId(1L);
-
-        assertEquals(1, result.size());
-        assertEquals(carReview, result.get(0));
-        verify(carReviewRepository, times(1)).findByFilter(argThat(filter -> filter != null && filter.test(carReview) && carReview.getId().equals(1L)));
-    }
-
-    @Test
-    void findCarReviewsByReviewerId_withValidCarId_shouldReturnCarReviews() throws SQLException {
-        CarReview carReview = createTestCarReview();
-        List<CarReview> carReviews = List.of(carReview);
-        when(carReviewRepository.findByFilter(any(CarReviewFilter.class))).thenReturn(carReviews);
-
-        List<CarReview> result = carReviewService.findCarReviewsByReviewerId(2L);
-
-        assertEquals(1, result.size());
-        assertEquals(carReview, result.get(0));
-        verify(carReviewRepository, times(1)).findByFilter(any(CarReviewFilter.class));
+        assertFalse(results.isEmpty());
+        verify(carReviewRepository, times(1)).findAll(any(Specification.class));
     }
 }

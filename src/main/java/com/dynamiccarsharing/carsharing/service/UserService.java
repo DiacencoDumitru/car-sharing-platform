@@ -2,20 +2,21 @@ package com.dynamiccarsharing.carsharing.service;
 
 import com.dynamiccarsharing.carsharing.enums.UserRole;
 import com.dynamiccarsharing.carsharing.enums.UserStatus;
+import com.dynamiccarsharing.carsharing.exception.InvalidUserStatusException;
+import com.dynamiccarsharing.carsharing.exception.UserNotFoundException;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.repository.UserRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.UserFilter;
-import com.dynamiccarsharing.carsharing.util.Validator;
-import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
+@Transactional
 public class UserService {
 
     private final UserRepository userRepository;
@@ -24,113 +25,90 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    @SneakyThrows
     public User save(User user) {
-        Validator.validateNonNull(user, "User");
         return userRepository.save(user);
     }
 
-    public Optional<User> findById(Long id) {
-        Validator.validateId(id, "User ID");
+    public Optional<User> findById(UUID id) {
         return userRepository.findById(id);
     }
 
-    public void deleteById(Long id) {
-        Validator.validateId(id, "User ID");
+    public void deleteById(UUID id) {
+        if (!userRepository.existsById(id)) {
+            throw new UserNotFoundException("User with ID " + id + " not found.");
+        }
         userRepository.deleteById(id);
     }
 
-    public Iterable<User> findAll() {
+    public List<User> findAll() {
         return userRepository.findAll();
     }
 
-    private User getUserOrThrow(Long id) {
-        return userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("User with ID " + id + " not found"));
-    }
-
-    @SneakyThrows
-    public User suspend(Long id) {
+    public User suspend(UUID id) {
         User user = getUserOrThrow(id);
         validateUserStatus(user.getStatus(), UserStatus.ACTIVE, "Only active users can be suspended");
         return userRepository.save(user.withStatus(UserStatus.SUSPENDED));
     }
 
-    @SneakyThrows
-    public User ban(Long id) {
+    public User ban(UUID id) {
         User user = getUserOrThrow(id);
         validateUserStatus(user.getStatus(), UserStatus.ACTIVE, "Only active users can be banned");
         return userRepository.save(user.withStatus(UserStatus.BANNED));
     }
 
-    @SneakyThrows
-    public User activate(Long id) {
+    public User activate(UUID id) {
         User user = getUserOrThrow(id);
         validateUserStatus(user.getStatus(), UserStatus.SUSPENDED, "Only suspended users can be activated");
         return userRepository.save(user.withStatus(UserStatus.ACTIVE));
     }
 
-    @SneakyThrows
-    public User addCar(Long userId, Car car) {
-        Validator.validateNonNull(car, "Car");
-        User user = getUserOrThrow(userId);
-        List<Car> updatedCars = new ArrayList<>(user.getCars());
-        updatedCars.add(car);
-        return userRepository.save(user.withCars(updatedCars));
+    public User addCarToUser(UUID userId, Car car) {
+        User user = userRepository.findWithCarsById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " not found"));
+        user.getCars().add(car);
+        return user;
     }
 
-    @SneakyThrows
-    public User removeCar(Long userId, Car car) {
-        Validator.validateNonNull(car, "Car");
-        User user = getUserOrThrow(userId);
-        List<Car> updatedCars = new ArrayList<>(user.getCars());
-        if (!updatedCars.remove(car)) {
-            throw new IllegalArgumentException("Car not found in user's list");
-        }
-        return userRepository.save(user.withCars(updatedCars));
+    public User removeCarFromUser(UUID userId, Car car) {
+        User user = userRepository.findWithCarsById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " not found"));
+        user.getCars().remove(car);
+        return user;
     }
 
-    @SneakyThrows
-    public User updateContactInfo(Long userId, ContactInfo newContactInfo) {
-        Validator.validateNonNull(newContactInfo, "Contact information");
+    public User updateContactInfo(UUID userId, ContactInfo newContactInfo) {
         User user = getUserOrThrow(userId);
         return userRepository.save(user.withContactInfo(newContactInfo));
     }
 
-    @SneakyThrows
-    public User signUp(String email, String password, ContactInfo contactInfo, UserRole role) {
-        Validator.validateEmail(email, "Email");
-        Validator.validateNonEmptyString(password, "Password");
-        Validator.validateNonNull(contactInfo, "Contact information");
-        Validator.validateNonNull(role, "Role");
-
-        User newUser = new User(null, contactInfo, role, UserStatus.ACTIVE, new ArrayList<>());
+    public User signUp(ContactInfo contactInfo, UserRole role) {
+        User newUser = User.builder()
+                .contactInfo(contactInfo)
+                .role(role)
+                .status(UserStatus.ACTIVE)
+                .build();
         return userRepository.save(newUser);
+    }
+
+    public List<User> findUsersByRole(UserRole role) {
+        return userRepository.findByRole(role);
+    }
+
+    public List<User> findUsersByStatus(UserStatus status) {
+        return userRepository.findByStatus(status);
+    }
+
+    public Optional<User> findUserByEmail(String email) {
+        return userRepository.findByContactInfoEmail(email);
+    }
+
+    private User getUserOrThrow(UUID id) {
+        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User with ID " + id + " not found"));
     }
 
     private void validateUserStatus(UserStatus currentStatus, UserStatus expectedStatus, String errorMessage) {
         if (currentStatus != expectedStatus) {
-            throw new IllegalStateException(errorMessage);
+            throw new InvalidUserStatusException(errorMessage);
         }
-    }
-
-    @SneakyThrows
-    public List<User> findUsersByRole(UserRole role) {
-        Validator.validateNonNull(role, "User role");
-        UserFilter filter = UserFilter.ofRole(role);
-        return userRepository.findByFilter(filter);
-    }
-
-    @SneakyThrows
-    public List<User> findUsersByStatus(UserStatus status) {
-        Validator.validateNonNull(status, "User status");
-        UserFilter filter = UserFilter.ofStatus(status);
-        return userRepository.findByFilter(filter);
-    }
-
-    @SneakyThrows
-    public List<User> findUsersByEmail(String email) {
-        Validator.validateEmail(email, "User email");
-        UserFilter filter = UserFilter.ofEmail(email);
-        return userRepository.findByFilter(filter);
     }
 }

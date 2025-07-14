@@ -1,205 +1,140 @@
 package com.dynamiccarsharing.carsharing.service;
 
+import com.dynamiccarsharing.carsharing.exception.ContactInfoNotFoundException;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.repository.ContactInfoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.StreamSupport;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
 
+@ExtendWith(MockitoExtension.class)
 class ContactInfoServiceTest {
 
     @Mock
-    ContactInfoRepository contactInfoRepository;
+    private ContactInfoRepository contactInfoRepository;
 
     private ContactInfoService contactInfoService;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        reset(contactInfoRepository);
         contactInfoService = new ContactInfoService(contactInfoRepository);
     }
 
-    private ContactInfo createTestContactInfo() {
-        return new ContactInfo(1L, "Dumitru", "Diacenco", "dd.prodev@gmail.com", "37367773888");
+    private ContactInfo createTestContactInfo(UUID id) {
+        return ContactInfo.builder()
+                .id(id)
+                .firstName("Dumitru")
+                .lastName("Diacenco")
+                .email("dd.prodev@gmail.com")
+                .phoneNumber("+37367773888")
+                .build();
     }
 
     @Test
-    void save_shouldCallRepository_shouldReturnSameContactInfo()  {
-        ContactInfo contactInfo = createTestContactInfo();
+    void save_shouldCallRepositoryAndReturnContactInfo() {
+        ContactInfo contactInfoToSave = createTestContactInfo(null);
+        ContactInfo savedContactInfo = createTestContactInfo(UUID.randomUUID());
+        when(contactInfoRepository.save(contactInfoToSave)).thenReturn(savedContactInfo);
 
-        when(contactInfoRepository.save(contactInfo)).thenReturn(contactInfo);
+        ContactInfo result = contactInfoService.save(contactInfoToSave);
 
-        ContactInfo savedContactInfo = contactInfoService.save(contactInfo);
-
-        verify(contactInfoRepository, times(1)).save(contactInfo);
-        assertEquals(contactInfo.getId(), savedContactInfo.getId());
-        assertEquals(contactInfo.getFirstName(), savedContactInfo.getFirstName());
-        assertEquals(contactInfo.getLastName(), savedContactInfo.getLastName());
-        assertEquals(contactInfo.getEmail(), savedContactInfo.getEmail());
-        assertEquals(contactInfo.getPhoneNumber(), savedContactInfo.getPhoneNumber());
+        assertNotNull(result);
+        assertNotNull(result.getId());
+        assertEquals("dd.prodev@gmail.com", result.getEmail());
+        verify(contactInfoRepository).save(contactInfoToSave);
     }
 
     @Test
-    void save_whenContactInfoIsNull_shouldThrowException() {
-        assertThrows(IllegalArgumentException.class, () -> contactInfoService.save(null));
+    void findById_whenContactInfoExists_shouldReturnOptionalOfContactInfo() {
+        UUID contactId = UUID.randomUUID();
+        ContactInfo testContactInfo = createTestContactInfo(contactId);
+        when(contactInfoRepository.findById(contactId)).thenReturn(Optional.of(testContactInfo));
+
+        Optional<ContactInfo> result = contactInfoService.findById(contactId);
+
+        assertTrue(result.isPresent());
+        assertEquals(contactId, result.get().getId());
     }
 
     @Test
-    void findById_whenContactInfoIsPresent_shouldReturnContactInfo() {
-        ContactInfo contactInfo = createTestContactInfo();
-        when(contactInfoRepository.findById(1L)).thenReturn(Optional.of(contactInfo));
+    void findById_whenContactInfoNotExist_shouldReturnEmptyOptional() {
+        UUID contactId = UUID.randomUUID();
+        when(contactInfoRepository.findById(contactId)).thenReturn(Optional.empty());
 
-        Optional<ContactInfo> foundContactInfo = contactInfoService.findById(1L);
+        Optional<ContactInfo> result = contactInfoService.findById(contactId);
 
-        verify(contactInfoRepository, times(1)).findById(1L);
-        assertTrue(foundContactInfo.isPresent());
-        assertEquals(contactInfo, foundContactInfo.get());
+        assertFalse(result.isPresent());
     }
 
     @Test
-    void findById_whenContactInfoNotFound_shouldReturnEmpty() {
-        when(contactInfoRepository.findById(1L)).thenReturn(Optional.empty());
+    void deleteById_whenContactInfoExists_shouldSucceed() {
+        UUID contactId = UUID.randomUUID();
+        when(contactInfoRepository.existsById(contactId)).thenReturn(true);
+        doNothing().when(contactInfoRepository).deleteById(contactId);
 
-        Optional<ContactInfo> foundBook = contactInfoService.findById(1L);
+        contactInfoService.deleteById(contactId);
 
-        verify(contactInfoRepository, times(1)).findById(1L);
-        assertFalse(foundBook.isPresent());
+        verify(contactInfoRepository).deleteById(contactId);
     }
 
     @Test
-    void findById_withInvalidId_shouldThrowException() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> contactInfoService.findById(-1L));
+    void deleteById_whenContactInfoNotExist_shouldThrowContactInfoNotFoundException() {
+        UUID contactId = UUID.randomUUID();
+        when(contactInfoRepository.existsById(contactId)).thenReturn(false);
 
-        assertEquals("Contact Info ID must be non-negative", exception.getMessage());
-        verify(contactInfoRepository, never()).findById(any());
+        assertThrows(ContactInfoNotFoundException.class, () -> {
+            contactInfoService.deleteById(contactId);
+        });
+        verify(contactInfoRepository, never()).deleteById(any());
     }
 
     @Test
-    void deleteById_withValidId_shouldDeleteContactInfo() {
-        contactInfoService.deleteById(1L);
+    void findAll_shouldReturnListOfContactInfos() {
+        when(contactInfoRepository.findAll()).thenReturn(List.of(createTestContactInfo(UUID.randomUUID())));
 
-        verify(contactInfoRepository, times(1)).deleteById(1L);
+        List<ContactInfo> results = contactInfoService.findAll();
+
+        assertEquals(1, results.size());
     }
 
     @Test
-    void deleteById_withInvalidId_shouldThrowException() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> contactInfoService.deleteById(-1L));
+    void findContactInfoByEmail_shouldCallRepository() {
+        String email = "test@example.com";
+        when(contactInfoRepository.findByEmail(email)).thenReturn(Optional.of(createTestContactInfo(UUID.randomUUID())));
 
-        assertEquals("Contact Info ID must be non-negative", exception.getMessage());
-        verify(contactInfoRepository, never()).findById(any());
+        contactInfoService.findContactInfoByEmail(email);
+
+        verify(contactInfoRepository).findByEmail(email);
     }
 
     @Test
-    void findAll_withMultipleContactInfos_shouldReturnAllContactInfos() {
-        ContactInfo contactInfo1 = createTestContactInfo();
-        ContactInfo contactInfo2 = new ContactInfo(2L, "Vitalii", "Diacenco", "dv.prodev@gmail.com", "37368883888");
-        List<ContactInfo> contactInfos = Arrays.asList(contactInfo1, contactInfo2);
-        when(contactInfoRepository.findAll()).thenReturn(contactInfos);
+    void findContactInfoByPhoneNumber_shouldCallRepository() {
+        String phone = "555-1234";
+        when(contactInfoRepository.findByPhoneNumber(phone)).thenReturn(List.of(createTestContactInfo(UUID.randomUUID())));
 
-        Iterable<ContactInfo> result = contactInfoService.findAll();
+        contactInfoService.findContactInfoByPhoneNumber(phone);
 
-        verify(contactInfoRepository, times(1)).findAll();
-        assertEquals(contactInfos, result);
-        List<ContactInfo> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertIterableEquals(contactInfos, result);
-        assertEquals(2, resultList.size());
-        assertTrue(resultList.contains(contactInfo1));
-        assertTrue(resultList.contains(contactInfo2));
+        verify(contactInfoRepository).findByPhoneNumber(phone);
     }
 
     @Test
-    void findAll_withSingleContactInfo_shouldReturnSingleContactInfo() {
-        ContactInfo contactInfo = createTestContactInfo();
-        List<ContactInfo> contactInfos = Collections.singletonList(contactInfo);
-        when(contactInfoRepository.findAll()).thenReturn(contactInfos);
+    void searchContacts_withCriteria_shouldCallRepositoryWithSpecification() {
+        String firstName = "Dumitru";
+        when(contactInfoRepository.findAll(any(Specification.class))).thenReturn(List.of(createTestContactInfo(UUID.randomUUID())));
 
-        Iterable<ContactInfo> result = contactInfoService.findAll();
+        List<ContactInfo> results = contactInfoService.searchContacts(firstName, null, null);
 
-        verify(contactInfoRepository, times(1)).findAll();
-        assertEquals(contactInfos, result);
-        List<ContactInfo> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertIterableEquals(contactInfos, result);
-        assertEquals(1, resultList.size());
-        assertEquals(contactInfo, resultList.get(0));
-    }
-
-    @Test
-    void findAll_withNoContactInfos_shouldReturnEmptyIterable() {
-        List<ContactInfo> contactInfos = Collections.emptyList();
-        when(contactInfoRepository.findAll()).thenReturn(contactInfos);
-
-        Iterable<ContactInfo> result = contactInfoService.findAll();
-
-        verify(contactInfoRepository, times(1)).findAll();
-        assertEquals(contactInfos, result);
-        List<ContactInfo> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertIterableEquals(contactInfos, result);
-        assertEquals(0, resultList.size());
-    }
-
-    @Test
-    void findContactInfoByEmail_withValidEmail_shouldReturnContacts() throws SQLException {
-        ContactInfo contactInfo = createTestContactInfo();
-        List<ContactInfo> contactInfos = List.of(contactInfo);
-        when(contactInfoRepository.findByFilter(argThat(filter -> filter != null && filter.test(contactInfo) && contactInfo.getEmail().equals("dd.prodev@gmail.com")))).thenReturn(contactInfos);
-
-        List<ContactInfo> result = contactInfoService.findContactInfoByEmail("dd.prodev@gmail.com");
-
-        assertEquals(1, result.size());
-        assertEquals(contactInfo, result.get(0));
-        verify(contactInfoRepository, times(1)).findByFilter(argThat(filter -> filter != null && filter.test(contactInfo) && contactInfo.getEmail().equals("dd.prodev@gmail.com")));
-    }
-
-    @Test
-    void findContactInfoByPhoneNumber_withValidPhoneNumber_shouldReturnContacts() throws SQLException {
-        ContactInfo contactInfo = createTestContactInfo();
-        List<ContactInfo> contactInfos = List.of(contactInfo);
-        when(contactInfoRepository.findByFilter(argThat(filter -> filter != null && filter.test(contactInfo) && contactInfo.getPhoneNumber().equals("37367773888")))).thenReturn(contactInfos);
-
-        List<ContactInfo> result = contactInfoService.findContactInfoByPhoneNumber("37367773888");
-
-        assertEquals(1, result.size());
-        assertEquals(contactInfo, result.get(0));
-        verify(contactInfoRepository, times(1)).findByFilter(argThat(filter -> filter != null && filter.test(contactInfo) && contactInfo.getPhoneNumber().equals("37367773888")));
-    }
-
-    @Test
-    void findContactInfoByFirstName_withValidFirstName_shouldReturnContacts() throws SQLException {
-        ContactInfo contactInfo = createTestContactInfo();
-        List<ContactInfo> contactInfos = List.of(contactInfo);
-        when(contactInfoRepository.findByFilter(argThat(filter -> filter != null && filter.test(contactInfo) && contactInfo.getFirstName().equals("Dumitru")))).thenReturn(contactInfos);
-
-        List<ContactInfo> result = contactInfoService.findContactInfoByFirstName("Dumitru");
-
-        assertEquals(1, result.size());
-        assertEquals(contactInfo, result.get(0));
-        verify(contactInfoRepository, times(1)).findByFilter(argThat(filter -> filter != null && filter.test(contactInfo) && contactInfo.getFirstName().equals("Dumitru")));
-    }
-
-    @Test
-    void findContactInfoByLastName_withValidLastName_shouldReturnContacts() throws SQLException {
-        ContactInfo contactInfo = createTestContactInfo();
-        List<ContactInfo> contactInfos = List.of(contactInfo);
-        when(contactInfoRepository.findByFilter(argThat(filter -> filter != null && filter.test(contactInfo) && contactInfo.getLastName().equals("Diacenco")))).thenReturn(contactInfos);
-
-        List<ContactInfo> result = contactInfoService.findContactInfoByLastName("Diacenco");
-
-        assertEquals(1, result.size());
-        assertEquals(contactInfo, result.get(0));
-        verify(contactInfoRepository, times(1)).findByFilter(argThat(filter -> filter != null && filter.test(contactInfo) && contactInfo.getLastName().equals("Diacenco")));
+        assertFalse(results.isEmpty());
+        verify(contactInfoRepository, times(1)).findAll(any(Specification.class));
     }
 }

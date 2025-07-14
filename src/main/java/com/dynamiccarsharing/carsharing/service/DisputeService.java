@@ -1,19 +1,24 @@
 package com.dynamiccarsharing.carsharing.service;
 
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
+import com.dynamiccarsharing.carsharing.exception.DisputeNotFoundException;
+import com.dynamiccarsharing.carsharing.exception.InvalidDisputeStatusException;
 import com.dynamiccarsharing.carsharing.model.Dispute;
 import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.DisputeFilter;
-import com.dynamiccarsharing.carsharing.util.Validator;
+import com.dynamiccarsharing.carsharing.repository.specification.DisputeSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
+@Transactional
 public class DisputeService {
+
     private final DisputeRepository disputeRepository;
 
     public DisputeService(DisputeRepository disputeRepository) {
@@ -21,52 +26,56 @@ public class DisputeService {
     }
 
     public Dispute save(Dispute dispute) {
-        Validator.validateNonNull(dispute, "Dispute");
         return disputeRepository.save(dispute);
     }
 
-    public Optional<Dispute> findById(Long id) {
-        Validator.validateId(id, "Dispute ID");
+    public Optional<Dispute> findById(UUID id) {
         return disputeRepository.findById(id);
     }
 
-    public void deleteById(Long id) {
-        Validator.validateId(id, "Dispute ID");
+    public void deleteById(UUID id) {
+        if (!disputeRepository.existsById(id)) {
+            throw new DisputeNotFoundException("Dispute with ID " + id + " not found.");
+        }
         disputeRepository.deleteById(id);
     }
 
-    public Iterable<Dispute> findAll() {
+    public List<Dispute> findAll() {
         return disputeRepository.findAll();
     }
 
-    public List<Dispute> findDisputesByStatus(DisputeStatus status) throws SQLException {
-        Validator.validateNonNull(status, "Dispute Status");
-        DisputeFilter filter = DisputeFilter.ofStatus(status);
-        return disputeRepository.findByFilter(filter);
+    public List<Dispute> findDisputesByStatus(DisputeStatus status) {
+        return disputeRepository.findByStatus(status);
     }
 
-    public List<Dispute> findDisputesByBookingId(Long bookingId) throws SQLException {
-        Validator.validateId(bookingId, "Booking ID");
-        DisputeFilter filter = DisputeFilter.ofBookingId(bookingId);
-        return disputeRepository.findByFilter(filter);
+    public Optional<Dispute> findDisputeByBookingId(UUID bookingId) {
+        return disputeRepository.findByBookingId(bookingId);
     }
 
-    public Dispute resolveDispute(Long disputeId) {
-        Validator.validateId(disputeId, "Dispute ID");
+    public Dispute resolveDispute(UUID disputeId) {
         Dispute dispute = getDisputeOrThrow(disputeId);
-        validateDisputeStatus(dispute.getStatus(), DisputeStatus.OPEN, "Can only resolve an OPEN dispute");
-        Dispute updatedDispute = dispute.withStatus(DisputeStatus.RESOLVED).withResolvedAt(LocalDateTime.now());
-        updatedDispute.validate();
+        validateDisputeStatus(dispute.getStatus());
+
+        Dispute updatedDispute = dispute.withStatus(DisputeStatus.RESOLVED)
+                .withResolvedAt(LocalDateTime.now());
+
         return disputeRepository.save(updatedDispute);
     }
 
-    private Dispute getDisputeOrThrow(Long disputeId) {
-        return findById(disputeId).orElseThrow(() -> new IllegalArgumentException("Dispute with ID " + disputeId + " not found"));
+    public List<Dispute> searchDisputes(UUID bookingId, DisputeStatus status) {
+        Specification<Dispute> spec = Specification
+                .where(bookingId != null ? DisputeSpecification.hasBookingId(bookingId) : null)
+                .and(status != null ? DisputeSpecification.hasStatus(status) : null);
+        return disputeRepository.findAll(spec);
     }
 
-    private void validateDisputeStatus(DisputeStatus currentStatus, DisputeStatus expectedStatus, String errorMessage) {
-        if (currentStatus != expectedStatus) {
-            throw new IllegalStateException(errorMessage);
+    private Dispute getDisputeOrThrow(UUID disputeId) {
+        return disputeRepository.findById(disputeId).orElseThrow(() -> new DisputeNotFoundException("Dispute with ID " + disputeId + " not found"));
+    }
+
+    private void validateDisputeStatus(DisputeStatus currentStatus) {
+        if (currentStatus != DisputeStatus.OPEN) {
+            throw new InvalidDisputeStatusException("Can only resolve an OPEN dispute");
         }
     }
 }
