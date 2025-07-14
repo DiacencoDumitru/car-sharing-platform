@@ -1,21 +1,26 @@
 package com.dynamiccarsharing.carsharing.service;
 
+import com.dynamiccarsharing.carsharing.enums.UserRole;
+import com.dynamiccarsharing.carsharing.enums.UserStatus;
+import com.dynamiccarsharing.carsharing.exception.InvalidUserStatusException;
+import com.dynamiccarsharing.carsharing.exception.UserNotFoundException;
+import com.dynamiccarsharing.carsharing.exception.UserReviewNotFoundException;
+import com.dynamiccarsharing.carsharing.model.Car;
+import com.dynamiccarsharing.carsharing.model.ContactInfo;
+import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.model.UserReview;
+import com.dynamiccarsharing.carsharing.repository.UserRepository;
 import com.dynamiccarsharing.carsharing.repository.UserReviewRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.UserReviewFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,150 +31,120 @@ import static org.mockito.Mockito.times;
 class UserReviewServiceTest {
 
     @Mock
-    UserReviewRepository userReviewRepository;
+    private UserReviewRepository userReviewRepository;
 
     private UserReviewService userReviewService;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        reset(userReviewRepository);
         userReviewService = new UserReviewService(userReviewRepository);
     }
 
-    private UserReview createTestUserReview() {
-        return new UserReview(1L, 2L, 3L, "Great user!");
+    private UserReview createTestUserReview(UUID id) {
+        return UserReview.builder()
+                .id(id)
+                .user(User.builder().id(UUID.randomUUID()).build())
+                .reviewer(User.builder().id(UUID.randomUUID()).build())
+                .comment("Great user!")
+                .build();
     }
 
     @Test
-    void save_shouldCallRepository_shouldReturnSameUserReview() {
-        UserReview userReview = createTestUserReview();
-        when(userReviewRepository.save(userReview)).thenReturn(userReview);
+    void save_shouldCallRepositoryAndReturnUserReview() {
+        UserReview reviewToSave = createTestUserReview(null);
+        UserReview savedReview = createTestUserReview(UUID.randomUUID());
+        when(userReviewRepository.save(reviewToSave)).thenReturn(savedReview);
 
-        UserReview savedUserReview = userReviewService.save(userReview);
+        UserReview result = userReviewService.save(reviewToSave);
 
-        verify(userReviewRepository, times(1)).save(userReview);
-        assertSame(userReview, savedUserReview);
-        assertEquals(userReview.getId(), savedUserReview.getId());
-        assertEquals(userReview.getReviewerId(), savedUserReview.getReviewerId());
-        assertEquals(userReview.getComment(), savedUserReview.getComment());
+        assertNotNull(result);
+        assertNotNull(result.getId());
+        assertEquals("Great user!", result.getComment());
+        verify(userReviewRepository).save(reviewToSave);
     }
 
     @Test
-    void save_whenUserReviewIsNull_shouldThrowException() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userReviewService.save(null));
+    void findById_whenReviewExists_shouldReturnOptionalOfUserReview() {
+        UUID reviewId = UUID.randomUUID();
+        UserReview testReview = createTestUserReview(reviewId);
+        when(userReviewRepository.findById(reviewId)).thenReturn(Optional.of(testReview));
 
-        assertEquals("UserReview must be non-null", exception.getMessage());
-        verify(userReviewRepository, never()).save(any());
+        Optional<UserReview> result = userReviewService.findById(reviewId);
+
+        assertTrue(result.isPresent());
+        assertEquals(reviewId, result.get().getId());
     }
 
     @Test
-    void findById_whenUserReviewIsPresent_shouldReturnUserReview() {
-        UserReview userReview = createTestUserReview();
-        when(userReviewRepository.findById(1L)).thenReturn(Optional.of(userReview));
+    void findById_whenReviewDoesNotExist_shouldReturnEmptyOptional() {
+        UUID reviewId = UUID.randomUUID();
+        when(userReviewRepository.findById(reviewId)).thenReturn(Optional.empty());
 
-        Optional<UserReview> foundUserReview = userReviewService.findById(1L);
+        Optional<UserReview> result = userReviewService.findById(reviewId);
 
-        verify(userReviewRepository, times(1)).findById(1L);
-        assertTrue(foundUserReview.isPresent());
-        assertSame(userReview, foundUserReview.get());
-        assertEquals(userReview.getId(), foundUserReview.get().getId());
-        assertEquals(userReview.getReviewerId(), foundUserReview.get().getReviewerId());
-        assertEquals(userReview.getComment(), foundUserReview.get().getComment());
+        assertFalse(result.isPresent());
     }
 
     @Test
-    void findById_whenUserReviewNotFound_shouldReturnEmpty() {
-        when(userReviewRepository.findById(1L)).thenReturn(Optional.empty());
+    void findAll_shouldReturnListOfUserReviews() {
+        when(userReviewRepository.findAll()).thenReturn(List.of(createTestUserReview(UUID.randomUUID())));
 
-        Optional<UserReview> foundUserReview = userReviewService.findById(1L);
+        List<UserReview> results = userReviewService.findAll();
 
-        verify(userReviewRepository, times(1)).findById(1L);
-        assertFalse(foundUserReview.isPresent());
+        assertEquals(1, results.size());
     }
 
     @Test
-    void findById_withInvalidId_shouldThrowException() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userReviewService.findById(-1L));
+    void deleteById_whenReviewExists_shouldSucceed() {
+        UUID reviewId = UUID.randomUUID();
+        when(userReviewRepository.existsById(reviewId)).thenReturn(true);
+        doNothing().when(userReviewRepository).deleteById(reviewId);
 
-        assertEquals("UserReview ID must be non-negative", exception.getMessage());
-        verify(userReviewRepository, never()).findById(any());
+        userReviewService.deleteById(reviewId);
+
+        verify(userReviewRepository).deleteById(reviewId);
     }
 
     @Test
-    void deleteById_withValidId_shouldDeleteUserReview() {
-        userReviewService.deleteById(1L);
+    void deleteById_whenReviewDoesNotExist_shouldThrowUserReviewNotFoundException() {
+        UUID reviewId = UUID.randomUUID();
+        when(userReviewRepository.existsById(reviewId)).thenReturn(false);
 
-        verify(userReviewRepository, times(1)).deleteById(1L);
+        assertThrows(UserReviewNotFoundException.class, () -> {
+            userReviewService.deleteById(reviewId);
+        });
+    }
+
+
+    @Test
+    void findUserReviewsByReviewerId_shouldCallRepository() {
+        UUID reviewerId = UUID.randomUUID();
+        when(userReviewRepository.findByReviewerId(reviewerId)).thenReturn(List.of(createTestUserReview(UUID.randomUUID())));
+
+        userReviewService.findUserReviewsByReviewerId(reviewerId);
+
+        verify(userReviewRepository).findByReviewerId(reviewerId);
     }
 
     @Test
-    void deleteById_withInvalidId_shouldThrowException() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> userReviewService.deleteById(-1L));
+    void findUserReviewsAboutUser_shouldCallRepository() {
+        UUID userId = UUID.randomUUID();
+        when(userReviewRepository.findByUserId(userId)).thenReturn(List.of(createTestUserReview(UUID.randomUUID())));
 
-        assertEquals("UserReview ID must be non-negative", exception.getMessage());
-        verify(userReviewRepository, never()).findById(any());
+        userReviewService.findUserReviewsAboutUser(userId);
+
+        verify(userReviewRepository).findByUserId(userId);
     }
 
-    @Test
-    void findAll_withMultipleUserReviews_shouldReturnAllUserReviews() {
-        UserReview userReview1 = createTestUserReview();
-        UserReview userReview2 = new UserReview(2L, 3L, 3L, "Good service");
-        List<UserReview> userReviews = Arrays.asList(userReview1, userReview2);
-        when(userReviewRepository.findAll()).thenReturn(userReviews);
-
-        Iterable<UserReview> result = userReviewService.findAll();
-
-        verify(userReviewRepository, times(1)).findAll();
-        List<UserReview> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertEquals(2, resultList.size());
-        assertTrue(resultList.contains(userReview1));
-        assertTrue(resultList.contains(userReview2));
-        assertEquals(userReview1.getId(), resultList.get(0).getId());
-        assertEquals(userReview1.getReviewerId(), resultList.get(0).getReviewerId());
-        assertEquals(userReview1.getComment(), resultList.get(0).getComment());
-    }
 
     @Test
-    void findAll_withSingleUserReview_shouldReturnSingleUserReview() {
-        UserReview userReview = createTestUserReview();
-        List<UserReview> userReviews = Collections.singletonList(userReview);
-        when(userReviewRepository.findAll()).thenReturn(userReviews);
+    void searchReviews_withCriteria_shouldCallRepositoryWithSpecification() {
+        UUID userId = UUID.randomUUID();
+        when(userReviewRepository.findAll(any(Specification.class))).thenReturn(List.of(createTestUserReview(UUID.randomUUID())));
 
-        Iterable<UserReview> result = userReviewService.findAll();
+        List<UserReview> results = userReviewService.searchReviews(userId, null);
 
-        verify(userReviewRepository, times(1)).findAll();
-        List<UserReview> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertEquals(1, resultList.size());
-        assertSame(userReview, resultList.get(0));
-        assertEquals(userReview.getId(), resultList.get(0).getId());
-        assertEquals(userReview.getReviewerId(), resultList.get(0).getReviewerId());
-        assertEquals(userReview.getComment(), resultList.get(0).getComment());
-    }
-
-    @Test
-    void findAll_withNoUserReviews_shouldReturnEmptyIterable() {
-        List<UserReview> userReviews = Collections.emptyList();
-        when(userReviewRepository.findAll()).thenReturn(userReviews);
-
-        Iterable<UserReview> result = userReviewService.findAll();
-
-        verify(userReviewRepository, times(1)).findAll();
-        List<UserReview> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertEquals(0, resultList.size());
-    }
-
-    @Test
-    void findUserReviewsByReviewerId_withValidReviewerId_shouldReturnReviewers() throws SQLException {
-        UserReview userReview = createTestUserReview();
-        List<UserReview> userReviews = List.of(userReview);
-        when(userReviewRepository.findByFilter(any(UserReviewFilter.class))).thenReturn(userReviews);
-
-
-        List<UserReview> result = userReviewService.findUserReviewsByReviewerId(2L);
-
-        assertEquals(1, result.size());
-        assertEquals(userReview, result.get(0));
-        verify(userReviewRepository, times(1)).findByFilter(any(UserReviewFilter.class));
+        assertFalse(results.isEmpty());
+        verify(userReviewRepository, times(1)).findAll(any(Specification.class));
     }
 }

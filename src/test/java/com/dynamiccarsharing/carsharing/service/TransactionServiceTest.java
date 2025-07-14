@@ -2,22 +2,21 @@ package com.dynamiccarsharing.carsharing.service;
 
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
+import com.dynamiccarsharing.carsharing.exception.TransactionNotFoundException;
+import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Transaction;
 import com.dynamiccarsharing.carsharing.repository.TransactionRepository;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,158 +27,118 @@ import static org.mockito.Mockito.times;
 class TransactionServiceTest {
 
     @Mock
-    TransactionRepository transactionRepository;
+    private TransactionRepository transactionRepository;
 
     private TransactionService transactionService;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-        reset(transactionRepository);
         transactionService = new TransactionService(transactionRepository);
     }
 
-    private Transaction createTestTransaction(TransactionStatus status) {
-        return new Transaction(1L, 1L, 100.0, status != null ? status : TransactionStatus.PENDING, PaymentType.CREDIT_CARD, LocalDateTime.now(), null);
-    }
-
-    @SneakyThrows
-    @Test
-    void save_shouldCallRepository_shouldReturnSameTransaction() {
-        Transaction transaction = createTestTransaction(TransactionStatus.PENDING);
-        when(transactionRepository.save(transaction)).thenReturn(transaction);
-
-        Transaction savedTransaction = transactionService.save(transaction);
-
-        verify(transactionRepository, times(1)).save(transaction);
-        assertSame(transaction, savedTransaction);
-        assertEquals(transaction.getId(), savedTransaction.getId());
-        assertEquals(transaction.getAmount(), savedTransaction.getAmount(), 0.001);
-        assertEquals(transaction.getStatus(), savedTransaction.getStatus());
-        assertEquals(transaction.getPaymentMethod(), savedTransaction.getPaymentMethod());
-        assertEquals(transaction.getCreatedAt(), savedTransaction.getCreatedAt());
-        assertEquals(transaction.getUpdatedAt(), savedTransaction.getUpdatedAt());
-    }
-
-    @SneakyThrows
-    @Test
-    void save_whenTransactionIsNull_shouldThrowException() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> transactionService.save(null));
-
-        assertEquals("Transaction must be non-null", exception.getMessage());
-        verify(transactionRepository, never()).save(any());
+    private Transaction createTestTransaction(UUID id, TransactionStatus status) {
+        return Transaction.builder()
+                .id(id)
+                .booking(Booking.builder().id(UUID.randomUUID()).build())
+                .amount(new BigDecimal("125.50"))
+                .status(status)
+                .paymentMethod(PaymentType.CREDIT_CARD)
+                .build();
     }
 
     @Test
-    void findById_whenTransactionIsPresent_shouldReturnTransaction() {
-        Transaction transaction = createTestTransaction(TransactionStatus.PENDING);
-        when(transactionRepository.findById(1L)).thenReturn(Optional.of(transaction));
+    void save_shouldCallRepositoryAndReturnTransaction() {
+        Transaction transactionToSave = createTestTransaction(null, TransactionStatus.PENDING);
+        Transaction savedTransaction = createTestTransaction(UUID.randomUUID(), TransactionStatus.PENDING);
+        when(transactionRepository.save(transactionToSave)).thenReturn(savedTransaction);
 
-        Optional<Transaction> foundTransaction = transactionService.findById(1L);
+        Transaction result = transactionService.save(transactionToSave);
 
-        verify(transactionRepository, times(1)).findById(1L);
-        assertTrue(foundTransaction.isPresent());
-        assertSame(transaction, foundTransaction.get());
-        assertEquals(transaction.getId(), foundTransaction.get().getId());
-        assertEquals(transaction.getAmount(), foundTransaction.get().getAmount(), 0.001);
-        assertEquals(TransactionStatus.PENDING, foundTransaction.get().getStatus());
+        assertNotNull(result);
+        assertNotNull(result.getId());
+        verify(transactionRepository).save(transactionToSave);
     }
 
     @Test
-    void findById_whenTransactionNotFound_shouldReturnEmpty() {
-        when(transactionRepository.findById(1L)).thenReturn(Optional.empty());
+    void findById_whenTransactionExists_shouldReturnOptionalOfTransaction() {
+        UUID transactionId = UUID.randomUUID();
+        Transaction testTransaction = createTestTransaction(transactionId, TransactionStatus.COMPLETED);
+        when(transactionRepository.findById(transactionId)).thenReturn(Optional.of(testTransaction));
 
-        Optional<Transaction> foundTransaction = transactionService.findById(1L);
+        Optional<Transaction> result = transactionService.findById(transactionId);
 
-        verify(transactionRepository, times(1)).findById(1L);
-        assertFalse(foundTransaction.isPresent());
+        assertTrue(result.isPresent());
+        assertEquals(transactionId, result.get().getId());
     }
 
     @Test
-    void findById_withInvalidId_shouldThrowException() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> transactionService.findById(-1L));
+    void findById_whenTransactionDoesNotExist_shouldReturnEmptyOptional() {
+        UUID transactionId = UUID.randomUUID();
+        when(transactionRepository.findById(transactionId)).thenReturn(Optional.empty());
 
-        assertEquals("Transaction ID must be non-negative", exception.getMessage());
-        verify(transactionRepository, never()).findById(any());
+        Optional<Transaction> result = transactionService.findById(transactionId);
+
+        assertFalse(result.isPresent());
     }
 
     @Test
-    void deleteById_withValidId_shouldDeleteTransaction() {
-        transactionService.deleteById(1L);
+    void deleteById_whenTransactionExists_shouldSucceed() {
+        UUID transactionId = UUID.randomUUID();
+        when(transactionRepository.existsById(transactionId)).thenReturn(true);
+        doNothing().when(transactionRepository).deleteById(transactionId);
 
-        verify(transactionRepository, times(1)).deleteById(1L);
+        transactionService.deleteById(transactionId);
+
+        verify(transactionRepository).deleteById(transactionId);
     }
 
     @Test
-    void deleteById_withInvalidId_shouldThrowException() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> transactionService.deleteById(-1L));
+    void deleteById_whenTransactionDoesNotExist_shouldThrowTransactionNotFoundException() {
+        UUID transactionId = UUID.randomUUID();
+        when(transactionRepository.existsById(transactionId)).thenReturn(false);
 
-        assertEquals("Transaction ID must be non-negative", exception.getMessage());
-        verify(transactionRepository, never()).findById(any());
+        assertThrows(TransactionNotFoundException.class, () -> {
+            transactionService.deleteById(transactionId);
+        });
     }
 
     @Test
-    void findAll_withMultipleTransactions_shouldReturnAllTransactions() {
-        Transaction transaction1 = createTestTransaction(TransactionStatus.PENDING);
-        Transaction transaction2 = new Transaction(
-                2L, 1L, 200.0, TransactionStatus.APPROVED, PaymentType.PAYPAL,
-                LocalDateTime.now().minusHours(1), null
-        );
-        List<Transaction> transactions = Arrays.asList(transaction1, transaction2);
-        when(transactionRepository.findAll()).thenReturn(transactions);
+    void findAll_shouldReturnListOfTransactions() {
+        when(transactionRepository.findAll()).thenReturn(List.of(createTestTransaction(UUID.randomUUID(), TransactionStatus.PENDING)));
 
-        Iterable<Transaction> result = transactionService.findAll();
+        List<Transaction> results = transactionService.findAll();
 
-        verify(transactionRepository, times(1)).findAll();
-        List<Transaction> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertEquals(2, resultList.size());
-        assertTrue(resultList.contains(transaction1));
-        assertTrue(resultList.contains(transaction2));
-        assertEquals(transaction1.getId(), resultList.get(0).getId());
-        assertEquals(transaction1.getAmount(), resultList.get(0).getAmount(), 0.001);
-        assertEquals(transaction1.getStatus(), resultList.get(0).getStatus());
+        assertEquals(1, results.size());
     }
 
     @Test
-    void findAll_withSingleTransaction_shouldReturnSingleTransaction() {
-        Transaction transaction = createTestTransaction(TransactionStatus.PENDING);
-        List<Transaction> transactions = Collections.singletonList(transaction);
-        when(transactionRepository.findAll()).thenReturn(transactions);
+    void findTransactionsByStatus_shouldCallRepository() {
+        TransactionStatus status = TransactionStatus.APPROVED;
+        when(transactionRepository.findByStatus(status)).thenReturn(List.of(createTestTransaction(UUID.randomUUID(), status)));
 
-        Iterable<Transaction> result = transactionService.findAll();
+        transactionService.findTransactionsByStatus(status);
 
-        verify(transactionRepository, times(1)).findAll();
-        List<Transaction> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertEquals(1, resultList.size());
-        assertSame(transaction, resultList.get(0));
-        assertEquals(transaction.getId(), resultList.get(0).getId());
-        assertEquals(transaction.getAmount(), resultList.get(0).getAmount(), 0.001);
-        assertEquals(transaction.getStatus(), resultList.get(0).getStatus());
+        verify(transactionRepository).findByStatus(status);
     }
 
     @Test
-    void findAll_withNoTransactions_shouldReturnEmptyIterable() {
-        List<Transaction> transactions = Collections.emptyList();
-        when(transactionRepository.findAll()).thenReturn(transactions);
+    void findTransactionsByBookingId_shouldCallRepository() {
+        UUID bookingId = UUID.randomUUID();
+        when(transactionRepository.findByBookingId(bookingId)).thenReturn(List.of(createTestTransaction(UUID.randomUUID(), TransactionStatus.PENDING)));
 
-        Iterable<Transaction> result = transactionService.findAll();
+        transactionService.findTransactionsByBookingId(bookingId);
 
-        verify(transactionRepository, times(1)).findAll();
-        List<Transaction> resultList = StreamSupport.stream(result.spliterator(), false).toList();
-        assertEquals(0, resultList.size());
+        verify(transactionRepository).findByBookingId(bookingId);
     }
 
-    @SneakyThrows
     @Test
-    void findTransactionsByStatus_withStatus_shouldReturnTransactions() {
-        Transaction transaction = createTestTransaction(TransactionStatus.APPROVED);
-        List<Transaction> payments = List.of(transaction);
-        when(transactionRepository.findByFilter(argThat(filter -> filter != null && filter.test(transaction) && transaction.getStatus().equals(TransactionStatus.APPROVED)))).thenReturn(payments);
+    void searchTransactions_withCriteria_shouldCallRepositoryWithSpecification() {
+        UUID bookingId = UUID.randomUUID();
+        when(transactionRepository.findAll(any(Specification.class))).thenReturn(List.of(createTestTransaction(UUID.randomUUID(), TransactionStatus.PENDING)));
 
-        List<Transaction> result = transactionService.findTransactionsByStatus(TransactionStatus.APPROVED);
+        List<Transaction> results = transactionService.searchTransactions(bookingId, null, null);
 
-        assertEquals(1, result.size());
-        assertEquals(transaction, result.get(0));
-        verify(transactionRepository, times(1)).findByFilter(argThat(filter -> filter != null && filter.test(transaction) && transaction.getStatus().equals(TransactionStatus.APPROVED)));
+        assertFalse(results.isEmpty());
+        verify(transactionRepository, times(1)).findAll(any(Specification.class));
     }
 }
