@@ -2,61 +2,46 @@ package com.dynamiccarsharing.carsharing.model;
 
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import com.dynamiccarsharing.carsharing.util.Validator;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.With;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @ToString
-@EqualsAndHashCode(exclude = "booking")
-@Builder
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
-@Entity
-@Table(name = "payments")
-@EntityListeners(AuditingEntityListener.class)
+@EqualsAndHashCode
 public class Payment {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private final UUID id;
-
-    @NotNull(message = "Booking must not be null.")
-    @OneToOne
-    @JoinColumn(name = "booking_id", nullable = false, unique = true)
-    private final Booking booking;
-
-    @NotNull(message = "Amount must not be null.")
-    @Positive(message = "Amount must be positive.")
-    @Column(nullable = false)
-    private final BigDecimal amount;
-
+    private final Long id;
+    private final Long bookingId;
+    private final double amount;
     @With
-    @NotNull(message = "Status must be not null.")
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
     private final TransactionStatus status;
-
-    @NotNull(message = "Payment method must be not null.")
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", nullable = false)
     private final PaymentType paymentMethod;
-
-    @NotNull(message = "Created at must be not null.")
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
+    private final LocalDateTime createdAt;
     @With
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private final LocalDateTime updatedAt;
+
+    public Payment(Long id, Long bookingId, double amount, TransactionStatus status, PaymentType paymentMethod, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        Validator.validateId(id, "ID");
+        Validator.validateId(bookingId, "Booking ID");
+        Validator.validateNonNull(status, "Status");
+        Validator.validateNonNull(paymentMethod, "Payment method");
+        Validator.validateNonNull(createdAt, "Created at");
+        this.id = id;
+        this.bookingId = bookingId;
+        this.amount = amount;
+        this.status = status;
+        this.paymentMethod = paymentMethod;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public void validate() {
+        if (status == TransactionStatus.COMPLETED && updatedAt == null) {
+            throw new IllegalStateException("Updated at must be non-null for COMPLETED status");
+        }
+    }
 }

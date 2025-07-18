@@ -2,76 +2,76 @@ package com.dynamiccarsharing.carsharing.model;
 
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
-import jakarta.validation.constraints.NotNull;
-import jakarta.persistence.*;
-import lombok.*;
+import com.dynamiccarsharing.carsharing.util.Validator;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.With;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @ToString
-@EqualsAndHashCode(exclude = {"renter", "car", "pickupLocation", "transactions", "payment", "dispute"})
-@Builder
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
-@Entity
-@Table(name = "bookings")
+@EqualsAndHashCode
 public class Booking {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private final UUID id;
-
-    @NotNull(message = "Renter must be not null.")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "renter_id", nullable = false)
-    private final User renter;
-
-    @NotNull(message = "Car must be not null.")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "car_id", nullable = false)
-    private final Car car;
-
-    @NotNull(message = "Start time must be not null.")
-    @Column(name = "start_time", nullable = false)
+    private final Long id;
+    private final Long renterId;
+    private final Long carId;
     private final LocalDateTime startTime;
-
-    @NotNull(message = "End time must be not null.")
-    @Column(name = "end_time", nullable = false)
     private final LocalDateTime endTime;
-
     @With
-    @NotNull(message = "Status must be not null.")
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private final TransactionStatus status;
-
-    @NotNull(message = "Pickup location must be not null.")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pickup_location_id", nullable = false)
     private final Location pickupLocation;
-
     @With
-    @Column(name = "dispute_description")
     private final String disputeDescription;
-
     @With
-    @Column(name = "dispute_status")
     private final DisputeStatus disputeStatus;
+    @With
+    private final List<Transaction> transactions;
 
-    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<Transaction> transactions = new ArrayList<>();
+    public Booking(Long id, Long renterId, Long carId, LocalDateTime startTime, LocalDateTime endTime, TransactionStatus status, Location pickupLocation, String disputeDescription, DisputeStatus disputeStatus, List<Transaction> transactions) {
 
-    @OneToOne(mappedBy = "booking")
-    private final Payment payment;
+        if (id != null) {
+            Validator.validateId(id, "ID");
+        }
 
-    @OneToOne(mappedBy = "booking")
-    private final Dispute dispute;
+        Validator.validateNonNull(renterId, "Renter ID");
+        Validator.validateNonNull(carId, "Car ID");
+
+        if (renterId != null && renterId <= 0) {
+            throw new IllegalArgumentException("Renter ID must be positive");
+        }
+        if (carId != null && carId <= 0) {
+            throw new IllegalArgumentException("Car ID must be positive");
+        }
+
+        Validator.validateDates(startTime, endTime, "Start time", "End time");
+        Validator.validateNonNull(pickupLocation, "Pickup location");
+        Validator.validateNonNull(transactions, "Transactions list");
+
+        if (transactions == null) {
+            transactions = new ArrayList<>();
+        }
+
+        this.id = id;
+        this.renterId = renterId;
+        this.carId = carId;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.status = status;
+        this.pickupLocation = pickupLocation;
+        this.disputeDescription = disputeDescription;
+        this.disputeStatus = disputeStatus;
+        this.transactions = transactions;
+    }
+
+    public Booking(Long id, Long renterId, Long carId, LocalDateTime startTime, LocalDateTime endTime, TransactionStatus status, Location pickupLocation, String disputeDescription, DisputeStatus disputeStatus) {
+        this(id, renterId, carId, startTime, endTime, status, pickupLocation, disputeDescription, disputeStatus, new ArrayList<>());
+    }
 
     public List<Transaction> getTransactions() {
-        return List.copyOf(transactions);
+        return new ArrayList<>(transactions);
     }
 }
