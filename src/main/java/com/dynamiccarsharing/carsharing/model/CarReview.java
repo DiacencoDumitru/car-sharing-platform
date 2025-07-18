@@ -1,37 +1,25 @@
 package com.dynamiccarsharing.carsharing.model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
-
-import java.util.UUID;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.With;
 
 @Getter
 @ToString
-@EqualsAndHashCode(exclude = {"car", "reviewer"})
-@Builder
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@NoArgsConstructor(force = true)
-@Entity
-@Table(name = "car_reviews")
-public class CarReview {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private final UUID id;
-
-    @NotNull(message = "Car must be not null.")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "car_id", nullable = false)
-    private final Car car;
-
-    @NotNull(message = "Reviewer must be not null.")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reviewer_id", nullable = false)
-    private final User reviewer;
-
+@EqualsAndHashCode
+public class CarReview implements Review {
+    private final Long id;
+    private final Long reviewerId;
+    private final Long carId;
     @With
-    @NotNull(message = "Comment must be not null.")
-    @Column(nullable = false)
     private final String comment;
+
+    public CarReview(Long id, Long reviewerId, Long carId, String comment) {
+        Review.validateReviewData(id, reviewerId, comment);
+        this.id = id;
+        this.reviewerId = reviewerId;
+        this.carId = carId;
+        this.comment = comment;
+    }
 }

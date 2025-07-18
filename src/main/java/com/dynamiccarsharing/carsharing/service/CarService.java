@@ -4,7 +4,6 @@ import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.exception.CarNotFoundException;
-import com.dynamiccarsharing.carsharing.exception.CarReviewNotFoundException;
 import com.dynamiccarsharing.carsharing.exception.InvalidCarStatusException;
 import com.dynamiccarsharing.carsharing.exception.InvalidVerificationStatusException;
 import com.dynamiccarsharing.carsharing.model.Car;
