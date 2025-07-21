@@ -3,10 +3,13 @@ package com.dynamiccarsharing.carsharing.dao;
 import com.dynamiccarsharing.carsharing.dao.jdbc.CarReviewSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
+import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.CarReview;
-import com.dynamiccarsharing.carsharing.repository.CarReviewRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
+import com.dynamiccarsharing.carsharing.model.User;
+import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.repository.jdbc.CarReviewRepositoryJdbcImpl;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
@@ -14,8 +17,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+@Profile("jdbc")
 @Repository
-public class CarReviewDao implements CarReviewRepository {
+public class CarReviewDao implements CarReviewRepositoryJdbcImpl {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<CarReview, Filter<CarReview>> sqlFilterMapper;
 
@@ -26,45 +30,30 @@ public class CarReviewDao implements CarReviewRepository {
 
     @Override
     public CarReview save(CarReview carReview) {
-        try {
-            if (carReview.getId() == null) {
-                String insertSql = "INSERT INTO car_reviews (car_id, reviewer_id, comment) VALUES (?, ?, ?)";
-                final Long[] newId = new Long[1];
+        if (carReview.getId() == null) {
+            String insertSql = "INSERT INTO car_reviews (car_id, reviewer_id, comment) VALUES (?, ?, ?)";
 
+            Long newId = databaseUtil.executeUpdateWithGeneratedKeys(insertSql, statement -> {
                 try {
-                    databaseUtil.executeWithGeneratedKeys(insertSql, statement -> {
-                        try {
-                            statement.setLong(1, carReview.getCarId());
-                            statement.setLong(2, carReview.getReviewerId());
-                            statement.setString(3, carReview.getComment());
-                            statement.executeUpdate();
-
-                            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                                if (generatedKeys.next()) {
-                                    newId[0] = generatedKeys.getLong(1);
-                                } else {
-                                    throw new RuntimeException("Failed to retrieve generated ID");
-                                }
-                            }
-                        } catch (SQLException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                } catch (RuntimeException e) {
-                    throw new RuntimeException("Failed to save CarReview", e);
+                    statement.setLong(1, carReview.getCar().getId());
+                    statement.setLong(2, carReview.getReviewer().getId());
+                    statement.setString(3, carReview.getComment());
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
                 }
+            });
 
-                return new CarReview(newId[0], carReview.getReviewerId(), carReview.getCarId(), carReview.getComment());
+            return CarReview.builder()
+                    .id(newId)
+                    .car(carReview.getCar())
+                    .reviewer(carReview.getReviewer())
+                    .comment(carReview.getComment())
+                    .build();
 
-            } else {
-                String updateSql = "UPDATE car_reviews SET car_id = ?, reviewer_id = ?, comment = ? WHERE id = ?";
-                databaseUtil.execute(updateSql, carReview.getCarId(), carReview.getReviewerId(), carReview.getComment(), carReview.getId());
-
-                return carReview;
-            }
-
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to save CarReview", e);
+        } else {
+            String updateSql = "UPDATE car_reviews SET car_id = ?, reviewer_id = ?, comment = ? WHERE id = ?";
+            databaseUtil.execute(updateSql, carReview.getCar().getId(), carReview.getReviewer().getId(), carReview.getComment(), carReview.getId());
+            return carReview;
         }
     }
 
@@ -97,11 +86,15 @@ public class CarReviewDao implements CarReviewRepository {
         return databaseUtil.findMany(fullQuery, this::mapToCarReview, sqlFilter.parametersArray());
     }
 
-    private CarReview mapToCarReview(ResultSet rs) {
-        try {
-            return new CarReview(rs.getLong("id"), rs.getLong("reviewer_id"), rs.getLong("car_id"), rs.getString("comment"));
-        } catch (SQLException e) {
-            throw new RuntimeException("Error mapping ResultSet", e);
-        }
+    private CarReview mapToCarReview(ResultSet rs) throws SQLException {
+        Car car = Car.builder().id(rs.getLong("car_id")).build();
+        User reviewer = User.builder().id(rs.getLong("reviewer_id")).build();
+
+        return CarReview.builder()
+                .id(rs.getLong("id"))
+                .car(car)
+                .reviewer(reviewer)
+                .comment(rs.getString("comment"))
+                .build();
     }
 }

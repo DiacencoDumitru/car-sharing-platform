@@ -1,16 +1,20 @@
 package com.dynamiccarsharing.carsharing.dao.jdbc;
 
 import com.dynamiccarsharing.carsharing.model.User;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.filter.UserFilter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.filter.UserFilter;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 public class UserSqlFilterMapper implements SqlFilterMapper<User, Filter<User>> {
 
     @Override
     public SqlFilter toSqlFilter(Filter<User> userFilter) {
+        if (userFilter == null) {
+            return SqlFilter.empty();
+        }
         if (userFilter instanceof UserFilter filter) {
             return new SqlFilter(buildSqlQuery(filter), getParameters(filter));
         }
@@ -34,18 +38,12 @@ public class UserSqlFilterMapper implements SqlFilterMapper<User, Filter<User>> 
     }
 
     private List<Object> getParameters(UserFilter filter) {
-        List<Object> params = new ArrayList<>();
-
-        if (filter.getRole() != null) {
-            params.add(filter.getRole().name());
-        }
-        if (filter.getStatus() != null) {
-            params.add(filter.getStatus().name());
-        }
-        if (filter.getEmail() != null) {
-            params.add(filter.getEmail());
-        }
-
-        return params;
+        return Stream.<Object>of(
+                        filter.getRole() != null ? filter.getRole().name() : null,
+                        filter.getStatus() != null ? filter.getStatus().name() : null,
+                        filter.getEmail()
+                )
+                .filter(Objects::nonNull)
+                .toList();
     }
 }

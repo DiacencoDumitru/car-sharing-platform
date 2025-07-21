@@ -1,16 +1,20 @@
 package com.dynamiccarsharing.carsharing.dao.jdbc;
 
 import com.dynamiccarsharing.carsharing.model.Car;
-import com.dynamiccarsharing.carsharing.repository.filter.CarFilter;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
+import com.dynamiccarsharing.carsharing.filter.CarFilter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 public class CarSqlFilterMapper implements SqlFilterMapper<Car, Filter<Car>> {
 
     @Override
     public SqlFilter toSqlFilter(Filter<Car> carFilter) {
+        if (carFilter == null) {
+            return SqlFilter.empty();
+        }
         if (carFilter instanceof CarFilter filter) {
             return new SqlFilter(buildSqlQuery(filter), getParameters(filter));
         }
@@ -30,7 +34,6 @@ public class CarSqlFilterMapper implements SqlFilterMapper<Car, Filter<Car>> {
             sb.append(" AND ").append("status = ?");
         }
         if (filter.getLocation() != null) {
-            // Assuming filtering by the Location's foreign key ID
             sb.append(" AND ").append("location_id = ?");
         }
         if (filter.getType() != null) {
@@ -44,27 +47,15 @@ public class CarSqlFilterMapper implements SqlFilterMapper<Car, Filter<Car>> {
     }
 
     private List<Object> getParameters(CarFilter filter) {
-        List<Object> params = new ArrayList<>();
-
-        if (filter.getMake() != null) {
-            params.add(filter.getMake());
-        }
-        if (filter.getModel() != null) {
-            params.add(filter.getModel());
-        }
-        if (filter.getStatus() != null) {
-            params.add(filter.getStatus().name());
-        }
-        if (filter.getLocation() != null) {
-            params.add(filter.getLocation().getId());
-        }
-        if (filter.getType() != null) {
-            params.add(filter.getType().name());
-        }
-        if (filter.getVerificationStatus() != null) {
-            params.add(filter.getVerificationStatus().name());
-        }
-
-        return params;
+        return Stream.<Object>of(
+                        filter.getMake(),
+                        filter.getModel(),
+                        filter.getStatus() != null ? filter.getStatus().name() : null,
+                        filter.getLocation() != null ? filter.getLocation().getId() : null,
+                        filter.getType() != null ? filter.getType().name() : null,
+                        filter.getVerificationStatus() != null ? filter.getVerificationStatus().name() : null
+                )
+                .filter(Objects::nonNull)
+                .toList();
     }
 }

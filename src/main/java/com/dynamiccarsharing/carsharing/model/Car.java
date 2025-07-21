@@ -3,51 +3,75 @@ package com.dynamiccarsharing.carsharing.model;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
-import com.dynamiccarsharing.carsharing.util.Validator;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.With;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.util.*;
 
 @Getter
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = {"location", "owners", "bookings", "reviews"})
+@Builder(toBuilder = true)
+@AllArgsConstructor
+@NoArgsConstructor(force = true)
+@Entity
+@Table(name = "cars")
 public class Car {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "car_seq")
+    @SequenceGenerator(name = "car_seq", sequenceName = "car_seq", allocationSize = 1)
     private final Long id;
+
+    @NotNull(message = "Registration number must be not null.")
+    @Column(name = "registration_number", unique = true, nullable = false)
     private final String registrationNumber;
+
+    @NotNull(message = "Make must be not null.")
+    @Column(nullable = false)
     private final String make;
+
+    @NotNull(message = "Model must be not null.")
+    @Column(nullable = false)
     private final String model;
+
     @With
+    @NotNull(message = "Status must be not null.")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private final CarStatus status;
+
+    @With
+    @NotNull(message = "Lcation must be not null.")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_id", nullable = false)
     private final Location location;
+
     @With
-    private final double price;
+    @NotNull(message = "Price per day must be not null.")
+    @Column(name = "price_per_day", nullable = false)
+    private final BigDecimal price;
+
+    @With
+    @NotNull(message = "Type must be not null.")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private final CarType type;
+
     @With
+    @NotNull(message = "Verification status must be not null.")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verification_status", nullable = false)
     private final VerificationStatus verificationStatus;
 
-    public Car(Long id, String registrationNumber, String make, String model, CarStatus status, Location location, double price, CarType type, VerificationStatus verificationStatus) {
+    @ManyToMany(mappedBy = "cars")
+    private final Set<User> owners = new HashSet<>();
 
-        if (id != null) {
-            Validator.validateId(id, "ID");
-        }
+    @OneToMany(mappedBy = "car")
+    private final List<Booking> bookings = new ArrayList<>();
 
-        Validator.validateNonEmptyString(registrationNumber, "Registration number");
-        Validator.validateNonEmptyString(make, "Make");
-        Validator.validateNonEmptyString(model, "Model");
-        Validator.validateNonNull(status, "Status");
-        Validator.validateNonNull(location, "Location");
-        Validator.validateNonNegativeDouble(price, "Price");
-        Validator.validateNonNull(type, "Type");
-        Validator.validateNonNull(verificationStatus, "Verification status");
-        this.id = id;
-        this.registrationNumber = registrationNumber;
-        this.make = make;
-        this.model = model;
-        this.status = status;
-        this.location = location;
-        this.price = price;
-        this.type = type;
-        this.verificationStatus = verificationStatus;
-    }
+    @OneToMany(mappedBy = "car")
+    private final List<CarReview> reviews = new ArrayList<>();
 }

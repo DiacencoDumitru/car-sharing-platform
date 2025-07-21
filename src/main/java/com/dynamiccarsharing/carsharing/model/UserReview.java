@@ -1,25 +1,37 @@
 package com.dynamiccarsharing.carsharing.model;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.With;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 
 @Getter
 @ToString
-@EqualsAndHashCode
-public class UserReview implements Review {
-    private final Long id;
-    private final Long userId;
-    private final Long reviewerId;
-    @With
-    private final String comment;
+@EqualsAndHashCode(exclude = {"user", "reviewer"})
+@Builder(toBuilder = true)
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+@Entity
+@Table(name = "user_reviews")
+public class UserReview {
 
-    public UserReview(Long id, Long userId, Long reviewerId, String comment) {
-        Review.validateReviewData(id, reviewerId, comment);
-        this.id = id;
-        this.userId = userId;
-        this.reviewerId = reviewerId;
-        this.comment = comment;
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_review_seq")
+    @SequenceGenerator(name = "user_review_seq", sequenceName = "user_review_seq", allocationSize = 1)
+    private final Long id;
+
+    @NotNull(message = "User being reviewed must not be null.")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private final User user;
+
+    @NotNull(message = "Reviewer must not be null.")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewer_id", nullable = false)
+    private final User reviewer;
+
+    @With
+    @NotBlank(message = "Comment must not be blank.")
+    @Column(nullable = false)
+    private final String comment;
 }

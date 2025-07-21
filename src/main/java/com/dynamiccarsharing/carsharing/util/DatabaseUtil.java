@@ -1,7 +1,5 @@
 package com.dynamiccarsharing.carsharing.util;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -13,6 +11,11 @@ import java.util.function.Consumer;
 @Component
 public class DatabaseUtil {
     private final DataSource dataSource;
+
+    @FunctionalInterface
+    public interface SqlExecutor<T> {
+        T execute(PreparedStatement ps) throws SQLException;
+    }
 
     public DatabaseUtil(DataSource dataSource) {
         this.dataSource = dataSource;
@@ -81,12 +84,20 @@ public class DatabaseUtil {
         }
     }
 
-    public void executeWithGeneratedKeys(String query, Consumer<PreparedStatement> consumer) {
+    public Long executeUpdateWithGeneratedKeys(String query, Consumer<PreparedStatement> psConsumer) {
         try (Connection connection = getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-            consumer.accept(preparedStatement);
+            psConsumer.accept(preparedStatement);
+            preparedStatement.executeUpdate();
+            try (ResultSet rs = preparedStatement.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                } else {
+                    throw new SQLException("Creating record failed, no ID obtained.");
+                }
+            }
         } catch (SQLException e) {
-            throw new RuntimeException("Database executeWithGeneratedKeys failed for query: " + query, e);
+            throw new RuntimeException("Database executeUpdateWithGeneratedKeys failed for query: " + query, e);
         }
     }
 }

@@ -1,16 +1,21 @@
 package com.dynamiccarsharing.carsharing.dao.jdbc;
 
 import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.filter.LocationFilter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.filter.LocationFilter;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 public class LocationSqlFilterMapper implements SqlFilterMapper<Location, Filter<Location>> {
 
     @Override
     public SqlFilter toSqlFilter(Filter<Location> locationFilter) {
+        if (locationFilter == null) {
+            return SqlFilter.empty();
+        }
+
         if (locationFilter instanceof LocationFilter filter) {
             return new SqlFilter(buildSqlQuery(filter), getParameters(filter));
         }
@@ -34,18 +39,8 @@ public class LocationSqlFilterMapper implements SqlFilterMapper<Location, Filter
     }
 
     private List<Object> getParameters(LocationFilter filter) {
-        List<Object> params = new ArrayList<>();
-
-        if (filter.getCity() != null) {
-            params.add(filter.getCity());
-        }
-        if (filter.getState() != null) {
-            params.add(filter.getState());
-        }
-        if (filter.getZipCode() != null) {
-            params.add(filter.getZipCode());
-        }
-
-        return params;
+        return Stream.<Object>of(filter.getCity(), filter.getState(), filter.getZipCode())
+                .filter(Objects::nonNull)
+                .toList();
     }
 }

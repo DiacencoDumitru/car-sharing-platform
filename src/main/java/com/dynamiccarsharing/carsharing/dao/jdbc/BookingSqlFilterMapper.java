@@ -1,8 +1,8 @@
 package com.dynamiccarsharing.carsharing.dao.jdbc;
 
 import com.dynamiccarsharing.carsharing.model.Booking;
-import com.dynamiccarsharing.carsharing.repository.filter.BookingFilter;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
+import com.dynamiccarsharing.carsharing.filter.BookingFilter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
 
 import java.util.List;
 import java.util.Objects;
@@ -12,6 +12,10 @@ public class BookingSqlFilterMapper implements SqlFilterMapper<Booking, Filter<B
 
     @Override
     public SqlFilter toSqlFilter(Filter<Booking> bookingFilter) {
+        if (bookingFilter == null) {
+            return SqlFilter.empty();
+        }
+
         if (bookingFilter instanceof BookingFilter filter) {
             return new SqlFilter(buildSqlQuery(filter), getParameters(filter));
         }
