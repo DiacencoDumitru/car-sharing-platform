@@ -4,9 +4,10 @@ import com.dynamiccarsharing.carsharing.dao.jdbc.ContactInfoSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
-import com.dynamiccarsharing.carsharing.repository.ContactInfoRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.repository.jdbc.ContactInfoRepositoryJdbcImpl;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
@@ -14,8 +15,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+@Profile("jdbc")
 @Repository
-public class ContactInfoDao implements ContactInfoRepository {
+public class ContactInfoDao implements ContactInfoRepositoryJdbcImpl {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<ContactInfo, Filter<ContactInfo>> sqlFilterMapper;
 
@@ -26,35 +28,25 @@ public class ContactInfoDao implements ContactInfoRepository {
 
     @Override
     public ContactInfo save(ContactInfo entity) {
-        try {
-            if (entity.getId() == null) {
-                String insertSql = "INSERT INTO contact_infos (email, phone_number, first_name, last_name) VALUES (?, ?, ?, ?)";
-                final Long[] newId = new Long[1];
-                databaseUtil.executeWithGeneratedKeys(insertSql, statement -> {
-                    try {
-                        statement.setString(1, entity.getEmail());
-                        statement.setString(2, entity.getPhoneNumber());
-                        statement.setString(3, entity.getFirstName());
-                        statement.setString(4, entity.getLastName());
-                        statement.executeUpdate();
-                        ResultSet generatedKeys = statement.getGeneratedKeys();
-                        if (generatedKeys.next()) {
-                            newId[0] = generatedKeys.getLong(1);
-                        } else {
-                            throw new SQLException("Failed to retrieve generated ID");
-                        }
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                return new ContactInfo(newId[0], entity.getFirstName(), entity.getLastName(), entity.getEmail(), entity.getPhoneNumber());
-            } else {
-                String updateSql = "UPDATE contact_infos SET email = ?, phone_number = ?, first_name = ?, last_name = ? WHERE id = ?";
-                databaseUtil.execute(updateSql, entity.getEmail(), entity.getPhoneNumber(), entity.getFirstName(), entity.getLastName(), entity.getId());
-                return entity;
-            }
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to save ContactInfo", e);
+        if (entity.getId() == null) {
+            String insertSql = "INSERT INTO contact_infos (email, phone_number, first_name, last_name) VALUES (?, ?, ?, ?)";
+
+            Long newId = databaseUtil.executeUpdateWithGeneratedKeys(insertSql, statement -> {
+                try {
+                    statement.setString(1, entity.getEmail());
+                    statement.setString(2, entity.getPhoneNumber());
+                    statement.setString(3, entity.getFirstName());
+                    statement.setString(4, entity.getLastName());
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            return entity.toBuilder().id(newId).build();
+        } else {
+            String updateSql = "UPDATE contact_infos SET email = ?, phone_number = ?, first_name = ?, last_name = ? WHERE id = ?";
+            databaseUtil.execute(updateSql, entity.getEmail(), entity.getPhoneNumber(), entity.getFirstName(), entity.getLastName(), entity.getId());
+            return entity;
         }
     }
 
@@ -88,12 +80,19 @@ public class ContactInfoDao implements ContactInfoRepository {
     }
 
     private ContactInfo mapToContactInfo(ResultSet rs) throws SQLException {
-        return new ContactInfo(
-                rs.getLong("id"),
-                rs.getString("first_name"),
-                rs.getString("last_name"),
-                rs.getString("email"),
-                rs.getString("phone_number")
-        );
+        return ContactInfo.builder()
+                .id(rs.getLong("id"))
+                .firstName(rs.getString("first_name"))
+                .lastName(rs.getString("last_name"))
+                .email(rs.getString("email"))
+                .phoneNumber(rs.getString("phone_number"))
+                .build();
+    }
+
+    @Override
+    public Optional<ContactInfo> findByEmail(String email) {
+        String query = "SELECT * FROM contact_infos WHERE email = ?";
+        ContactInfo contactInfo = databaseUtil.findOne(query, this::mapToContactInfo, email);
+        return Optional.ofNullable(contactInfo);
     }
 }

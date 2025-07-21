@@ -1,0 +1,18 @@
+package com.dynamiccarsharing.carsharing.repository.jpa;
+
+import com.dynamiccarsharing.carsharing.model.UserReview;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Profile("jpa")
+@Repository
+public interface UserReviewJpaRepository extends JpaRepository<UserReview, Long>, JpaSpecificationExecutor<UserReview> {
+
+    List<UserReview> findByUserId(Long userId);
+
+    List<UserReview> findByReviewerId(Long reviewerId);
+}

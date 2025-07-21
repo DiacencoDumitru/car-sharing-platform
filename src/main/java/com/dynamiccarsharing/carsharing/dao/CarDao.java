@@ -8,9 +8,10 @@ import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.repository.CarRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.repository.jdbc.CarRepositoryJdbcImpl;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
@@ -18,8 +19,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+@Profile("jdbc")
 @Repository
-public class CarDao implements CarRepository {
+public class CarDao implements CarRepositoryJdbcImpl {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<Car, Filter<Car>> sqlFilterMapper;
 
@@ -30,40 +32,39 @@ public class CarDao implements CarRepository {
 
     @Override
     public Car save(Car car) {
-        try {
-            if (car.getId() == null) {
-                String insertSql = "INSERT INTO cars (registration_number, make, model, status, location_id, price_per_day, type, verification_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-                final Long[] newId = new Long[1];
-                databaseUtil.executeWithGeneratedKeys(insertSql, statement -> {
-                    try {
-                        statement.setString(1, car.getRegistrationNumber());
-                        statement.setString(2, car.getMake());
-                        statement.setString(3, car.getModel());
-                        statement.setString(4, car.getStatus().name());
-                        statement.setLong(5, car.getLocation().getId());
-                        statement.setDouble(6, car.getPrice());
-                        statement.setString(7, car.getType().name());
-                        statement.setString(8, car.getVerificationStatus().name());
-                        statement.executeUpdate();
-                        try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                            if (generatedKeys.next()) {
-                                newId[0] = generatedKeys.getLong(1);
-                            } else {
-                                throw new SQLException("Failed to retrieve generated ID");
-                            }
-                        }
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                return new Car(newId[0], car.getRegistrationNumber(), car.getMake(), car.getModel(), car.getStatus(), car.getLocation(), car.getPrice(), car.getType(), car.getVerificationStatus());
-            } else {
-                String updateSql = "UPDATE cars SET registration_number = ?, make = ?, model = ?, status = ?, location_id = ?, price_per_day = ?, type = ?, verification_status = ? WHERE id = ?";
-                databaseUtil.execute(updateSql, car.getRegistrationNumber(), car.getMake(), car.getModel(), car.getStatus().name(), car.getLocation().getId(), car.getPrice(), car.getType().name(), car.getVerificationStatus().name(), car.getId());
-                return car;
-            }
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to save Car", e);
+        if (car.getId() == null) {
+            String insertSql = "INSERT INTO cars (registration_number, make, model, status, location_id, price_per_day, type, verification_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+            Long newId = databaseUtil.executeUpdateWithGeneratedKeys(insertSql, statement -> {
+                try {
+                    statement.setString(1, car.getRegistrationNumber());
+                    statement.setString(2, car.getMake());
+                    statement.setString(3, car.getModel());
+                    statement.setString(4, car.getStatus().name());
+                    statement.setLong(5, car.getLocation().getId());
+                    statement.setBigDecimal(6, car.getPrice());
+                    statement.setString(7, car.getType().name());
+                    statement.setString(8, car.getVerificationStatus().name());
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            return Car.builder()
+                    .id(newId)
+                    .registrationNumber(car.getRegistrationNumber())
+                    .make(car.getMake())
+                    .model(car.getModel())
+                    .status(car.getStatus())
+                    .location(car.getLocation())
+                    .price(car.getPrice())
+                    .type(car.getType())
+                    .verificationStatus(car.getVerificationStatus())
+                    .build();
+        } else {
+            String updateSql = "UPDATE cars SET registration_number = ?, make = ?, model = ?, status = ?, location_id = ?, price_per_day = ?, type = ?, verification_status = ? WHERE id = ?";
+            databaseUtil.execute(updateSql, car.getRegistrationNumber(), car.getMake(), car.getModel(), car.getStatus().name(), car.getLocation().getId(), car.getPrice(), car.getType().name(), car.getVerificationStatus().name(), car.getId());
+            return car;
         }
     }
 
@@ -99,22 +100,30 @@ public class CarDao implements CarRepository {
     }
 
     private Car mapToCar(ResultSet rs) throws SQLException {
-        Location location = new Location(
-                rs.getLong("location_id"),
-                rs.getString("city"),
-                rs.getString("state"),
-                rs.getString("zip_code")
-        );
-        return new Car(
-                rs.getLong("id"),
-                rs.getString("registration_number"),
-                rs.getString("make"),
-                rs.getString("model"),
-                CarStatus.valueOf(rs.getString("status")),
-                location,
-                rs.getDouble("price_per_day"),
-                CarType.valueOf(rs.getString("type")),
-                VerificationStatus.valueOf(rs.getString("verification_status"))
-        );
+        Location location = Location.builder()
+                .id(rs.getLong("location_id"))
+                .city(rs.getString("city"))
+                .state(rs.getString("state"))
+                .zipCode(rs.getString("zip_code"))
+                .build();
+
+        return Car.builder()
+                .id(rs.getLong("id"))
+                .registrationNumber(rs.getString("registration_number"))
+                .make(rs.getString("make"))
+                .model(rs.getString("model"))
+                .status(CarStatus.valueOf(rs.getString("status")))
+                .location(location)
+                .price(rs.getBigDecimal("price_per_day"))
+                .type(CarType.valueOf(rs.getString("type")))
+                .verificationStatus(VerificationStatus.valueOf(rs.getString("verification_status")))
+                .build();
+    }
+
+    @Override
+    public List<Car> findByStatus(CarStatus status) {
+        String query = "SELECT c.*, l.city, l.state, l.zip_code FROM cars c " +
+                "JOIN locations l ON c.location_id = l.id WHERE c.status = ?";
+        return databaseUtil.findMany(query, this::mapToCar, status.name());
     }
 }

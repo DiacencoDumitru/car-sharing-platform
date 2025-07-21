@@ -440,7 +440,7 @@ Why?: The parent object, although detached from the current session, has a valid
 
 The Result: The changes are NOT saved to the database.
 
-Why?: When I fetch an entity using userRepository.findById(), the transaction for that operation closes immediately. The returned object becomes detached. Any changes I make to this object are just changes to a regular Java object in memory; JPA is no longer tracking it.
+Why?: When I fetch an entity using userRepositoryJdbcImpl.findById(), the transaction for that operation closes immediately. The returned object becomes detached. Any changes I make to this object are just changes to a regular Java object in memory; JPA is no longer tracking it.
 ```
 
 ```dotenv

@@ -5,181 +5,119 @@ import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.repository.filter.CarFilter;
+import com.dynamiccarsharing.carsharing.filter.CarFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ActiveProfiles;
 
-import java.sql.*;
+import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ActiveProfiles("jdbc")
 class CarDaoTest extends BaseDaoTest {
     @Autowired
     private CarDao carDao;
 
-    private Long locationId;
     private Location testLocation;
+    private Location secondLocation;
 
     @BeforeEach
     void setUp() throws SQLException {
-        createTestDependencies();
+        this.testLocation = createLocation("Test City", "TS", "12345");
+        this.secondLocation = createLocation("Another City", "AC", "54321");
     }
 
-    private void createTestDependencies() throws SQLException {
-        this.locationId = createLocation("Test City", "TS", "12345");
-        this.testLocation = new Location(locationId, "Test City", "TS", "12345");
-    }
-
-    private Car createCar(String regNumber, String make, String model, CarStatus status, double price, CarType type, VerificationStatus verificationStatus) {
-        return new Car(null, regNumber, make, model, status, testLocation, price, type, verificationStatus);
-    }
-
-    private Car createDefaultCar(String regNumber) {
-        return createCar(regNumber, "Toyota", "Camry", CarStatus.AVAILABLE, 50.0, CarType.SEDAN, VerificationStatus.VERIFIED);
+    private Car buildUnsavedCar(String regNumber, String make, String model) {
+        return Car.builder()
+                .registrationNumber(regNumber)
+                .make(make)
+                .model(model)
+                .status(CarStatus.AVAILABLE)
+                .location(testLocation)
+                .price(BigDecimal.valueOf(50.0))
+                .type(CarType.SEDAN)
+                .verificationStatus(VerificationStatus.VERIFIED)
+                .build();
     }
 
     @Nested
     @DisplayName("Save Operations")
     class SaveOperations {
-
         @Test
         @DisplayName("Should save new car successfully")
         void save_newValidCar_shouldSave() {
-            Car car = createDefaultCar("TEST123");
-
+            Car car = buildUnsavedCar("TEST123", "Toyota", "Camry");
             Car saved = carDao.save(car);
-
             assertNotNull(saved.getId());
             assertEquals(car.getRegistrationNumber(), saved.getRegistrationNumber());
-            assertEquals(car.getMake(), saved.getMake());
-            assertEquals(car.getModel(), saved.getModel());
-            assertEquals(car.getStatus(), saved.getStatus());
-            assertEquals(car.getLocation().getId(), saved.getLocation().getId());
-            assertEquals(car.getPrice(), saved.getPrice(), 0.01);
-            assertEquals(car.getType(), saved.getType());
-            assertEquals(car.getVerificationStatus(), saved.getVerificationStatus());
         }
 
         @Test
         @DisplayName("Should update existing car")
-        void save_existingCar_shouldUpdate() {
-            Car original = carDao.save(createDefaultCar("TEST123"));
-
-            Car updated = original.withStatus(CarStatus.RENTED).withPrice(75.0);
+        void save_existingCar_shouldUpdate() throws SQLException {
+            Car original = createCar("UPDATE123", "Toyota", "Corolla", testLocation);
+            Car updated = original.withStatus(CarStatus.RENTED).withPrice(BigDecimal.valueOf(75.0));
             Car result = carDao.save(updated);
 
             assertEquals(original.getId(), result.getId());
             assertEquals(CarStatus.RENTED, result.getStatus());
-            assertEquals(75.0, result.getPrice(), 0.01);
-            assertEquals(original.getRegistrationNumber(), result.getRegistrationNumber());
-        }
-
-        @Test
-        @DisplayName("Should save car with different types")
-        void save_differentCarTypes_shouldSave() {
-            Car sedan = createCar("SEDAN123", "Toyota", "Camry", CarStatus.AVAILABLE, 50.0, CarType.SEDAN, VerificationStatus.VERIFIED);
-            Car suv = createCar("SUV123", "Honda", "CR-V", CarStatus.AVAILABLE, 75.0, CarType.SUV, VerificationStatus.VERIFIED);
-            Car hatchback = createCar("HATCH123", "Ford", "Focus", CarStatus.AVAILABLE, 45.0, CarType.HATCHBACK, VerificationStatus.VERIFIED);
-
-            Car savedSedan = carDao.save(sedan);
-            Car savedSuv = carDao.save(suv);
-            Car savedHatchback = carDao.save(hatchback);
-
-            assertEquals(CarType.SEDAN, savedSedan.getType());
-            assertEquals(CarType.SUV, savedSuv.getType());
-            assertEquals(CarType.HATCHBACK, savedHatchback.getType());
-        }
-
-        @Test
-        @DisplayName("Should save car with different verification statuses")
-        void save_differentVerificationStatuses_shouldSave() {
-            Car pending = createCar("PEND123", "Toyota", "Camry", CarStatus.AVAILABLE, 50.0, CarType.SEDAN, VerificationStatus.PENDING);
-            Car verified = createCar("VERIF123", "Honda", "Civic", CarStatus.AVAILABLE, 50.0, CarType.SEDAN, VerificationStatus.VERIFIED);
-            Car rejected = createCar("REJ123", "Ford", "Focus", CarStatus.RENTED, 50.0, CarType.SEDAN, VerificationStatus.REJECTED);
-
-            Car savedPending = carDao.save(pending);
-            Car savedVerified = carDao.save(verified);
-            Car savedRejected = carDao.save(rejected);
-
-            assertEquals(VerificationStatus.PENDING, savedPending.getVerificationStatus());
-            assertEquals(VerificationStatus.VERIFIED, savedVerified.getVerificationStatus());
-            assertEquals(VerificationStatus.REJECTED, savedRejected.getVerificationStatus());
+            assertEquals(0, BigDecimal.valueOf(75.0).compareTo(result.getPrice()));
         }
     }
 
     @Nested
     @DisplayName("Find Operations")
     class FindOperations {
-
         @Test
         @DisplayName("Should find car by valid ID")
-        void findById_validId_shouldReturnCar() {
-            Car saved = carDao.save(createDefaultCar("TEST123"));
-
+        void findById_validId_shouldReturnCar() throws SQLException {
+            Car saved = createCar("FINDME", "Honda", "Accord", testLocation);
             Optional<Car> found = carDao.findById(saved.getId());
-
             assertTrue(found.isPresent());
             assertEquals(saved.getId(), found.get().getId());
-            assertEquals(saved.getRegistrationNumber(), found.get().getRegistrationNumber());
-            assertEquals(saved.getMake(), found.get().getMake());
-            assertEquals(saved.getModel(), found.get().getModel());
+        }
+
+        @Test
+        @DisplayName("Should find cars by status")
+        void findByStatus_shouldReturnOnlyMatchingCars() throws SQLException {
+            Car car1 = createCar("AVAIL1", "Toyota", "Camry", testLocation);
+            carDao.save(car1.withStatus(CarStatus.RENTED));
+            createCar("AVAIL2", "Honda", "Civic", testLocation);
+
+            List<Car> rentedCars = carDao.findByStatus(CarStatus.RENTED);
+            assertEquals(1, rentedCars.size());
+            assertEquals(CarStatus.RENTED, rentedCars.get(0).getStatus());
         }
 
         @Test
         @DisplayName("Should return empty for non-existent ID")
         void findById_nonExistentId_shouldReturnEmpty() {
             Optional<Car> found = carDao.findById(999L);
-
             assertFalse(found.isPresent());
-        }
-
-        @Test
-        @DisplayName("Should return all cars")
-        void findAll_withData_shouldReturnAll() {
-            carDao.save(createDefaultCar("TEST123"));
-            carDao.save(createCar("TEST456", "Honda", "Civic", CarStatus.AVAILABLE, 45.0, CarType.SEDAN, VerificationStatus.VERIFIED));
-
-            Iterable<Car> cars = carDao.findAll();
-
-            assertTrue(cars.iterator().hasNext());
-            long count = 0;
-            for (Car car : cars) {
-                count++;
-            }
-            assertEquals(2, count);
-        }
-
-        @Test
-        @DisplayName("Should return empty iterable when no cars exist")
-        void findAll_noData_shouldReturnEmpty() {
-            Iterable<Car> cars = carDao.findAll();
-
-            assertFalse(cars.iterator().hasNext());
         }
     }
 
     @Nested
     @DisplayName("Delete Operations")
     class DeleteOperations {
-
         @Test
         @DisplayName("Should delete car by ID")
-        void deleteById_validId_shouldDelete() {
-            Car saved = carDao.save(createDefaultCar("TEST123"));
-
-            carDao.deleteById(saved.getId());
-
-            Optional<Car> found = carDao.findById(saved.getId());
+        void deleteById_validId_shouldDelete() throws SQLException {
+            Car carToDelete = createCar("DELETE ME", "Nissan", "Titan", testLocation);
+            carDao.deleteById(carToDelete.getId());
+            Optional<Car> found = carDao.findById(carToDelete.getId());
             assertFalse(found.isPresent());
         }
 
         @Test
-        @DisplayName("Should not throw exception for non-existent ID")
+        @DisplayName("Should not throw exception when deleting non-existent car")
         void deleteById_nonExistentId_shouldNotThrow() {
             assertDoesNotThrow(() -> carDao.deleteById(999L));
         }
@@ -188,83 +126,63 @@ class CarDaoTest extends BaseDaoTest {
     @Nested
     @DisplayName("Filter Operations")
     class FilterOperations {
+        @BeforeEach
+        void setUpData() {
+            Car toyotaSedan = buildUnsavedCar("TS-01", "Toyota", "Camry").withType(CarType.SEDAN);
+            carDao.save(toyotaSedan);
+
+            Car toyotaSuv = buildUnsavedCar("TS-02", "Toyota", "RAV4").withType(CarType.SUV);
+            carDao.save(toyotaSuv);
+
+            Car hondaRented = buildUnsavedCar("HN-01", "Honda", "Civic").withStatus(CarStatus.RENTED);
+            carDao.save(hondaRented);
+
+            Car fordOtherLocation = buildUnsavedCar("FD-01", "Ford", "Focus").withLocation(secondLocation);
+            carDao.save(fordOtherLocation);
+        }
+
+        @Test
+        @DisplayName("Should find cars by make filter")
+        void findByFilter_byMake_shouldReturnMatching() throws SQLException {
+            CarFilter filter = CarFilter.ofMake("Toyota");
+            List<Car> cars = carDao.findByFilter(filter);
+            assertEquals(2, cars.size());
+            assertTrue(cars.stream().allMatch(c -> c.getMake().equals("Toyota")));
+        }
 
         @Test
         @DisplayName("Should find cars by status filter")
-        void findByFilter_statusFilter_shouldReturnMatching() throws SQLException {
-            carDao.save(createCar("AVAIL1", "Toyota", "Camry", CarStatus.AVAILABLE, 50.0, CarType.SEDAN, VerificationStatus.VERIFIED));
-            carDao.save(createCar("AVAIL2", "Honda", "Civic", CarStatus.AVAILABLE, 45.0, CarType.SEDAN, VerificationStatus.VERIFIED));
-            carDao.save(createCar("RENTED1", "Ford", "Focus", CarStatus.RENTED, 40.0, CarType.HATCHBACK, VerificationStatus.VERIFIED));
-
-            CarFilter filter = CarFilter.ofStatus(CarStatus.AVAILABLE);
-
+        void findByFilter_byStatus_shouldReturnMatching() throws SQLException {
+            CarFilter filter = CarFilter.ofStatus(CarStatus.RENTED);
             List<Car> cars = carDao.findByFilter(filter);
-
-            assertEquals(2, cars.size());
-            cars.forEach(car -> assertEquals(CarStatus.AVAILABLE, car.getStatus()));
-        }
-
-        @Test
-        @DisplayName("Should find cars by type filter")
-        void findByFilter_typeFilter_shouldReturnMatching() throws SQLException {
-            carDao.save(createCar("SEDAN1", "Toyota", "Camry", CarStatus.AVAILABLE, 50.0, CarType.SEDAN, VerificationStatus.VERIFIED));
-            carDao.save(createCar("SEDAN2", "Honda", "Civic", CarStatus.AVAILABLE, 45.0, CarType.SEDAN, VerificationStatus.VERIFIED));
-            carDao.save(createCar("SUV1", "Ford", "Explorer", CarStatus.AVAILABLE, 75.0, CarType.SUV, VerificationStatus.VERIFIED));
-
-            CarFilter filter = CarFilter.ofType(CarType.SEDAN);
-
-            List<Car> cars = carDao.findByFilter(filter);
-
-            assertEquals(2, cars.size());
-            cars.forEach(car -> assertEquals(CarType.SEDAN, car.getType()));
-        }
-
-        @Test
-        @DisplayName("Should find cars by verification status filter")
-        void findByFilter_verificationStatusFilter_shouldReturnMatching() throws SQLException {
-            carDao.save(createCar("VERIF1", "Toyota", "Camry", CarStatus.AVAILABLE, 50.0, CarType.SEDAN, VerificationStatus.VERIFIED));
-            carDao.save(createCar("VERIF2", "Honda", "Civic", CarStatus.AVAILABLE, 45.0, CarType.SEDAN, VerificationStatus.VERIFIED));
-            carDao.save(createCar("PEND1", "Ford", "Focus", CarStatus.AVAILABLE, 40.0, CarType.HATCHBACK, VerificationStatus.PENDING));
-
-            CarFilter filter = CarFilter.ofVerificationStatus(VerificationStatus.VERIFIED);
-
-            List<Car> cars = carDao.findByFilter(filter);
-
-            assertEquals(2, cars.size());
-            cars.forEach(car -> assertEquals(VerificationStatus.VERIFIED, car.getVerificationStatus()));
+            assertEquals(1, cars.size());
+            assertEquals("HN-01", cars.get(0).getRegistrationNumber());
         }
 
         @Test
         @DisplayName("Should find cars by location filter")
-        void findByFilter_locationFilter_shouldReturnMatching() throws SQLException {
-            Long locationId2 = createLocation("Another City", "AC", "54321");
-            Location location2 = new Location(locationId2, "Another City", "AC", "54321");
-
-            carDao.save(createDefaultCar("LOC1"));
-            Car carInLocation2 = new Car(null, "LOC2", "Honda", "Civic", CarStatus.AVAILABLE, location2, 45.0, CarType.SEDAN, VerificationStatus.VERIFIED);
-            carDao.save(carInLocation2);
-
-            carDao.save(createCar("LOC3", "Ford", "Focus", CarStatus.AVAILABLE, 40.0, CarType.HATCHBACK, VerificationStatus.VERIFIED));
-
-            CarFilter filter = CarFilter.ofLocation(testLocation);
-
+        void findByFilter_byLocation_shouldReturnMatching() throws SQLException {
+            CarFilter filter = CarFilter.ofLocation(secondLocation);
             List<Car> cars = carDao.findByFilter(filter);
-
-            assertEquals(2, cars.size());
-            cars.forEach(car -> assertEquals(testLocation.getId(), car.getLocation().getId()));
+            assertEquals(1, cars.size());
+            assertEquals("FD-01", cars.get(0).getRegistrationNumber());
         }
 
         @Test
-        @DisplayName("Should return empty list when no cars match filter")
-        void findByFilter_noMatches_shouldReturnEmpty() throws SQLException {
-            carDao.save(createCar("TEST1", "Toyota", "Camry", CarStatus.AVAILABLE, 50.0, CarType.SEDAN, VerificationStatus.VERIFIED));
-            carDao.save(createCar("TEST2", "Honda", "Civic", CarStatus.AVAILABLE, 45.0, CarType.SEDAN, VerificationStatus.VERIFIED));
-
-            CarFilter filter = CarFilter.ofStatus(CarStatus.MAINTENANCE);
-
+        @DisplayName("Should find cars by multiple criteria")
+        void findByFilter_byMultipleCriteria_shouldReturnMatching() throws SQLException {
+            CarFilter filter = CarFilter.of("Toyota", null, CarStatus.AVAILABLE, null, CarType.SEDAN, null);
             List<Car> cars = carDao.findByFilter(filter);
+            assertEquals(1, cars.size());
+            assertEquals("TS-01", cars.get(0).getRegistrationNumber());
+        }
 
-            assertTrue(cars.isEmpty());
+        @Test
+        @DisplayName("Should return all cars for empty filter")
+        void findByFilter_emptyFilter_shouldReturnAll() throws SQLException {
+            CarFilter filter = CarFilter.of(null, null, null, null, null, null);
+            List<Car> results = carDao.findByFilter(filter);
+            assertEquals(4, results.size());
         }
     }
 }

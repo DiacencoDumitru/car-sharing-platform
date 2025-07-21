@@ -3,6 +3,7 @@ package com.dynamiccarsharing.carsharing.util;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.sql.SQLException;
@@ -11,14 +12,24 @@ import java.util.List;
 @SpringBootTest
 @ActiveProfiles("test")
 @DisplayName("DatabaseUtil Tests")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class DatabaseUtilTest {
     @Autowired
     DatabaseUtil databaseUtil;
 
     @BeforeEach
     void setup() {
+        databaseUtil.execute("DELETE FROM user_cars");
+        databaseUtil.execute("DELETE FROM payments");
+        databaseUtil.execute("DELETE FROM disputes");
+        databaseUtil.execute("DELETE FROM transactions");
+        databaseUtil.execute("DELETE FROM car_reviews");
+        databaseUtil.execute("DELETE FROM user_reviews");
+        databaseUtil.execute("DELETE FROM bookings");
+        databaseUtil.execute("DELETE FROM cars");
         databaseUtil.execute("DELETE FROM users");
         databaseUtil.execute("DELETE FROM contact_infos");
+        databaseUtil.execute("DELETE FROM locations");
 
         databaseUtil.execute("INSERT INTO contact_infos (id, email, phone_number, first_name, last_name) VALUES (?, ?, ?, ?, ?)", 1, "test@user.com", "12345", "Dumitru", "Test");
         databaseUtil.execute("INSERT INTO users (id, contact_info_id, role, status) VALUES (?, ?, ?, ?)", 1, 1, "RENTER", "ACTIVE");
@@ -37,7 +48,7 @@ class DatabaseUtilTest {
     }
 
     @Test
-    void findOne_withNonExistingId_returnsNull() {
+    void findOne_withExistingId_returnsExpectedRole() {
         String role = databaseUtil.findOne("SELECT role FROM users WHERE id = ?", resultSet -> {
             try {
                 return resultSet.getString("role");
@@ -50,8 +61,21 @@ class DatabaseUtilTest {
     }
 
     @Test
+    void findOne_withNonExistingId_shouldReturnNull() {
+        String role = databaseUtil.findOne("SELECT role FROM users WHERE id = ?", resultSet -> {
+            try {
+                return resultSet.getString("role");
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }, 999L);
+
+        Assertions.assertNull(role);
+    }
+
+    @Test
     void findMany_withMultipleUsers_shouldReturnsAllNames() {
-        databaseUtil.execute("INSERT INTO contact_infos (id, email, phone_number, first_name, last_name) VALUES (?, ?, ?, ?, ?)",2, "vitalii@user.com", "555-0102", "Vitalii", "Test");
+        databaseUtil.execute("INSERT INTO contact_infos (id, email, phone_number, first_name, last_name) VALUES (?, ?, ?, ?, ?)", 2, "vitalii@user.com", "555-0102", "Vitalii", "Test");
         databaseUtil.execute("INSERT INTO users (id, contact_info_id, role, status) VALUES (?, ?, ?, ?)", 2, 2, "RENTER", "ACTIVE");
 
         String sql = "SELECT ci.first_name FROM users u JOIN contact_infos ci ON u.contact_info_id = ci.id ORDER BY u.id";

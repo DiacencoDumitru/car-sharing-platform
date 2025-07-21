@@ -4,20 +4,25 @@ import com.dynamiccarsharing.carsharing.dao.jdbc.DisputeSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
+import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Dispute;
-import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
+import com.dynamiccarsharing.carsharing.model.User;
+import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.repository.jdbc.DisputeRepositoryJdbcImpl;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Profile("jdbc")
 @Repository
-public class DisputeDao implements DisputeRepository {
+public class DisputeDao implements DisputeRepositoryJdbcImpl {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<Dispute, Filter<Dispute>> sqlFilterMapper;
 
@@ -28,38 +33,31 @@ public class DisputeDao implements DisputeRepository {
 
     @Override
     public Dispute save(Dispute dispute) {
-        try {
-            if (dispute.getId() == null) {
-                String insertSql = "INSERT INTO disputes (booking_id, creation_user_id, description, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, ?)";
-                final Long[] newId = new Long[1];
-                databaseUtil.executeWithGeneratedKeys(insertSql, statement -> {
-                    try {
-                        statement.setLong(1, dispute.getBookingId());
-                        statement.setLong(2, dispute.getCreationUserId());
-                        statement.setString(3, dispute.getDescription());
-                        statement.setString(4, dispute.getStatus().name());
-                        statement.setTimestamp(5, Timestamp.valueOf(dispute.getCreatedAt()));
-                        statement.setTimestamp(6, dispute.getResolvedAt() != null ? Timestamp.valueOf(dispute.getResolvedAt()) : null);
-                        statement.executeUpdate();
-                        try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                            if (generatedKeys.next()) {
-                                newId[0] = generatedKeys.getLong(1);
-                            } else {
-                                throw new SQLException("Failed to retrieve generated ID");
-                            }
-                        }
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                return new Dispute(newId[0], dispute.getBookingId(), dispute.getCreationUserId(), dispute.getDescription(), dispute.getStatus(), dispute.getCreatedAt(), dispute.getResolvedAt());
-            } else {
-                String updateSql = "UPDATE disputes SET booking_id = ?, creation_user_id = ?, description = ?, status = ?, created_at = ?, resolved_at = ? WHERE id = ?";
-                databaseUtil.execute(updateSql, dispute.getBookingId(), dispute.getCreationUserId(), dispute.getDescription(), dispute.getStatus().name(), Timestamp.valueOf(dispute.getCreatedAt()), dispute.getResolvedAt() != null ? Timestamp.valueOf(dispute.getResolvedAt()) : null, dispute.getId());
-                return dispute;
-            }
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to save Dispute", e);
+        if (dispute.getId() == null) {
+            String insertSql = "INSERT INTO disputes (booking_id, creation_user_id, description, status, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, ?)";
+            LocalDateTime creationTime = LocalDateTime.now();
+
+            Long newId = databaseUtil.executeUpdateWithGeneratedKeys(insertSql, statement -> {
+                try {
+                    statement.setLong(1, dispute.getBooking().getId());
+                    statement.setLong(2, dispute.getCreationUser().getId());
+                    statement.setString(3, dispute.getDescription());
+                    statement.setString(4, dispute.getStatus().name());
+                    statement.setTimestamp(5, Timestamp.valueOf(creationTime));
+                    statement.setTimestamp(6, dispute.getResolvedAt() != null ? Timestamp.valueOf(dispute.getResolvedAt()) : null);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            return dispute.toBuilder()
+                    .id(newId)
+                    .createdAt(creationTime)
+                    .build();
+        } else {
+            String updateSql = "UPDATE disputes SET booking_id = ?, creation_user_id = ?, description = ?, status = ?, resolved_at = ? WHERE id = ?";
+            databaseUtil.execute(updateSql, dispute.getBooking().getId(), dispute.getCreationUser().getId(), dispute.getDescription(), dispute.getStatus().name(), dispute.getResolvedAt() != null ? Timestamp.valueOf(dispute.getResolvedAt()) : null, dispute.getId());
+            return dispute;
         }
     }
 
@@ -86,21 +84,35 @@ public class DisputeDao implements DisputeRepository {
     public List<Dispute> findByFilter(Filter<Dispute> filter) throws SQLException {
         String baseQuery = "SELECT * FROM disputes WHERE 1=1";
         SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
-
         String fullQuery = baseQuery + sqlFilter.filterQuery();
-
         return databaseUtil.findMany(fullQuery, this::mapToDispute, sqlFilter.parametersArray());
     }
 
     private Dispute mapToDispute(ResultSet rs) throws SQLException {
-        return new Dispute(
-                rs.getLong("id"),
-                rs.getLong("booking_id"),
-                rs.getLong("creation_user_id"),
-                rs.getString("description"),
-                DisputeStatus.valueOf(rs.getString("status")),
-                rs.getTimestamp("created_at").toLocalDateTime(),
-                rs.getTimestamp("resolved_at") != null ? rs.getTimestamp("resolved_at").toLocalDateTime() : null
-        );
+        Booking booking = Booking.builder().id(rs.getLong("booking_id")).build();
+        User user = User.builder().id(rs.getLong("creation_user_id")).build();
+
+        return Dispute.builder()
+                .id(rs.getLong("id"))
+                .booking(booking)
+                .creationUser(user)
+                .description(rs.getString("description"))
+                .status(DisputeStatus.valueOf(rs.getString("status")))
+                .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
+                .resolvedAt(rs.getTimestamp("resolved_at") != null ? rs.getTimestamp("resolved_at").toLocalDateTime() : null)
+                .build();
+    }
+
+    @Override
+    public Optional<Dispute> findByBookingId(Long bookingId) {
+        String query = "SELECT * FROM disputes WHERE booking_id = ?";
+        Dispute dispute = databaseUtil.findOne(query, this::mapToDispute, bookingId);
+        return Optional.ofNullable(dispute);
+    }
+
+    @Override
+    public List<Dispute> findByStatus(DisputeStatus status) {
+        String query = "SELECT * FROM disputes WHERE status = ?";
+        return databaseUtil.findMany(query, this::mapToDispute, status.name());
     }
 }

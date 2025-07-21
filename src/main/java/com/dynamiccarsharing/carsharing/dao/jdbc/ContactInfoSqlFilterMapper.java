@@ -1,16 +1,21 @@
 package com.dynamiccarsharing.carsharing.dao.jdbc;
 
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
-import com.dynamiccarsharing.carsharing.repository.filter.ContactInfoFilter;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
+import com.dynamiccarsharing.carsharing.filter.ContactInfoFilter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 public class ContactInfoSqlFilterMapper implements SqlFilterMapper<ContactInfo, Filter<ContactInfo>> {
 
     @Override
     public SqlFilter toSqlFilter(Filter<ContactInfo> contactInfoFilter) {
+        if (contactInfoFilter == null) {
+            return SqlFilter.empty();
+        }
+
         if (contactInfoFilter instanceof ContactInfoFilter filter) {
             return new SqlFilter(buildSqlQuery(filter), getParameters(filter));
         }
@@ -37,21 +42,8 @@ public class ContactInfoSqlFilterMapper implements SqlFilterMapper<ContactInfo, 
     }
 
     private List<Object> getParameters(ContactInfoFilter filter) {
-        List<Object> params = new ArrayList<>();
-
-        if (filter.getEmail() != null) {
-            params.add(filter.getEmail());
-        }
-        if (filter.getPhoneNumber() != null) {
-            params.add(filter.getPhoneNumber());
-        }
-        if (filter.getFirstName() != null) {
-            params.add(filter.getFirstName());
-        }
-        if (filter.getLastName() != null) {
-            params.add(filter.getLastName());
-        }
-
-        return params;
+        return Stream.<Object>of(filter.getEmail(), filter.getPhoneNumber(), filter.getFirstName(), filter.getLastName())
+                .filter(Objects::nonNull)
+                .toList();
     }
 }

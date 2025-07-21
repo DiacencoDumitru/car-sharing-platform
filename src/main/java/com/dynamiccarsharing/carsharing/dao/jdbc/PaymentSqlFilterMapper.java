@@ -1,16 +1,21 @@
 package com.dynamiccarsharing.carsharing.dao.jdbc;
 
 import com.dynamiccarsharing.carsharing.model.Payment;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.filter.PaymentFilter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.filter.PaymentFilter;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 public class PaymentSqlFilterMapper implements SqlFilterMapper<Payment, Filter<Payment>> {
 
     @Override
     public SqlFilter toSqlFilter(Filter<Payment> paymentFilter) {
+        if (paymentFilter == null) {
+            return SqlFilter.empty();
+        }
+
         if (paymentFilter instanceof PaymentFilter filter) {
             return new SqlFilter(buildSqlQuery(filter), getParameters(filter));
         }
@@ -40,24 +45,14 @@ public class PaymentSqlFilterMapper implements SqlFilterMapper<Payment, Filter<P
     }
 
     private List<Object> getParameters(PaymentFilter filter) {
-        List<Object> params = new ArrayList<>();
-
-        if (filter.getId() != null) {
-            params.add(filter.getId());
-        }
-        if (filter.getBookingId() != null) {
-            params.add(filter.getBookingId());
-        }
-        if (filter.getAmount() != null) {
-            params.add(filter.getAmount());
-        }
-        if (filter.getStatus() != null) {
-            params.add(filter.getStatus().name());
-        }
-        if (filter.getPaymentMethod() != null) {
-            params.add(filter.getPaymentMethod().name());
-        }
-
-        return params;
+        return Stream.<Object>of(
+                        filter.getId(),
+                        filter.getBookingId(),
+                        filter.getAmount(),
+                        filter.getStatus() != null ? filter.getStatus().name() : null,
+                        filter.getPaymentMethod() != null ? filter.getPaymentMethod().name() : null
+                )
+                .filter(Objects::nonNull)
+                .toList();
     }
 }

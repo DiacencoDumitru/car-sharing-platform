@@ -5,20 +5,24 @@ import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.dao.jdbc.TransactionSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
+import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Transaction;
-import com.dynamiccarsharing.carsharing.repository.TransactionRepository;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.repository.jdbc.TransactionRepositoryJdbcImpl;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@Profile("jdbc")
 @Repository
-public class TransactionDao implements TransactionRepository {
+public class TransactionDao implements TransactionRepositoryJdbcImpl {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<Transaction, Filter<Transaction>> sqlFilterMapper;
 
@@ -29,39 +33,44 @@ public class TransactionDao implements TransactionRepository {
 
     @Override
     public Transaction save(Transaction transaction) {
-        try {
-            if (transaction.getId() == null) {
-                String insertSql = "INSERT INTO transactions (booking_id, amount, status, payment_method, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
-                final Long[] newId = new Long[1];
+        if (transaction.getId() == null) {
+            String insertSql = "INSERT INTO transactions (booking_id, amount, status, payment_method, created_at) VALUES (?, ?, ?, ?, ?)";
 
-                databaseUtil.executeWithGeneratedKeys(insertSql, statement -> {
-                    try {
-                        statement.setLong(1, transaction.getBooking_id());
-                        statement.setDouble(2, transaction.getAmount());
-                        statement.setString(3, transaction.getStatus().name());
-                        statement.setString(4, transaction.getPaymentMethod().name());
-                        statement.setTimestamp(5, Timestamp.valueOf(transaction.getCreatedAt()));
-                        statement.setTimestamp(6, transaction.getUpdatedAt() != null ? Timestamp.valueOf(transaction.getUpdatedAt()) : null);
-                        statement.executeUpdate();
-                        try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
-                            if (generatedKeys.next()) {
-                                newId[0] = generatedKeys.getLong(1);
-                            } else {
-                                throw new SQLException("Failed to retrieve generated ID");
-                            }
-                        }
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-                return new Transaction(newId[0], transaction.getBooking_id(), transaction.getAmount(), transaction.getStatus(), transaction.getPaymentMethod(), transaction.getCreatedAt(), transaction.getUpdatedAt());
-            } else {
-                String updateSql = "UPDATE transactions SET booking_id = ?, amount = ?, status = ?, payment_method = ?, created_at = ?, updated_at = ? WHERE id = ?";
-                databaseUtil.execute(updateSql, transaction.getBooking_id(), transaction.getAmount(), transaction.getStatus().name(), transaction.getPaymentMethod().name(), Timestamp.valueOf(transaction.getCreatedAt()), transaction.getUpdatedAt() != null ? Timestamp.valueOf(transaction.getUpdatedAt()) : null, transaction.getId());
-                return transaction;
-            }
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to save Transaction", e);
+            LocalDateTime creationTime = LocalDateTime.now();
+
+            Long newId = databaseUtil.executeUpdateWithGeneratedKeys(insertSql, statement -> {
+                try {
+                    statement.setLong(1, transaction.getBooking().getId());
+                    statement.setBigDecimal(2, transaction.getAmount());
+                    statement.setString(3, transaction.getStatus().name());
+                    statement.setString(4, transaction.getPaymentMethod().name());
+                    statement.setTimestamp(5, Timestamp.valueOf(creationTime));
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            return Transaction.builder()
+                    .id(newId)
+                    .booking(transaction.getBooking())
+                    .amount(transaction.getAmount())
+                    .status(transaction.getStatus())
+                    .paymentMethod(transaction.getPaymentMethod())
+                    .createdAt(creationTime)
+                    .build();
+        } else {
+            String updateSql = "UPDATE transactions SET booking_id = ?, amount = ?, status = ?, payment_method = ?, updated_at = ? WHERE id = ?";
+            LocalDateTime updateTime = LocalDateTime.now();
+
+            databaseUtil.execute(updateSql,
+                    transaction.getBooking().getId(),
+                    transaction.getAmount(),
+                    transaction.getStatus().name(),
+                    transaction.getPaymentMethod().name(),
+                    Timestamp.valueOf(updateTime),
+                    transaction.getId());
+
+            return transaction.withUpdatedAt(updateTime);
         }
     }
 
@@ -84,25 +93,38 @@ public class TransactionDao implements TransactionRepository {
         databaseUtil.execute(deleteSql, id);
     }
 
+
     @Override
     public List<Transaction> findByFilter(Filter<Transaction> filter) throws SQLException {
         String baseQuery = "SELECT * FROM transactions WHERE 1=1";
         SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
-
         String fullQuery = baseQuery + sqlFilter.filterQuery();
-
         return databaseUtil.findMany(fullQuery, this::mapToTransaction, sqlFilter.parametersArray());
     }
 
     private Transaction mapToTransaction(ResultSet rs) throws SQLException {
-        return new Transaction(
-                rs.getLong("id"),
-                rs.getLong("booking_id"),
-                rs.getDouble("amount"),
-                TransactionStatus.valueOf(rs.getString("status")),
-                PaymentType.valueOf(rs.getString("payment_method")),
-                rs.getTimestamp("created_at").toLocalDateTime(),
-                rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null
-        );
+        Booking booking = Booking.builder().id(rs.getLong("booking_id")).build();
+
+        return Transaction.builder()
+                .id(rs.getLong("id"))
+                .booking(booking)
+                .amount(rs.getBigDecimal("amount"))
+                .status(TransactionStatus.valueOf(rs.getString("status")))
+                .paymentMethod(PaymentType.valueOf(rs.getString("payment_method")))
+                .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
+                .updatedAt(rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null)
+                .build();
+    }
+
+    @Override
+    public List<Transaction> findByStatus(TransactionStatus status) {
+        String query = "SELECT * FROM transactions WHERE status = ?";
+        return databaseUtil.findMany(query, this::mapToTransaction, status.name());
+    }
+
+    @Override
+    public List<Transaction> findByBookingId(Long bookingId) {
+        String query = "SELECT * FROM transactions WHERE booking_id = ?";
+        return databaseUtil.findMany(query, this::mapToTransaction, bookingId);
     }
 }

@@ -1,16 +1,21 @@
 package com.dynamiccarsharing.carsharing.dao.jdbc;
 
 import com.dynamiccarsharing.carsharing.model.CarReview;
-import com.dynamiccarsharing.carsharing.repository.filter.CarReviewFilter;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
+import com.dynamiccarsharing.carsharing.filter.CarReviewFilter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 public class CarReviewSqlFilterMapper implements SqlFilterMapper<CarReview, Filter<CarReview>> {
 
     @Override
     public SqlFilter toSqlFilter(Filter<CarReview> carReviewFilter) {
+        if (carReviewFilter == null) {
+            return SqlFilter.empty();
+        }
+
         if (carReviewFilter instanceof CarReviewFilter filter) {
             return new SqlFilter(buildSqlQuery(filter), getParameters(filter));
         }
@@ -34,18 +39,8 @@ public class CarReviewSqlFilterMapper implements SqlFilterMapper<CarReview, Filt
     }
 
     private List<Object> getParameters(CarReviewFilter filter) {
-        List<Object> params = new ArrayList<>();
-
-        if (filter.getId() != null) {
-            params.add(filter.getId());
-        }
-        if (filter.getReviewerId() != null) {
-            params.add(filter.getReviewerId());
-        }
-        if (filter.getCarId() != null) {
-            params.add(filter.getCarId());
-        }
-
-        return params;
+        return Stream.<Object>of(filter.getId(), filter.getReviewerId(), filter.getCarId())
+                .filter(Objects::nonNull)
+                .toList();
     }
 }

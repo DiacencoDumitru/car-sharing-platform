@@ -2,40 +2,61 @@ package com.dynamiccarsharing.carsharing.model;
 
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
-import com.dynamiccarsharing.carsharing.util.Validator;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.With;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = "booking")
+@Builder(toBuilder = true)
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+@Entity
+@Table(name = "transactions")
+@EntityListeners(AuditingEntityListener.class)
 public class Transaction {
-    private final Long id;
-    private final Long booking_id;
-    private final double amount;
-    @With
-    private final TransactionStatus status;
-    private final PaymentType paymentMethod;
-    private final LocalDateTime createdAt;
-    @With
-    private final LocalDateTime updatedAt;
 
-    public Transaction(Long id, Long booking_id, double amount, TransactionStatus status, PaymentType paymentMethod, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        Validator.validateId(id, "ID");
-        Validator.validateId(booking_id, "Booking ID");
-        Validator.validateNonNull(status, "Status");
-        Validator.validateNonNull(paymentMethod, "Payment method");
-        Validator.validateNonNull(createdAt, "Created at");
-        this.id = id;
-        this.booking_id = booking_id;
-        this.amount = amount;
-        this.status = status;
-        this.paymentMethod = paymentMethod;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_seq")
+    @SequenceGenerator(name = "transaction_seq", sequenceName = "transaction_seq", allocationSize = 1)
+    private final Long id;
+
+    @NotNull(message = "Booking must not be null.")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_id", nullable = false)
+    private final Booking booking;
+
+    @NotNull(message = "Amount must not be null.")
+    @Positive(message = "Amount must be positive.")
+    @Column(nullable = false)
+    private final BigDecimal amount;
+
+    @With
+    @NotNull(message = "Status must not be null.")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private final TransactionStatus status;
+
+    @NotNull(message = "Payment method must not be null.")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method", nullable = false)
+    private final PaymentType paymentMethod;
+
+    @NotNull(message = "Creation time must not be null.")
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @With
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

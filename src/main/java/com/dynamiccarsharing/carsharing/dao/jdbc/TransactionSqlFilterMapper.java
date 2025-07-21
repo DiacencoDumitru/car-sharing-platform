@@ -1,16 +1,20 @@
 package com.dynamiccarsharing.carsharing.dao.jdbc;
 
 import com.dynamiccarsharing.carsharing.model.Transaction;
-import com.dynamiccarsharing.carsharing.repository.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.filter.TransactionFilter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.filter.TransactionFilter;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 public class TransactionSqlFilterMapper implements SqlFilterMapper<Transaction, Filter<Transaction>> {
 
     @Override
     public SqlFilter toSqlFilter(Filter<Transaction> transactionFilter) {
+        if (transactionFilter == null) {
+            return SqlFilter.empty();
+        }
         if (transactionFilter instanceof TransactionFilter filter) {
             return new SqlFilter(buildSqlQuery(filter), getParameters(filter));
         }
@@ -37,21 +41,13 @@ public class TransactionSqlFilterMapper implements SqlFilterMapper<Transaction, 
     }
 
     private List<Object> getParameters(TransactionFilter filter) {
-        List<Object> params = new ArrayList<>();
-
-        if (filter.getId() != null) {
-            params.add(filter.getId());
-        }
-        if (filter.getBookingId() != null) {
-            params.add(filter.getBookingId());
-        }
-        if (filter.getStatus() != null) {
-            params.add(filter.getStatus().name());
-        }
-        if (filter.getPaymentMethod() != null) {
-            params.add(filter.getPaymentMethod().name());
-        }
-
-        return params;
+        return Stream.<Object>of(
+                        filter.getId(),
+                        filter.getBookingId(),
+                        filter.getStatus() != null ? filter.getStatus().name() : null,
+                        filter.getPaymentMethod() != null ? filter.getPaymentMethod().name() : null
+                )
+                .filter(Objects::nonNull)
+                .toList();
     }
 }
