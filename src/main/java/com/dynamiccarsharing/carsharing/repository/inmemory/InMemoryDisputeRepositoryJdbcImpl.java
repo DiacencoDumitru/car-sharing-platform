@@ -2,13 +2,12 @@ package com.dynamiccarsharing.carsharing.repository.inmemory;
 
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.model.Dispute;
-import com.dynamiccarsharing.carsharing.repository.jdbc.DisputeRepositoryJdbcImpl;
 import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class InMemoryDisputeRepositoryJdbcImpl implements DisputeRepositoryJdbcImpl {
+public class InMemoryDisputeRepositoryJdbcImpl implements DisputeRepository {
     private final Map<Long, Dispute> disputeMap = new HashMap<>();
 
     @Override
@@ -29,7 +28,7 @@ public class InMemoryDisputeRepositoryJdbcImpl implements DisputeRepositoryJdbcI
 
     @Override
     public List<Dispute> findByFilter(Filter<Dispute> filter) {
-        return disputeMap.values().stream().filter(filter::test).collect(Collectors.toList());
+        return disputeMap.values().stream().filter(filter::test).toList();
     }
 
     @Override
@@ -48,6 +47,6 @@ public class InMemoryDisputeRepositoryJdbcImpl implements DisputeRepositoryJdbcI
     public List<Dispute> findByStatus(DisputeStatus status) {
         return disputeMap.values().stream()
                 .filter(dispute -> dispute.getStatus() == status)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

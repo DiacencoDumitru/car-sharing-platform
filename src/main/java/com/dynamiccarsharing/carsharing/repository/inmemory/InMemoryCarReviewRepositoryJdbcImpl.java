@@ -1,13 +1,12 @@
 package com.dynamiccarsharing.carsharing.repository.inmemory;
 
 import com.dynamiccarsharing.carsharing.model.CarReview;
-import com.dynamiccarsharing.carsharing.repository.jdbc.CarReviewRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.CarReviewRepository;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class InMemoryCarReviewRepositoryJdbcImpl implements CarReviewRepositoryJdbcImpl {
+public class InMemoryCarReviewRepositoryJdbcImpl implements CarReviewRepository {
     private final Map<Long, CarReview> carReviewMap = new HashMap<>();
 
     @Override
@@ -28,7 +27,21 @@ public class InMemoryCarReviewRepositoryJdbcImpl implements CarReviewRepositoryJ
 
     @Override
     public List<CarReview> findByFilter(Filter<CarReview> filter) {
-        return carReviewMap.values().stream().filter(filter::test).collect(Collectors.toList());
+        return carReviewMap.values().stream().filter(filter::test).toList();
+    }
+
+    @Override
+    public List<CarReview> findByCarId(Long carId) {
+        return carReviewMap.values().stream()
+                .filter(review -> review.getCar() != null && review.getCar().getId().equals(carId))
+                .toList();
+    }
+
+    @Override
+    public List<CarReview> findByReviewerId(Long reviewerId) {
+        return carReviewMap.values().stream()
+                .filter(review -> review.getReviewer() != null && review.getReviewer().getId().equals(reviewerId))
+                .toList();
     }
 
     @Override

@@ -9,7 +9,7 @@ import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.jdbc.CarRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.CarRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -21,7 +21,7 @@ import java.util.Optional;
 
 @Profile("jdbc")
 @Repository
-public class CarDao implements CarRepositoryJdbcImpl {
+public class CarDao implements CarRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<Car, Filter<Car>> sqlFilterMapper;
 
@@ -120,7 +120,6 @@ public class CarDao implements CarRepositoryJdbcImpl {
                 .build();
     }
 
-    @Override
     public List<Car> findByStatus(CarStatus status) {
         String query = "SELECT c.*, l.city, l.state, l.zip_code FROM cars c " +
                 "JOIN locations l ON c.location_id = l.id WHERE c.status = ?";

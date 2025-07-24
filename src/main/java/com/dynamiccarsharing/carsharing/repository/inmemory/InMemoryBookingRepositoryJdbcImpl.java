@@ -1,13 +1,12 @@
 package com.dynamiccarsharing.carsharing.repository.inmemory;
 
 import com.dynamiccarsharing.carsharing.model.Booking;
-import com.dynamiccarsharing.carsharing.repository.jdbc.BookingRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.BookingRepository;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class InMemoryBookingRepositoryJdbcImpl implements BookingRepositoryJdbcImpl {
+public class InMemoryBookingRepositoryJdbcImpl implements BookingRepository {
     private final Map<Long, Booking> bookingMap = new HashMap<>();
 
     @Override
@@ -28,18 +27,18 @@ public class InMemoryBookingRepositoryJdbcImpl implements BookingRepositoryJdbcI
 
     @Override
     public List<Booking> findByFilter(Filter<Booking> filter) {
-        return bookingMap.values().stream().filter(filter::test).collect(Collectors.toList());
+        return bookingMap.values().stream().filter(filter::test).toList();
     }
 
     @Override
-    public Iterable<Booking> findAll() {
-        return bookingMap.values();
+    public List<Booking> findAll() {
+        return new ArrayList<>(bookingMap.values());
     }
 
     @Override
     public List<Booking> findByRenterId(Long renterId) {
         return bookingMap.values().stream()
                 .filter(booking -> booking.getRenter() != null && booking.getRenter().getId().equals(renterId))
-                .collect(Collectors.toList());
+                .toList();
     }
 }

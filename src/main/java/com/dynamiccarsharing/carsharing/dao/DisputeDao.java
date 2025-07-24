@@ -8,7 +8,7 @@ import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Dispute;
 import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.jdbc.DisputeRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -22,7 +22,7 @@ import java.util.Optional;
 
 @Profile("jdbc")
 @Repository
-public class DisputeDao implements DisputeRepositoryJdbcImpl {
+public class DisputeDao implements DisputeRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<Dispute, Filter<Dispute>> sqlFilterMapper;
 

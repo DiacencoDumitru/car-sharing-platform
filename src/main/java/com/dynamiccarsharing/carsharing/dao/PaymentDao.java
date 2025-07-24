@@ -8,7 +8,7 @@ import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Payment;
 import com.dynamiccarsharing.carsharing.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.jdbc.PaymentRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.PaymentRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -22,7 +22,7 @@ import java.util.Optional;
 
 @Profile("jdbc")
 @Repository
-public class PaymentDao implements PaymentRepositoryJdbcImpl {
+public class PaymentDao implements PaymentRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<Payment, Filter<Payment>> sqlFilterMapper;
 

@@ -1,13 +1,12 @@
 package com.dynamiccarsharing.carsharing.repository.inmemory;
 
 import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.repository.jdbc.LocationRepositoryJdbcImpl;
 import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.repository.LocationRepository;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class InMemoryLocationRepositoryJdbcImpl implements LocationRepositoryJdbcImpl {
+public class InMemoryLocationRepositoryJdbcImpl implements LocationRepository {
     private final Map<Long, Location> locationMap = new HashMap<>();
 
     @Override
@@ -28,7 +27,7 @@ public class InMemoryLocationRepositoryJdbcImpl implements LocationRepositoryJdb
 
     @Override
     public List<Location> findByFilter(Filter<Location> filter) {
-        return locationMap.values().stream().filter(filter::test).collect(Collectors.toList());
+        return locationMap.values().stream().filter(filter::test).toList();
     }
 
     @Override
@@ -37,16 +36,21 @@ public class InMemoryLocationRepositoryJdbcImpl implements LocationRepositoryJdb
     }
 
     @Override
-    public List<Location> findByStateIgnoreCase(String state) {
-        return locationMap.values().stream()
-                .filter(location -> location.getState().equalsIgnoreCase(state))
-                .collect(Collectors.toList());
+    public List<Location> findByCityIgnoreCase(String city) {
+        return List.of();
     }
 
     @Override
-    public Optional<Location> findByZipCode(String zipCode) {
+    public List<Location> findByStateIgnoreCase(String state) {
+        return locationMap.values().stream()
+                .filter(location -> location.getState().equalsIgnoreCase(state))
+                .toList();
+    }
+
+    @Override
+    public List<Location> findByZipCode(String zipCode) {
         return locationMap.values().stream()
                 .filter(location -> location.getZipCode().equals(zipCode))
-                .findFirst();
+                .toList();
     }
 }

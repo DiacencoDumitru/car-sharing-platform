@@ -5,7 +5,7 @@ import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.jdbc.LocationRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.LocationRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @Profile("jdbc")
 @Repository
-public class LocationDao implements LocationRepositoryJdbcImpl {
+public class LocationDao implements LocationRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<Location, Filter<Location>> sqlFilterMapper;
 
@@ -84,15 +84,20 @@ public class LocationDao implements LocationRepositoryJdbcImpl {
     }
 
     @Override
+    public List<Location> findByCityIgnoreCase(String city) {
+        String query = "SELECT * FROM locations WHERE LOWER(city) = LOWER(?)";
+        return databaseUtil.findMany(query, this::mapToLocation, city);
+    }
+
+    @Override
     public List<Location> findByStateIgnoreCase(String state) {
         String query = "SELECT * FROM locations WHERE LOWER(state) = LOWER(?)";
         return databaseUtil.findMany(query, this::mapToLocation, state);
     }
 
     @Override
-    public Optional<Location> findByZipCode(String zipCode) {
+    public List<Location> findByZipCode(String zipCode) {
         String query = "SELECT * FROM locations WHERE zip_code = ?";
-        Location location = databaseUtil.findOne(query, this::mapToLocation, zipCode);
-        return Optional.ofNullable(location);
+        return databaseUtil.findMany(query, this::mapToLocation, zipCode);
     }
 }

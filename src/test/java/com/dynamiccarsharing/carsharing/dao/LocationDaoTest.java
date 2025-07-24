@@ -140,9 +140,8 @@ class LocationDaoTest extends BaseDaoTest {
         @DisplayName("Should find by zip code")
         void findByZipCode_shouldReturnCorrectLocation() throws SQLException {
             createLocation("Unique City", "UC", "99999");
-            Optional<Location> found = locationDao.findByZipCode("99999");
-            assertTrue(found.isPresent());
-            assertEquals("UC", found.get().getState());
+            List<Location> found = locationDao.findByZipCode("99999");
+            assertEquals("UC", found.get(0).getState());
         }
     }
 }

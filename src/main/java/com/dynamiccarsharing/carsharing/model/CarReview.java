@@ -7,7 +7,7 @@ import lombok.*;
 @Getter
 @ToString
 @EqualsAndHashCode(exclude = {"car", "reviewer"})
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor(force = true)
 @Entity
@@ -17,20 +17,20 @@ public class CarReview {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "car_review_seq")
     @SequenceGenerator(name = "car_review_seq", sequenceName = "car_review_seq", allocationSize = 1)
-    private final Long id;
+    private Long id;
 
     @NotNull(message = "Car must be not null.")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "car_id", nullable = false)
-    private final Car car;
+    private Car car;
 
     @NotNull(message = "Reviewer must be not null.")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewer_id", nullable = false)
-    private final User reviewer;
+    private User reviewer;
 
     @With
     @NotNull(message = "Comment must be not null.")
     @Column(nullable = false)
-    private final String comment;
+    private String comment;
 }

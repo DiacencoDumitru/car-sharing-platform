@@ -3,6 +3,7 @@ package com.dynamiccarsharing.carsharing.dto;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
+import com.dynamiccarsharing.carsharing.model.Location;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -12,7 +13,7 @@ public class CarSearchCriteria {
     private String make;
     private String model;
     private CarStatus status;
-    private Long locationId;
+    private Location location;
     private CarType type;
     private VerificationStatus verificationStatus;
 }

@@ -21,32 +21,32 @@ public class Dispute {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "dispute_seq")
     @SequenceGenerator(name = "dispute_seq", sequenceName = "dispute_seq", allocationSize = 1)
-    private final Long id;
+    private Long id;
 
     @OneToOne
     @JoinColumn(name = "booking_id", nullable = false, unique = true)
-    private final Booking booking;
+    private Booking booking;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creation_user_id", nullable = false)
-    private final User creationUser;
+    private User creationUser;
 
     @With
     @NotBlank(message = "Description must be not null.")
     @Column(nullable = false)
-    private final String description;
+    private String description;
 
     @With
     @NotNull(message = "Status must not be null.")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private final DisputeStatus status;
+    private DisputeStatus status;
 
     @NotNull(message = "Created at must be not null.")
     @Column(name = "created_at", nullable = false)
-    private final LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
     @With
     @Column(name = "resolved_at")
-    private final LocalDateTime resolvedAt;
+    private LocalDateTime resolvedAt;
 }

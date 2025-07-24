@@ -69,6 +69,8 @@ class BookingDaoTest extends BaseDaoTest {
             Booking booking = createUnsavedBooking(TransactionStatus.PENDING, start, end);
             Booking saved = bookingDao.save(booking);
 
+            System.out.println(booking);
+
             assertNotNull(saved.getId());
             assertEquals(booking.getRenter().getId(), saved.getRenter().getId());
             assertEquals(booking.getCar().getId(), saved.getCar().getId());

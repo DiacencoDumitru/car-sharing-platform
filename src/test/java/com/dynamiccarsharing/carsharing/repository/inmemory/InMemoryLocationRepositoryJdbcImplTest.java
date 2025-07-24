@@ -120,9 +120,8 @@ class InMemoryLocationRepositoryJdbcImplTest {
             repository.save(loc1);
             repository.save(loc2);
 
-            Optional<Location> found = repository.findByZipCode("60601");
-            assertTrue(found.isPresent());
-            assertEquals(loc2, found.get());
+            List<Location> found = repository.findByZipCode("60601");
+            assertEquals(loc2, found.get(0));
         }
 
         @Test

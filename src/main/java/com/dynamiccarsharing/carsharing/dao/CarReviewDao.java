@@ -7,7 +7,7 @@ import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.CarReview;
 import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.jdbc.CarReviewRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.CarReviewRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @Profile("jdbc")
 @Repository
-public class CarReviewDao implements CarReviewRepositoryJdbcImpl {
+public class CarReviewDao implements CarReviewRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<CarReview, Filter<CarReview>> sqlFilterMapper;
 
@@ -84,6 +84,18 @@ public class CarReviewDao implements CarReviewRepositoryJdbcImpl {
         String fullQuery = baseQuery + sqlFilter.filterQuery();
 
         return databaseUtil.findMany(fullQuery, this::mapToCarReview, sqlFilter.parametersArray());
+    }
+
+    @Override
+    public List<CarReview> findByCarId(Long carId) {
+        String query = "SELECT * FROM car_reviews WHERE car_id = ?";
+        return databaseUtil.findMany(query, this::mapToCarReview, carId);
+    }
+
+    @Override
+    public List<CarReview> findByReviewerId(Long reviewerId) {
+        String query = "SELECT * FROM car_reviews WHERE reviewer_id = ?";
+        return databaseUtil.findMany(query, this::mapToCarReview, reviewerId);
     }
 
     private CarReview mapToCarReview(ResultSet rs) throws SQLException {
