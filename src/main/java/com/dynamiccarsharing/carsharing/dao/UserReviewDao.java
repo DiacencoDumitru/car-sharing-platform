@@ -6,7 +6,7 @@ import com.dynamiccarsharing.carsharing.dao.jdbc.UserReviewSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.model.UserReview;
 import com.dynamiccarsharing.carsharing.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.jdbc.UserReviewRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.UserReviewRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -18,7 +18,7 @@ import java.util.Optional;
 
 @Profile("jdbc")
 @Repository
-public class UserReviewDao implements UserReviewRepositoryJdbcImpl {
+public class UserReviewDao implements UserReviewRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<UserReview, Filter<UserReview>> sqlFilterMapper;
 
@@ -58,7 +58,7 @@ public class UserReviewDao implements UserReviewRepositoryJdbcImpl {
     }
 
     @Override
-    public Iterable<UserReview> findAll() {
+    public List<UserReview> findAll() {
         String query = "SELECT * FROM user_reviews";
         return databaseUtil.findMany(query, this::mapToUserReview);
     }

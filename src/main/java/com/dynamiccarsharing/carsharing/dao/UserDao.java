@@ -13,7 +13,7 @@ import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.jdbc.UserRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.UserRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -27,7 +27,7 @@ import java.util.Optional;
 
 @Profile("jdbc")
 @Repository
-public class UserDao implements UserRepositoryJdbcImpl {
+public class UserDao implements UserRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<User, Filter<User>> sqlFilterMapper;
     private final ContactInfoDao contactInfoDao;
@@ -79,7 +79,7 @@ public class UserDao implements UserRepositoryJdbcImpl {
     }
 
     @Override
-    public Iterable<User> findAll() {
+    public List<User> findAll() {
         return databaseUtil.findMany(USER_CONTACT_JOIN_QUERY, this::mapToUser);
     }
 
@@ -178,5 +178,10 @@ public class UserDao implements UserRepositoryJdbcImpl {
         String query = USER_CONTACT_JOIN_QUERY + " WHERE c.email = ?";
         User user = databaseUtil.findOne(query, this::mapToUser, email);
         return Optional.ofNullable(user);
+    }
+
+    @Override
+    public Optional<User> findWithCarsById(Long id) {
+        return findById(id);
     }
 }

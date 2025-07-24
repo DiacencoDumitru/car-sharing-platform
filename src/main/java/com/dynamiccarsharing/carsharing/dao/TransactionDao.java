@@ -8,7 +8,7 @@ import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Transaction;
 import com.dynamiccarsharing.carsharing.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.jdbc.TransactionRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.TransactionRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -22,7 +22,7 @@ import java.util.Optional;
 
 @Profile("jdbc")
 @Repository
-public class TransactionDao implements TransactionRepositoryJdbcImpl {
+public class TransactionDao implements TransactionRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<Transaction, Filter<Transaction>> sqlFilterMapper;
 
@@ -82,7 +82,7 @@ public class TransactionDao implements TransactionRepositoryJdbcImpl {
     }
 
     @Override
-    public Iterable<Transaction> findAll() {
+    public List<Transaction> findAll() {
         String query = "SELECT * FROM transactions";
         return databaseUtil.findMany(query, this::mapToTransaction);
     }

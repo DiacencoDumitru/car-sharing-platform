@@ -8,7 +8,7 @@ import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.model.*;
 import com.dynamiccarsharing.carsharing.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.jdbc.BookingRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.BookingRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -21,7 +21,7 @@ import java.util.Optional;
 
 @Profile("jdbc")
 @Repository
-public class BookingDao implements BookingRepositoryJdbcImpl {
+public class BookingDao implements BookingRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<Booking, Filter<Booking>> sqlFilterMapper;
 
@@ -77,7 +77,7 @@ public class BookingDao implements BookingRepositoryJdbcImpl {
     }
 
     @Override
-    public Iterable<Booking> findAll() {
+    public List<Booking> findAll() {
         String query = "SELECT b.*, l.city, l.state, l.zip_code FROM bookings b " +
                 "JOIN locations l ON b.pickup_location_id = l.id";
         return databaseUtil.findMany(query, this::mapToBooking);

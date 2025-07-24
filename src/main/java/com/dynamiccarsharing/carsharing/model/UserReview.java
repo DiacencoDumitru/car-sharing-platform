@@ -18,20 +18,20 @@ public class UserReview {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_review_seq")
     @SequenceGenerator(name = "user_review_seq", sequenceName = "user_review_seq", allocationSize = 1)
-    private final Long id;
+    private Long id;
 
     @NotNull(message = "User being reviewed must not be null.")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private final User user;
+    private User user;
 
     @NotNull(message = "Reviewer must not be null.")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewer_id", nullable = false)
-    private final User reviewer;
+    private User reviewer;
 
     @With
     @NotBlank(message = "Comment must not be blank.")
     @Column(nullable = false)
-    private final String comment;
+    private String comment;
 }

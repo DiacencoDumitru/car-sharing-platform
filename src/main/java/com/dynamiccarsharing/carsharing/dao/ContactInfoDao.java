@@ -5,7 +5,7 @@ import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.filter.Filter;
-import com.dynamiccarsharing.carsharing.repository.jdbc.ContactInfoRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.ContactInfoRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @Profile("jdbc")
 @Repository
-public class ContactInfoDao implements ContactInfoRepositoryJdbcImpl {
+public class ContactInfoDao implements ContactInfoRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<ContactInfo, Filter<ContactInfo>> sqlFilterMapper;
 

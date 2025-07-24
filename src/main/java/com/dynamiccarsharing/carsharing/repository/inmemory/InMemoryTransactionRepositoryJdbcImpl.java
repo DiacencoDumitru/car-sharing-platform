@@ -2,13 +2,12 @@ package com.dynamiccarsharing.carsharing.repository.inmemory;
 
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.model.Transaction;
-import com.dynamiccarsharing.carsharing.repository.jdbc.TransactionRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.TransactionRepository;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class InMemoryTransactionRepositoryJdbcImpl implements TransactionRepositoryJdbcImpl {
+public class InMemoryTransactionRepositoryJdbcImpl implements TransactionRepository {
     private final Map<Long, Transaction> transactionMap = new HashMap<>();
 
     @Override
@@ -29,25 +28,25 @@ public class InMemoryTransactionRepositoryJdbcImpl implements TransactionReposit
 
     @Override
     public List<Transaction> findByFilter(Filter<Transaction> filter) {
-        return transactionMap.values().stream().filter(filter::test).collect(Collectors.toList());
+        return transactionMap.values().stream().filter(filter::test).toList();
     }
 
     @Override
-    public Iterable<Transaction> findAll() {
-        return transactionMap.values();
+    public List<Transaction> findAll() {
+        return new ArrayList<>(transactionMap.values());
     }
 
     @Override
     public List<Transaction> findByStatus(TransactionStatus status) {
         return transactionMap.values().stream()
                 .filter(transaction -> transaction.getStatus() == status)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public List<Transaction> findByBookingId(Long bookingId) {
         return transactionMap.values().stream()
                 .filter(transaction -> transaction.getBooking() != null && transaction.getBooking().getId().equals(bookingId))
-                .collect(Collectors.toList());
+                .toList();
     }
 }

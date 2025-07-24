@@ -2,13 +2,12 @@ package com.dynamiccarsharing.carsharing.repository.inmemory;
 
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.model.Payment;
-import com.dynamiccarsharing.carsharing.repository.jdbc.PaymentRepositoryJdbcImpl;
+import com.dynamiccarsharing.carsharing.repository.PaymentRepository;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class InMemoryPaymentRepositoryJdbcImpl implements PaymentRepositoryJdbcImpl {
+public class InMemoryPaymentRepositoryJdbcImpl implements PaymentRepository {
     private final Map<Long, Payment> paymentMap = new HashMap<>();
 
     @Override
@@ -29,7 +28,7 @@ public class InMemoryPaymentRepositoryJdbcImpl implements PaymentRepositoryJdbcI
 
     @Override
     public List<Payment> findByFilter(Filter<Payment> filter) {
-        return paymentMap.values().stream().filter(filter::test).collect(Collectors.toList());
+        return paymentMap.values().stream().filter(filter::test).toList();
     }
 
     @Override
@@ -48,6 +47,6 @@ public class InMemoryPaymentRepositoryJdbcImpl implements PaymentRepositoryJdbcI
     public List<Payment> findByStatus(TransactionStatus status) {
         return paymentMap.values().stream()
                 .filter(payment -> payment.getStatus() == status)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

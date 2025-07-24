@@ -27,28 +27,28 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "payment_seq")
     @SequenceGenerator(name = "payment_seq", sequenceName = "payment_seq", allocationSize = 1)
-    private final Long id;
+    private Long id;
 
     @NotNull(message = "Booking must not be null.")
     @OneToOne
     @JoinColumn(name = "booking_id", nullable = false, unique = true)
-    private final Booking booking;
+    private Booking booking;
 
     @NotNull(message = "Amount must not be null.")
     @Positive(message = "Amount must be positive.")
     @Column(nullable = false)
-    private final BigDecimal amount;
+    private BigDecimal amount;
 
     @With
     @NotNull(message = "Status must be not null.")
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private final TransactionStatus status;
+    private TransactionStatus status;
 
     @NotNull(message = "Payment method must be not null.")
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false)
-    private final PaymentType paymentMethod;
+    private PaymentType paymentMethod;
 
     @NotNull(message = "Created at must be not null.")
     @CreatedDate
