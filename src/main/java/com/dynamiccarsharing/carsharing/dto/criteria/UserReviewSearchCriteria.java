@@ -1,4 +1,4 @@
-package com.dynamiccarsharing.carsharing.dto;
+package com.dynamiccarsharing.carsharing.dto.criteria;
 
 import lombok.Builder;
 import lombok.Getter;
