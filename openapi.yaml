@@ -1,0 +1,890 @@
+openapi: 3.0.3
+info:
+  title: Dynamic Car Sharing API
+  description: |-
+    A comprehensive API for a peer-to-peer car sharing platform.
+    This API covers all functionalities for renters, car owners, and administrators,
+    from Browse and booking cars to managing disputes and verifying users.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: API Version 1
+tags:
+  - name: Cars
+    description: Public Browse and management of cars.
+  - name: Bookings
+    description: Operations for renters to book cars and for owners to manage requests.
+  - name: Users & Profiles
+    description: User account management, profiles, and reviews.
+  - name: Reviews
+    description: Managing user and car reviews.
+  - name: Payments & Transactions
+    description: Endpoints for handling payments and viewing transaction history.
+  - name: Disputes
+    description: Endpoints for raising and resolving disputes.
+  - name: Admin
+    description: Administrative endpoints for platform management.
+
+paths:
+  /cars:
+    get:
+      tags:
+        - Cars
+      summary: Browse and filter available cars
+      description: Allows guests and renters to browse available cars with extensive filtering.
+      operationId: searchCars
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+        - name: locationId
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/CarType'
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+            format: double
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+            format: double
+        - name: verificationStatus
+          in: query
+          schema:
+            $ref: '#/components/schemas/VerificationStatus'
+      responses:
+        '200':
+          description: A paginated list of available cars.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarPage'
+    post:
+      tags:
+        - Cars
+      summary: List a new car
+      description: Allows a car owner to list a new car on the platform.
+      operationId: createCar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarCreateRequest'
+      responses:
+        '201':
+          description: Car created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /cars/{carId}:
+    get:
+      tags:
+        - Cars
+      summary: Get car details by ID
+      description: Retrieves the details of a specific car.
+      operationId: getCarById
+      parameters:
+        - $ref: '#/components/parameters/CarId'
+      responses:
+        '200':
+          description: Detailed information for a single car.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Cars
+      summary: Update car details
+      description: Allows a car owner to update their car's details.
+      operationId: updateCar
+      parameters:
+        - $ref: '#/components/parameters/CarId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarUpdateRequest'
+      responses:
+        '200':
+          description: Car updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Cars
+      summary: Delete a car
+      description: Allows a car owner or admin to delete a car listing.
+      operationId: deleteCar
+      parameters:
+        - $ref: '#/components/parameters/CarId'
+      responses:
+        '204':
+          description: "Car deleted successfully."
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bookings:
+    get:
+      tags:
+        - Bookings
+      summary: List all bookings (Admin)
+      description: Retrieves a paginated list of all bookings on the platform. For admin use.
+      operationId: getAllBookings
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: A paginated list of all bookings.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingPage'
+    post:
+      tags:
+        - Bookings
+      summary: Book a car
+      description: Allows a renter to book a car for a specific time period.
+      operationId: createBooking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingCreateRequest'
+      responses:
+        '201':
+          description: "Booking request created."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /bookings/{bookingId}:
+    get:
+      tags:
+        - Bookings
+      summary: Get booking details
+      description: Retrieves details of a specific booking.
+      operationId: getBookingById
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      responses:
+        '200':
+          description: Detailed information for the booking.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Bookings
+      summary: Update booking status
+      description: Allows a car owner or renter to update the booking status (e.g., APPROVE, CANCEL).
+      operationId: updateBookingStatus
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/TransactionStatus'
+      responses:
+        '200':
+          description: "Booking status updated."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    delete:
+      tags:
+        - Bookings
+      summary: Delete a booking (Admin)
+      description: Allows an admin to delete a booking record.
+      operationId: deleteBooking
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      responses:
+        '204':
+          description: "Booking deleted successfully."
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users:
+    get:
+      tags:
+        - Users & Profiles
+      summary: List all users (Admin)
+      description: Retrieves a paginated list of all users.
+      operationId: getAllUsers
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: A paginated list of users.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+
+  /users/register:
+    post:
+      tags:
+        - Users & Profiles
+      summary: Register a new user
+      description: Allows a guest to sign up for a new account.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '201':
+          description: "User account created."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /users/{userId}:
+    get:
+      tags:
+        - Users & Profiles
+      summary: Get user's public profile
+      description: View a user's public profile, including their reviews.
+      operationId: getUserProfileById
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: "User's public profile."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPublicProfile'
+    delete:
+      tags:
+        - Users & Profiles
+      summary: Delete a user (Admin)
+      description: Allows an admin to permanently delete a user account.
+      operationId: deleteUser
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204':
+          description: "User deleted successfully."
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/me:
+    get:
+      tags:
+        - Users & Profiles
+      summary: Get current user's profile
+      description: "Retrieves the full profile for the authenticated user."
+      operationId: getCurrentUserProfile
+      responses:
+        '200':
+          description: "Authenticated user's profile."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    patch:
+      tags:
+        - Users & Profiles
+      summary: Update current user's contact info
+      description: Allows a user to update their contact information.
+      operationId: updateCurrentUserContactInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactInfo'
+      responses:
+        '200':
+          description: "Contact info updated."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /reviews/{reviewId}:
+    get:
+      tags:
+        - Reviews
+      summary: Get a specific review by ID
+      description: Retrieves a single car or user review by its unique ID.
+      operationId: getReviewById
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+      responses:
+        '200':
+          description: "Review details."
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/UserReview'
+                  - $ref: '#/components/schemas/CarReview'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Reviews
+      summary: Update a review
+      description: Allows the original author or an admin to edit a review's comment.
+      operationId: updateReview
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+      responses:
+        '200':
+          description: "Review updated."
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Reviews
+      summary: Delete a review
+      description: Allows the original author or an admin to delete a review.
+      operationId: deleteReview
+      parameters:
+        - $ref: '#/components/parameters/ReviewId'
+      responses:
+        '204':
+          description: "Review deleted."
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{userId}/reviews:
+    get:
+      tags:
+        - Reviews
+      summary: Get reviews for a user
+      description: Retrieves all reviews for a specific user.
+      operationId: getUserReviews
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: "A list of reviews for the user."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserReview'
+    post:
+      tags:
+        - Reviews
+      summary: Review a user
+      description: Allows a user to rate and review another user after a completed trip.
+      operationId: createUserReview
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserReviewCreateRequest'
+      responses:
+        '201':
+          description: "Review submitted."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserReview'
+
+  /cars/{carId}/reviews:
+    get:
+      tags:
+        - Reviews
+      summary: Get reviews for a car
+      description: Retrieves all reviews for a specific car.
+      operationId: getCarReviews
+      parameters:
+        - $ref: '#/components/parameters/CarId'
+      responses:
+        '200':
+          description: "A list of reviews for the car."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CarReview'
+    post:
+      tags:
+        - Reviews
+      summary: Review a car
+      description: Allows a renter to review a car after a completed trip.
+      operationId: createCarReview
+      parameters:
+        - $ref: '#/components/parameters/CarId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarReviewCreateRequest'
+      responses:
+        '201':
+          description: "Review submitted."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarReview'
+
+  /cars/{carId}/verification:
+    post:
+      tags:
+        - Cars
+      summary: Submit a car for verification
+      description: A car owner can submit their car to be verified by an admin.
+      operationId: submitCarForVerification
+      parameters:
+        - $ref: '#/components/parameters/CarId'
+      responses:
+        '202':
+          description: "Verification request accepted."
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bookings/{bookingId}/payment:
+    post:
+      tags:
+        - Payments & Transactions
+      summary: Pay for a booking
+      description: Allows a renter to securely pay for an approved booking.
+      operationId: payForBooking
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '201':
+          description: "Payment successful."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '402':
+          description: "Payment Required or Failed."
+
+  /bookings/{bookingId}/dispute:
+    post:
+      tags:
+        - Disputes
+      summary: File a dispute for a booking
+      description: Allows a renter to file a dispute for a completed booking.
+      operationId: createDispute
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisputeCreateRequest'
+      responses:
+        '201':
+          description: "Dispute filed successfully."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispute'
+        '409':
+          description: "A dispute already exists for this booking."
+
+  /users/me/bookings:
+    get:
+      tags:
+        - Bookings
+      summary: Get my booking history
+      description: Retrieves a paginated list of bookings for the authenticated user.
+      operationId: getMyBookings
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+        - name: asRole
+          in: query
+          description: "Filter bookings by user's role (`renter` or `owner`)."
+          schema:
+            type: string
+            enum:
+              - renter
+              - owner
+      responses:
+        '200':
+          description: "A paginated list of the user's bookings."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingPage'
+
+  /users/me/transactions:
+    get:
+      tags:
+        - Payments & Transactions
+      summary: Get my transaction history
+      description: "Retrieves a paginated list of all financial transactions for the authenticated user."
+      operationId: getMyTransactions
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: "A paginated list of transactions."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionPage'
+
+  /admin/cars/{carId}/verification:
+    patch:
+      tags:
+        - Admin
+      summary: Verify or reject a car
+      description: Allows an admin to approve or reject a car's verification request.
+      operationId: setCarVerificationStatus
+      parameters:
+        - $ref: '#/components/parameters/CarId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/VerificationStatus'
+      responses:
+        '200':
+          description: "Car verification status updated."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+
+  /admin/users/{userId}/status:
+    patch:
+      tags:
+        - Admin
+      summary: Manage a user's account status
+      description: Allows an admin to manage a user's account (e.g., suspend or ban).
+      operationId: setUserStatus
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/UserStatus'
+      responses:
+        '200':
+          description: "User status updated."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /admin/disputes:
+    get:
+      tags:
+        - Admin
+      summary: List all disputes
+      description: Retrieves a paginated list of all disputes for admin review.
+      operationId: getAllDisputes
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: "A paginated list of disputes."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisputePage'
+
+  /admin/disputes/{disputeId}/resolve:
+    patch:
+      tags:
+        - Admin
+      summary: Resolve a dispute
+      description: Allows an admin to resolve a dispute between a renter and an owner.
+      operationId: resolveDispute
+      parameters:
+        - $ref: '#/components/parameters/DisputeId'
+      responses:
+        '200':
+          description: "Dispute resolved."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispute'
+
+components:
+  parameters:
+    CarId:
+      name: carId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    BookingId:
+      name: bookingId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    DisputeId:
+      name: disputeId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    ReviewId:
+      name: reviewId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    Page:
+      name: page
+      in: query
+      description: "Page number (0-indexed)"
+      schema:
+        type: integer
+        default: 0
+    Size:
+      name: size
+      in: query
+      description: "Number of items per page"
+      schema:
+        type: integer
+        default: 20
+    Sort:
+      name: sort
+      in: query
+      description: "Sorting criteria: property,(asc|desc)"
+      schema:
+        type: string
+        example: "createdAt,desc"
+
+  responses:
+    NotFound:
+      description: The specified resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    BadRequest:
+      description: Invalid request payload.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+
+  schemas:
+    Car:
+      $ref: 'schemas/Car.yaml'
+    Booking:
+      $ref: 'schemas/Booking.yaml'
+    User:
+      $ref: 'schemas/User.yaml'
+    UserPublicProfile:
+      $ref: 'schemas/UserPublicProfile.yaml'
+    UserReview:
+      $ref: 'schemas/UserReview.yaml'
+    CarReview:
+      $ref: 'schemas/CarReview.yaml'
+    Payment:
+      $ref: 'schemas/Payment.yaml'
+    Transaction:
+      $ref: 'schemas/Transaction.yaml'
+    Dispute:
+      $ref: 'schemas/Dispute.yaml'
+    ContactInfo:
+      $ref: 'schemas/ContactInfo.yaml'
+
+    CarCreateRequest:
+      $ref: 'schemas/CarCreateRequest.yaml'
+    CarUpdateRequest:
+      $ref: 'schemas/CarUpdateRequest.yaml'
+    BookingCreateRequest:
+      $ref: 'schemas/BookingCreateRequest.yaml'
+    UserCreateRequest:
+      $ref: 'schemas/UserCreateRequest.yaml'
+    UserReviewCreateRequest:
+      $ref: 'schemas/UserReviewCreateRequest.yaml'
+    CarReviewCreateRequest:
+      $ref: 'schemas/CarReviewCreateRequest.yaml'
+    DisputeCreateRequest:
+      $ref: 'schemas/DisputeCreateRequest.yaml'
+    PaymentRequest:
+      $ref: 'schemas/PaymentRequest.yaml'
+
+    CarPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Car'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+    BookingPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+    TransactionPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+    DisputePage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dispute'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+    UserPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        totalPages:
+          type: integer
+        totalElements:
+          type: integer
+
+    CarType:
+      type: string
+      enum: [ SEDAN, SUV, HATCHBACK, COUPE, TRUCK ]
+    CarStatus:
+      type: string
+      enum: [ AVAILABLE, RENTED, MAINTENANCE ]
+    TransactionStatus:
+      type: string
+      enum: [ PENDING, APPROVED, COMPLETED, CANCELED, REFUNDED ]
+    VerificationStatus:
+      type: string
+      enum: [ PENDING, VERIFIED, REJECTED ]
+    DisputeStatus:
+      type: string
+      enum: [ OPEN, RESOLVED ]
+    UserStatus:
+      type: string
+      enum: [ ACTIVE, SUSPENDED, BANNED ]
+    UserRole:
+      type: string
+      enum: [ RENTER, CAR_OWNER, ADMIN, GUEST ]
+    PaymentType:
+      type: string
+      enum: [ CREDIT_CARD, DEBIT_CARD, PAYPAL, APPLE_PAY, GOOGLE_PAY, BANK_TRANSFER, CASH, CRYPTO, MOBILE_MONEY ]
+
+    ApiError:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
