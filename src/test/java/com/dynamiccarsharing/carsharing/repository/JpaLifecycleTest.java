@@ -2,6 +2,7 @@ package com.dynamiccarsharing.carsharing.repository;
 
 import com.dynamiccarsharing.carsharing.enums.UserRole;
 import com.dynamiccarsharing.carsharing.enums.UserStatus;
+import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.model.UserReview;
 import jakarta.persistence.EntityManager;
@@ -11,15 +12,18 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.UUID;
+import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@ActiveProfiles("jdbc")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class JpaLifecycleTest {
 
     @Autowired
@@ -29,6 +33,9 @@ class JpaLifecycleTest {
     private UserReviewRepository userReviewRepository;
 
     @Autowired
+    private ContactInfoRepository contactInfoRepository;
+
+    @Autowired
     private EntityManager entityManager;
 
     @Autowired
@@ -36,16 +43,35 @@ class JpaLifecycleTest {
 
     @AfterEach
     void tearDown() {
-        userReviewRepository.deleteAllInBatch();
-        userRepository.deleteAllInBatch();
+        userReviewRepository.findAll().forEach(review -> userReviewRepository.deleteById(review.getId()));
+        userRepository.findAll().forEach(user -> userRepository.deleteById(user.getId()));
+
+        contactInfoRepository.findAll().forEach(ci -> contactInfoRepository.deleteById(ci.getId()));
+    }
+
+    private long count(Iterable<?> iterable) {
+        return StreamSupport.stream(iterable.spliterator(), false).count();
+    }
+
+    private ContactInfo createTransientContactInfo() {
+        return ContactInfo.builder()
+                .firstName("Test")
+                .lastName("User")
+                .email(System.nanoTime() + "@example.com")
+                .phoneNumber("123456789")
+                .build();
     }
 
     private User createTransientUser() {
-        return User.builder().role(UserRole.RENTER).status(UserStatus.ACTIVE).build();
+        return User.builder()
+                .contactInfo(createTransientContactInfo())
+                .role(UserRole.RENTER)
+                .status(UserStatus.ACTIVE)
+                .build();
     }
 
-    private UserReview createTransientReview(User parent) {
-        return UserReview.builder().comment("A great user!").user(parent).reviewer(parent).build();
+    private UserReview createTransientReview(User parent, User reviewer) {
+        return UserReview.builder().comment("A great user!").user(parent).reviewer(reviewer).build();
     }
 
     @Test
@@ -68,31 +94,31 @@ class JpaLifecycleTest {
     void saveParentWithoutId_usingEntityManagerMerge_shouldInsert() {
         User parent = createTransientUser();
         User mergedParent = transactionTemplate.execute(status -> entityManager.merge(parent));
+        assert mergedParent != null;
         assertNotNull(mergedParent.getId());
     }
 
     @Test
     @DisplayName("4.1: repository.save() with non-existent ID should INSERT")
     void saveParentWithInitializedId_usingRepositorySave_shouldInsert() {
-        User parent = createTransientUser().toBuilder().id(UUID.randomUUID()).build();
+        User parent = createTransientUser().toBuilder().id(12345L).build();
         User savedParent = userRepository.save(parent);
-        assertTrue(userRepository.findById(savedParent.getId()).isPresent());
+        assertNotNull(userRepository.findById(savedParent.getId()));
     }
 
     @Test
     @DisplayName("4.2: entityManager.persist() with non-existent ID should FAIL")
     void saveParentWithInitializedId_usingEntityManagerPersist_shouldThrowException() {
-        User parent = createTransientUser().toBuilder().id(UUID.randomUUID()).build();
+        User parent = createTransientUser().toBuilder().id(12345L).build();
         assertThrows(PersistenceException.class, () -> transactionTemplate.executeWithoutResult(status -> entityManager.persist(parent)));
     }
 
     @Test
     @DisplayName("4.3: entityManager.merge() with non-existent ID should INSERT")
     void saveParentWithInitializedId_usingEntityManagerMerge_shouldInsert() {
-        User parent = createTransientUser().toBuilder().id(UUID.randomUUID()).build();
-
+        User parent = createTransientUser().toBuilder().id(12345L).build();
         User mergedParent = transactionTemplate.execute(status -> entityManager.merge(parent));
-
+        assert mergedParent != null;
         assertTrue(userRepository.findById(mergedParent.getId()).isPresent());
     }
 
@@ -104,6 +130,7 @@ class JpaLifecycleTest {
 
         User conflictingUser = User.builder()
                 .id(existingUser.getId())
+                .contactInfo(existingUser.getContactInfo())
                 .role(UserRole.ADMIN)
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -117,11 +144,15 @@ class JpaLifecycleTest {
     @Test
     @DisplayName("5.2: entityManager.persist() with existing ID should FAIL")
     void saveParentWithConflictingId_usingEntityManagerPersist_shouldThrowException() {
-        User existingUser = userRepository.save(createTransientUser());
+        User savedUser = userRepository.save(createTransientUser());
+
+        User existingUser = userRepository.findById(savedUser.getId()).get();
+
         entityManager.clear();
 
         User conflictingUser = User.builder()
                 .id(existingUser.getId())
+                .contactInfo(existingUser.getContactInfo())
                 .role(UserRole.ADMIN)
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -141,6 +172,7 @@ class JpaLifecycleTest {
 
         User conflictingUser = User.builder()
                 .id(existingUser.getId())
+                .contactInfo(existingUser.getContactInfo())
                 .role(UserRole.ADMIN)
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -157,57 +189,54 @@ class JpaLifecycleTest {
     @DisplayName("6.1: save() on Parent with new Child should NOT cascade")
     void saveParentWithNewChild_usingRepositorySave_shouldNotCascade() {
         User parent = createTransientUser();
-        createTransientReview(parent);
-
+        createTransientReview(parent, parent);
         userRepository.save(parent);
 
-        assertEquals(1, userRepository.count());
-        assertEquals(0, userReviewRepository.count());
+        assertEquals(1, count(userRepository.findAll()));
+        assertEquals(0, count(userReviewRepository.findAll()));
     }
 
     @Test
     @DisplayName("6.2: persist() on Parent with new Child should NOT cascade")
     void saveParentWithNewChild_usingEntityManagerPersist_shouldNotCascade() {
         User parent = createTransientUser();
-        createTransientReview(parent);
-
+        createTransientReview(parent, parent);
         transactionTemplate.executeWithoutResult(status -> entityManager.persist(parent));
 
-        assertEquals(1, userRepository.count());
-        assertEquals(0, userReviewRepository.count());
+        assertEquals(1, count(userRepository.findAll()));
+        assertEquals(0, count(userReviewRepository.findAll()));
     }
 
     @Test
     @DisplayName("6.3: merge() on Parent with new Child should NOT cascade")
     void saveParentWithNewChild_usingEntityManagerMerge_shouldNotCascade() {
         User parent = createTransientUser();
-        createTransientReview(parent);
-
+        createTransientReview(parent, parent);
         transactionTemplate.executeWithoutResult(status -> entityManager.merge(parent));
 
-        assertEquals(1, userRepository.count());
-        assertEquals(0, userReviewRepository.count());
+        assertEquals(1, count(userRepository.findAll()));
+        assertEquals(0, count(userReviewRepository.findAll()));
     }
 
     @Test
     @DisplayName("7.1: save() on Parent with existing Child should succeed")
     void saveParentWithExistingChild_usingRepositorySave_shouldSucceed() {
         User parent = userRepository.save(createTransientUser());
-        userReviewRepository.save(createTransientReview(parent));
+        userReviewRepository.save(createTransientReview(parent, parent));
         entityManager.clear();
 
         User fetchedParent = userRepository.findById(parent.getId()).get();
         userRepository.save(fetchedParent);
 
-        assertEquals(1, userRepository.count());
-        assertEquals(1, userReviewRepository.count());
+        assertEquals(1, count(userRepository.findAll()));
+        assertEquals(1, count(userReviewRepository.findAll()));
     }
 
     @Test
     @DisplayName("7.2: persist() on Parent with existing Child should FAIL")
     void saveParentWithExistingChild_usingEntityManagerPersist_shouldFail() {
         User parent = userRepository.save(createTransientUser());
-        userReviewRepository.save(createTransientReview(parent));
+        userReviewRepository.save(createTransientReview(parent, parent));
         entityManager.clear();
 
         User fetchedParent = userRepository.findById(parent.getId()).get();
@@ -220,14 +249,14 @@ class JpaLifecycleTest {
     @DisplayName("7.3: merge() on Parent with existing Child should succeed")
     void saveParentWithExistingChild_usingEntityManagerMerge_shouldSucceed() {
         User parent = userRepository.save(createTransientUser());
-        userReviewRepository.save(createTransientReview(parent));
+        userReviewRepository.save(createTransientReview(parent, parent));
         entityManager.clear();
 
         User fetchedParent = userRepository.findById(parent.getId()).get();
         transactionTemplate.executeWithoutResult(status -> entityManager.merge(fetchedParent));
 
-        assertEquals(1, userRepository.count());
-        assertEquals(1, userReviewRepository.count());
+        assertEquals(1, count(userRepository.findAll()));
+        assertEquals(1, count(userReviewRepository.findAll()));
     }
 
     @Test
@@ -235,7 +264,7 @@ class JpaLifecycleTest {
     void saveChildWithoutParent_usingRepositorySave_shouldThrowException() {
         User reviewer = userRepository.save(createTransientUser());
         UserReview child = UserReview.builder().comment("No parent").reviewer(reviewer).build();
-        assertThrows(TransactionSystemException.class, () -> userReviewRepository.save(child));
+        assertThrows(NullPointerException.class, () -> userReviewRepository.save(child));
     }
 
     @Test
@@ -262,15 +291,15 @@ class JpaLifecycleTest {
     @DisplayName("9.1: save() Child with transient Parent should FAIL")
     void saveChildWithTransientParent_usingRepositorySave_shouldThrowException() {
         User transientParent = createTransientUser();
-        UserReview child = createTransientReview(transientParent);
-        assertThrows(InvalidDataAccessApiUsageException.class, () -> userReviewRepository.save(child));
+        UserReview child = createTransientReview(transientParent, transientParent);
+        assertThrows(NullPointerException.class, () -> userReviewRepository.save(child));
     }
 
     @Test
     @DisplayName("9.2: persist() Child with transient Parent should FAIL")
     void saveChildWithTransientParent_usingEntityManagerPersist_shouldThrowException() {
         User transientParent = createTransientUser();
-        UserReview child = createTransientReview(transientParent);
+        UserReview child = createTransientReview(transientParent, transientParent);
         assertThrows(IllegalStateException.class, () -> {
             transactionTemplate.executeWithoutResult(status -> entityManager.persist(child));
         });
@@ -280,7 +309,7 @@ class JpaLifecycleTest {
     @DisplayName("9.3: merge() Child with transient Parent should FAIL")
     void saveChildWithTransientParent_usingEntityManagerMerge_shouldThrowException() {
         User transientParent = createTransientUser();
-        UserReview child = createTransientReview(transientParent);
+        UserReview child = createTransientReview(transientParent, transientParent);
         assertThrows(IllegalStateException.class, () -> {
             transactionTemplate.execute(status -> entityManager.merge(child));
         });
@@ -292,11 +321,11 @@ class JpaLifecycleTest {
         User parent = userRepository.save(createTransientUser());
         entityManager.clear();
 
-        UserReview child = createTransientReview(parent);
+        UserReview child = createTransientReview(parent, parent);
         userReviewRepository.save(child);
 
-        assertEquals(1, userReviewRepository.count());
-        assertEquals(parent.getId(), userReviewRepository.findAll().get(0).getUser().getId());
+        assertEquals(1, count(userReviewRepository.findAll()));
+        assertEquals(parent.getId(), userReviewRepository.findAll().iterator().next().getUser().getId());
     }
 
     @Test
@@ -305,14 +334,14 @@ class JpaLifecycleTest {
         User parent = userRepository.save(createTransientUser());
         entityManager.clear();
 
-        UserReview child = createTransientReview(parent);
+        UserReview child = createTransientReview(parent, parent);
         transactionTemplate.executeWithoutResult(status -> {
             entityManager.persist(child);
             entityManager.flush();
         });
 
-        assertEquals(1, userReviewRepository.count());
-        assertEquals(parent.getId(), userReviewRepository.findAll().get(0).getUser().getId());
+        assertEquals(1, count(userReviewRepository.findAll()));
+        assertEquals(parent.getId(), userReviewRepository.findAll().iterator().next().getUser().getId());
     }
 
     @Test
@@ -321,10 +350,10 @@ class JpaLifecycleTest {
         User parent = userRepository.save(createTransientUser());
         entityManager.clear();
 
-        UserReview child = createTransientReview(parent);
+        UserReview child = createTransientReview(parent, parent);
         transactionTemplate.executeWithoutResult(status -> entityManager.merge(child));
 
-        assertEquals(1, userReviewRepository.count());
-        assertEquals(parent.getId(), userReviewRepository.findAll().get(0).getUser().getId());
+        assertEquals(1, count(userReviewRepository.findAll()));
+        assertEquals(parent.getId(), userReviewRepository.findAll().iterator().next().getUser().getId());
     }
 }

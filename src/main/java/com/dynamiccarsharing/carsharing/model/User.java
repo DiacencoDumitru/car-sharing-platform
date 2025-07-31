@@ -12,32 +12,33 @@ import java.util.*;
 @ToString(exclude = {"cars", "bookings", "disputes"})
 @EqualsAndHashCode(exclude = {"contactInfo", "cars", "bookings", "disputes", "reviewsOfUser", "reviewsByUser", "carReviewsByUser"})
 @Builder(toBuilder = true)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 @Entity
 @Table(name = "users")
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private final UUID id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
+    @SequenceGenerator(name = "user_seq", sequenceName = "user_seq", allocationSize = 1)
+    private Long id;
 
     @With
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "contact_info_id", unique = true)
-    private final ContactInfo contactInfo;
+    private ContactInfo contactInfo;
 
     @With
     @NotNull(message = "Role must not be null.")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private final UserRole role;
+    private UserRole role;
 
     @With
     @NotNull(message = "Status must not be null.")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private final UserStatus status;
+    private UserStatus status;
 
     @Builder.Default
     @ManyToMany
@@ -46,21 +47,25 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "car_id")
     )
-    private final Set<Car> cars = new HashSet<>();
+    private Set<Car> cars = new HashSet<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "renter")
-    private final List<Booking> bookings = new ArrayList<>();
+    private List<Booking> bookings = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "creationUser")
-    private final List<Dispute> disputes = new ArrayList<>();
+    private List<Dispute> disputes = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user")
-    private final List<UserReview> reviewsOfUser = new ArrayList<>();
+    private List<UserReview> reviewsOfUser = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "reviewer")
-    private final List<UserReview> reviewsByUser = new ArrayList<>();
+    private List<UserReview> reviewsByUser = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "reviewer")
-    private final List<CarReview> carReviewsByUser = new ArrayList<>();
+    private List<CarReview> carReviewsByUser = new ArrayList<>();
 }

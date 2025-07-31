@@ -2,23 +2,22 @@ package com.dynamiccarsharing.carsharing.model;
 
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @ToString
 @EqualsAndHashCode(exclude = "booking")
-@Builder
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder(toBuilder = true)
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 @Entity
 @Table(name = "transactions")
@@ -26,29 +25,30 @@ import java.util.UUID;
 public class Transaction {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private final UUID id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "transaction_seq")
+    @SequenceGenerator(name = "transaction_seq", sequenceName = "transaction_seq", allocationSize = 1)
+    private Long id;
 
     @NotNull(message = "Booking must not be null.")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id", nullable = false)
-    private final Booking booking;
+    private Booking booking;
 
     @NotNull(message = "Amount must not be null.")
     @Positive(message = "Amount must be positive.")
     @Column(nullable = false)
-    private final BigDecimal amount;
+    private BigDecimal amount;
 
     @With
     @NotNull(message = "Status must not be null.")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private final TransactionStatus status;
+    private TransactionStatus status;
 
     @NotNull(message = "Payment method must not be null.")
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false)
-    private final PaymentType paymentMethod;
+    private PaymentType paymentMethod;
 
     @NotNull(message = "Creation time must not be null.")
     @CreatedDate
