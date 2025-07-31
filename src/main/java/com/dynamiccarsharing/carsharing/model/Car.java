@@ -13,62 +13,70 @@ import java.util.*;
 @Getter
 @ToString
 @EqualsAndHashCode(exclude = {"location", "owners", "bookings", "reviews"})
-@Builder
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder(toBuilder = true)
+@AllArgsConstructor
 @NoArgsConstructor(force = true)
 @Entity
 @Table(name = "cars")
 public class Car {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private final UUID id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "car_seq")
+    @SequenceGenerator(name = "car_seq", sequenceName = "car_seq", allocationSize = 1)
+    private Long id;
 
     @NotNull(message = "Registration number must be not null.")
     @Column(name = "registration_number", unique = true, nullable = false)
-    private final String registrationNumber;
+    private String registrationNumber;
 
     @NotNull(message = "Make must be not null.")
     @Column(nullable = false)
-    private final String make;
+    private String make;
 
     @NotNull(message = "Model must be not null.")
     @Column(nullable = false)
-    private final String model;
+    private String model;
 
     @With
     @NotNull(message = "Status must be not null.")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private final CarStatus status;
+    private CarStatus status;
 
-    @NotNull(message = "Lcation must be not null.")
+    @With
+    @NotNull(message = "Location must be not null.")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", nullable = false)
-    private final Location location;
+    private Location location;
 
     @With
     @NotNull(message = "Price per day must be not null.")
     @Column(name = "price_per_day", nullable = false)
-    private final BigDecimal price;
+    private BigDecimal price;
 
+    @With
     @NotNull(message = "Type must be not null.")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private final CarType type;
+    private CarType type;
 
     @With
     @NotNull(message = "Verification status must be not null.")
     @Enumerated(EnumType.STRING)
     @Column(name = "verification_status", nullable = false)
-    private final VerificationStatus verificationStatus;
+    private VerificationStatus verificationStatus;
 
+    @Builder.Default
     @ManyToMany(mappedBy = "cars")
-    private final Set<User> owners = new HashSet<>();
+    private Set<User> owners = new HashSet<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "car")
-    private final List<Booking> bookings = new ArrayList<>();
+    private List<Booking> bookings = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "car")
-    private final List<CarReview> reviews = new ArrayList<>();
+    private List<CarReview> reviews = new ArrayList<>();
+
+    
 }

@@ -2,19 +2,18 @@ package com.dynamiccarsharing.carsharing.model;
 
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
-import jakarta.validation.constraints.NotNull;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @ToString
 @EqualsAndHashCode(exclude = {"renter", "car", "pickupLocation", "transactions", "payment", "dispute"})
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 @Entity
@@ -22,54 +21,57 @@ import java.util.UUID;
 public class Booking {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private final UUID id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "booking_seq")
+    @SequenceGenerator(name = "booking_seq", sequenceName = "booking_seq", allocationSize = 1)
+    private Long id;
 
     @NotNull(message = "Renter must be not null.")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "renter_id", nullable = false)
-    private final User renter;
+    private User renter;
 
     @NotNull(message = "Car must be not null.")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "car_id", nullable = false)
-    private final Car car;
+    private Car car;
 
     @NotNull(message = "Start time must be not null.")
     @Column(name = "start_time", nullable = false)
-    private final LocalDateTime startTime;
+    private LocalDateTime startTime;
 
     @NotNull(message = "End time must be not null.")
     @Column(name = "end_time", nullable = false)
-    private final LocalDateTime endTime;
+    private LocalDateTime endTime;
 
     @With
     @NotNull(message = "Status must be not null.")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private final TransactionStatus status;
+    private TransactionStatus status;
 
     @NotNull(message = "Pickup location must be not null.")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pickup_location_id", nullable = false)
-    private final Location pickupLocation;
+    private Location pickupLocation;
 
     @With
     @Column(name = "dispute_description")
-    private final String disputeDescription;
+    private String disputeDescription;
 
     @With
     @Column(name = "dispute_status")
-    private final DisputeStatus disputeStatus;
+    private DisputeStatus disputeStatus;
 
+    @With
+    @Builder.Default
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<Transaction> transactions = new ArrayList<>();
+    private List<Transaction> transactions = new ArrayList<>();
 
     @OneToOne(mappedBy = "booking")
-    private final Payment payment;
+    private Payment payment;
 
     @OneToOne(mappedBy = "booking")
-    private final Dispute dispute;
+    private Dispute dispute;
 
     public List<Transaction> getTransactions() {
         return List.copyOf(transactions);
