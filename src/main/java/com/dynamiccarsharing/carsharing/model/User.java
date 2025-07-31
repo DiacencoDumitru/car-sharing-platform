@@ -2,46 +2,65 @@ package com.dynamiccarsharing.carsharing.model;
 
 import com.dynamiccarsharing.carsharing.enums.UserRole;
 import com.dynamiccarsharing.carsharing.enums.UserStatus;
-import com.dynamiccarsharing.carsharing.util.Validator;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.With;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Getter
-@ToString
-@EqualsAndHashCode
+@ToString(exclude = {"cars", "bookings", "disputes"})
+@EqualsAndHashCode(exclude = {"contactInfo", "cars", "bookings", "disputes", "reviewsOfUser", "reviewsByUser", "carReviewsByUser"})
+@Builder(toBuilder = true)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+@Entity
+@Table(name = "users")
 public class User {
-    private final Long id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private final UUID id;
+
     @With
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "contact_info_id", unique = true)
     private final ContactInfo contactInfo;
+
     @With
+    @NotNull(message = "Role must not be null.")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private final UserRole role;
+
     @With
+    @NotNull(message = "Status must not be null.")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private final UserStatus status;
-    @With
-    private final List<Car> cars;
 
-    public User(Long id, ContactInfo contactInfo, UserRole role, UserStatus status, List<Car> cars) {
-        Validator.validateNonNull(contactInfo, "Contact info");
-        Validator.validateNonNull(role, "Role");
-        Validator.validateNonNull(status, "Status");
-        Validator.validateNonNullList(cars, "Cars list");
-        this.id = id;
-        this.contactInfo = contactInfo;
-        this.role = role;
-        this.status = status;
-        this.cars = new ArrayList<>(cars);
-    }
+    @Builder.Default
+    @ManyToMany
+    @JoinTable(
+            name = "user_cars",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "car_id")
+    )
+    private final Set<Car> cars = new HashSet<>();
 
-    public User(Long id, ContactInfo contactInfo, UserRole role, UserStatus status) {
-        this(id, contactInfo, role, status, new ArrayList<>());
-    }
+    @Builder.Default
+    @OneToMany(mappedBy = "renter")
+    private final List<Booking> bookings = new ArrayList<>();
 
-    public List<Car> getCars() {
-        return new ArrayList<>(cars);
-    }
+    @OneToMany(mappedBy = "creationUser")
+    private final List<Dispute> disputes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    private final List<UserReview> reviewsOfUser = new ArrayList<>();
+
+    @OneToMany(mappedBy = "reviewer")
+    private final List<UserReview> reviewsByUser = new ArrayList<>();
+
+    @OneToMany(mappedBy = "reviewer")
+    private final List<CarReview> carReviewsByUser = new ArrayList<>();
 }

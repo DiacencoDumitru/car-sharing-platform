@@ -1,50 +1,52 @@
 package com.dynamiccarsharing.carsharing.model;
 
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
-import com.dynamiccarsharing.carsharing.util.Validator;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.With;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = {"booking", "creationUser"})
+@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+@Entity
+@Table(name = "disputes")
 public class Dispute {
-    private final Long id;
-    private final Long bookingId;
-    private final Long creationUserId;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private final UUID id;
+
+    @OneToOne
+    @JoinColumn(name = "booking_id", nullable = false, unique = true)
+    private final Booking booking;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creation_user_id", nullable = false)
+    private final User creationUser;
+
     @With
+    @NotBlank(message = "Description must be not null.")
+    @Column(nullable = false)
     private final String description;
+
     @With
+    @NotNull(message = "Status must not be null.")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private final DisputeStatus status;
+
+    @NotNull(message = "Created at must be not null.")
+    @Column(name = "created_at", nullable = false)
     private final LocalDateTime createdAt;
+
     @With
+    @Column(name = "resolved_at")
     private final LocalDateTime resolvedAt;
-
-    public Dispute(Long id, Long bookingId, Long creationUserId, String description, DisputeStatus status, LocalDateTime createdAt, LocalDateTime resolvedAt) {
-        if (id != null) {
-            Validator.validateId(id, "ID");
-        }
-        Validator.validateId(bookingId, "Booking ID");
-        Validator.validateId(creationUserId, "Creation User ID");
-        Validator.validateOptionalString(description, "Description");
-        Validator.validateNonNull(status, "Status");
-        Validator.validateNonNull(createdAt, "Created at");
-        this.id = id;
-        this.bookingId = bookingId;
-        this.creationUserId = creationUserId;
-        this.description = description;
-        this.status = status;
-        this.createdAt = createdAt;
-        this.resolvedAt = resolvedAt;
-    }
-
-    public void validate() {
-        if (status == DisputeStatus.RESOLVED) {
-            Validator.validateNonNull(resolvedAt, "Resolved at");
-        }
-    }
 }
