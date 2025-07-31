@@ -140,7 +140,7 @@ Port Conflict: Check if 5432 is in use
 --------------------------
 1. Update DB_PORT in .env if needed.
 2. Connection Issues: Verify container status (docker ps) and .env values.
-3. Permission Errors: Ensure Docker is running, and you have access (sudo systemctl start docker).
+3. Permission Errors: Ensure Docker is running, and I have access (sudo systemctl start docker).
 
 ### Statement vs Prepared Statement
 #### Statement
@@ -186,7 +186,7 @@ pstmt.setString(2, password);
 
 ResultSet resultSet = pstmt.executeQuery();
 
-// Query is safe: user input is treated as text, not part of the SQL command
+// Query is safe: user input is treated as dotenv, not part of the SQL command
 SELECT * FROM users WHERE username = 'admin' AND password = '\' OR \'1\'=\'1'
 ```
 2. Efficient — the query is compiled once and can be reused with different values.
@@ -220,7 +220,7 @@ Advantages:
 - Can be integrated with application servers (e.g., JNDI)
 - When using DataSource, we can centrally manage transaction settings, such as:
     - Auto-commit (default: true): Can be explicitly turned off to begin a manual transaction.
-    - Transaction isolation level: Can be configured depending on the level of data consistency and concurrency you need.
+    - Transaction isolation level: Can be configured depending on the level of data consistency and concurrency I need.
 
 Disadvantages:
 - More complex to configure
@@ -349,3 +349,104 @@ Step 3-4:
 * Test with non-prefix column (start_time)
 
 ![img_8.png](images/img_8.png)
+
+### JPA Lifecycle Experiments (Difference)
+This information is explanation of key behaviors under various conditions: 
+
+1. `repository.save()`, 
+2. `entityManager.persist()`, 
+3. `entityManager.merge()`
+
+```dotenv
+--- 3. Saving a New Parent (without an ID) ---
+
+3.1 repository.save(newUser): Works perfectly. Spring Data JPA detects the null ID and calls persist() behind the scenes, generating an INSERT.
+
+3.2 entityManager.persist(newUser): Works perfectly. This is the core JPA method for making a new object persistent. It generates an INSERT.
+
+3.3 entityManager.merge(newUser): Works. merge on a new object also results in an INSERT. The key difference is that merge returns a new, managed instance, while the original object remains detached.
+
+Conclusion: For new entities, repository.save() and entityManager.persist() are the most direct approaches.
+```
+
+```dotenv
+--- 4. Saving a Parent with a Pre-assigned ID ---
+
+4.1 repository.save(userWithId): Works. Spring Data JPA sees the non-null ID, assumes it's a detached entity, and calls merge(). This results in a SELECT to check for existence, followed by an INSERT.
+
+4.2 entityManager.persist(userWithId): FAILS. The persist method is strictly for new entities without an ID. It throws a PersistenceException because the entity is considered "detached," not new.
+
+4.3 entityManager.merge(userWithId): Works. This is the same behavior as repository.save(), resulting in a SELECT then an INSERT.
+
+Conclusion: persist() cannot be used on objects that already have an ID. repository.save() is a safe wrapper around merge() in this case.
+```
+
+```dotenv
+--- 5. Saving a Parent with a Conflicting ID ---
+
+5.1 repository.save(conflictingUser): Works. It calls merge(), finds the existing record by its ID, and performs an UPDATE, overwriting the old data.
+
+5.2 entityManager.persist(conflictingUser): FAILS. It throws a PersistenceException because I cannot persist a new entity with a primary key that already exists in the database.
+
+5.3 entityManager.merge(conflictingUser): Works. This is the classic use case for merge. It finds the existing record and performs an UPDATE.
+
+Conclusion: merge() (and by extension, repository.save()) is the correct way to update an existing record's state from a detached object.
+```
+
+```dotenv
+--- 6. Saving a Parent with New (Transient) Children ---
+
+The Result: All three approaches (save, persist, merge) will only save the Parent and will NOT save the Children.
+
+Why?: Although the Parent's List<UserReview> was updated in memory, the UserReview object itself did not have its user field set. Because UserReview is the owning side of the relationship (it has the @JoinColumn), JPA only looks at the user field on the UserReview object to determine the relationship. Since it's null, no link is created.
+
+Conclusion: For bidirectional relationships, the owning side of the relationship must be set for persistence to cascade correctly.
+```
+
+```dotenv
+--- 7. Saving a Parent with Existing (Persistent) Children ---
+
+The Result: All three approaches work as expected.
+
+Why?: The child (UserReview) already exists in the database with a valid foreign key (user_id). The operations on the parent do not need to cascade any changes to the already-persistent child.
+```
+
+```dotenv
+--- 8. Saving a Child without a Parent ---
+
+The Result: All three approaches FAIL.
+
+Why?: UserReview entity has @JoinColumn(name = "user_id", nullable = false). The database has a NOT NULL constraint on the user_id column. The operation fails at the database level because JPA tries to execute an INSERT statement with a NULL foreign key.
+```
+
+```dotenv
+--- 9. Saving a Child with a New (Transient) Parent ---
+
+The Result: All three approaches FAIL.
+
+Why?: I'm trying to save a UserReview and link it to a User that does not yet exist in the database. This violates the foreign key constraint (fk_user_reviews_on_users_user), as the user_id I'm trying to insert does not exist in the users table.
+```
+
+```dotenv
+--- 10. Saving a Child with a Detached Parent. ---
+
+The Result: All three approaches SUCCEED.
+
+Why?: The parent object, although detached from the current session, has a valid ID that exists in the database. When I save the child, JPA can see the ID from child.getUser().getId() and correctly inserts the user_id foreign key.
+```
+
+```dotenv
+--- 11. Changing a Detached Entity (No @Transactional) ---
+
+The Result: The changes are NOT saved to the database.
+
+Why?: When I fetch an entity using userRepository.findById(), the transaction for that operation closes immediately. The returned object becomes detached. Any changes I make to this object are just changes to a regular Java object in memory; JPA is no longer tracking it.
+```
+
+```dotenv
+--- 12. Changing a Managed Entity (With @Transactional) ---
+    
+The Result: The changes ARE saved to the database, even without calling save().
+
+Why?: Inside a transaction, any entity I fetch is managed. JPA tracks this object for changes. When the transaction commits, JPA performs "dirty checking," sees that the role was modified, and automatically generates and executes an UPDATE statement. This is a core feature of an ORM.
+```
