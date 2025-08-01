@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.carsharing.service.interfaces;
 
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
-import com.dynamiccarsharing.carsharing.dto.ContactInfoSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.ContactInfoSearchCriteria;
 
 import java.util.List;
 import java.util.Optional;

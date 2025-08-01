@@ -8,8 +8,8 @@ import com.dynamiccarsharing.carsharing.exception.InvalidDisputeStatusException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.*;
 import com.dynamiccarsharing.carsharing.repository.jpa.BookingJpaRepository;
-import com.dynamiccarsharing.carsharing.repository.jpa.DisputeRepository;
-import com.dynamiccarsharing.carsharing.dto.BookingSearchCriteria;
+import com.dynamiccarsharing.carsharing.repository.jpa.DisputeJpaRepository;
+import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,13 +32,13 @@ class BookingServiceImplTest {
     private BookingJpaRepository bookingRepository;
 
     @Mock
-    private DisputeRepository disputeRepository;
+    private DisputeJpaRepository disputeJpaRepository;
 
     private BookingServiceImpl bookingService;
 
     @BeforeEach
     void setUp() {
-        bookingService = new BookingServiceImpl(bookingRepository, disputeRepository);
+        bookingService = new BookingServiceImpl(bookingRepository, disputeJpaRepository);
     }
 
     private Booking createTestBooking(Long id, TransactionStatus status) {
@@ -93,7 +93,7 @@ class BookingServiceImplTest {
 
         Booking result = bookingService.raiseDispute(bookingId, "Test dispute");
 
-        verify(disputeRepository, times(1)).save(any(Dispute.class));
+        verify(disputeJpaRepository, times(1)).save(any(Dispute.class));
         assertEquals(DisputeStatus.OPEN, result.getDisputeStatus());
     }
 

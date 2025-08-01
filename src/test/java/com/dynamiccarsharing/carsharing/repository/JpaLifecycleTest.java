@@ -1,5 +1,6 @@
 package com.dynamiccarsharing.carsharing.repository;
 
+import com.dynamiccarsharing.carsharing.DynamicCarSharingApplication;
 import com.dynamiccarsharing.carsharing.enums.UserRole;
 import com.dynamiccarsharing.carsharing.enums.UserStatus;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
@@ -21,8 +22,8 @@ import java.util.stream.StreamSupport;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-@ActiveProfiles("jdbc")
+@SpringBootTest(classes = DynamicCarSharingApplication.class)
+@ActiveProfiles("jpa")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class JpaLifecycleTest {
 

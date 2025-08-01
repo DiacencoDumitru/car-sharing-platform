@@ -1,6 +1,6 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.dto.CarReviewSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.CarReviewSearchCriteria;
 import com.dynamiccarsharing.carsharing.exception.CarReviewNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.CarReviewFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
@@ -62,5 +62,19 @@ public class CarReviewServiceImpl implements CarReviewService {
         } catch (SQLException e) {
             throw new RuntimeException("Search for car reviews failed", e);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CarReview> findByCarId(Long carId) {
+        return carReviewRepository.findByCarId(carId);
+    }
+
+    @Override
+    public CarReview updateReviewComment(Long reviewId, String newComment) {
+        CarReview review = carReviewRepository.findById(reviewId).orElseThrow(() -> new CarReviewNotFoundException("CarReview with ID " + reviewId + " not found."));
+
+        CarReview updatedReview = review.withComment(newComment);
+        return carReviewRepository.save(updatedReview);
     }
 }

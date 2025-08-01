@@ -1,6 +1,6 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.dto.ContactInfoSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.ContactInfoSearchCriteria;
 import com.dynamiccarsharing.carsharing.exception.ContactInfoNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.ContactInfoFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;

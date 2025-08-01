@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.carsharing.service.interfaces;
 
 import com.dynamiccarsharing.carsharing.model.Dispute;
-import com.dynamiccarsharing.carsharing.dto.DisputeSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.DisputeSearchCriteria;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +10,8 @@ public interface DisputeService {
     Dispute save(Dispute dispute);
 
     Optional<Dispute> findById(Long id);
+
+    Iterable<Dispute> findAll();
 
     void deleteById(Long id);
 

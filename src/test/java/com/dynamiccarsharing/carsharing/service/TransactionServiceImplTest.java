@@ -6,7 +6,7 @@ import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Transaction;
 import com.dynamiccarsharing.carsharing.repository.jpa.TransactionJpaRepository;
-import com.dynamiccarsharing.carsharing.dto.TransactionSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.TransactionSearchCriteria;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

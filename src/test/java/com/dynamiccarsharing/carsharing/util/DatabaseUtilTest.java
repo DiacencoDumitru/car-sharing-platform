@@ -1,26 +1,25 @@
 package com.dynamiccarsharing.carsharing.util;
 
-import com.dynamiccarsharing.carsharing.repository.*;
 import org.junit.jupiter.api.*;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.sql.SQLException;
 import java.util.List;
 
-@SpringBootTest
+// @SpringBootTest
+@JdbcTest
 @ActiveProfiles("test")
 @DisplayName("DatabaseUtil Tests")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class DatabaseUtilTest {
+
     @Autowired
     DatabaseUtil databaseUtil;
 
+/*
     @TestConfiguration
     static class TestConfig {
         @Bean
@@ -73,6 +72,7 @@ class DatabaseUtilTest {
             return Mockito.mock(TransactionRepository.class);
         }
     }
+*/
 
     @BeforeEach
     void setup() {

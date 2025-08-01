@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.carsharing.service.interfaces;
 
 import com.dynamiccarsharing.carsharing.model.Car;
-import com.dynamiccarsharing.carsharing.dto.CarSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 
 import java.math.BigDecimal;
 import java.util.List;

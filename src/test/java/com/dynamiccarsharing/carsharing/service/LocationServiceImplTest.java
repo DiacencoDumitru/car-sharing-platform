@@ -4,7 +4,7 @@ import com.dynamiccarsharing.carsharing.exception.LocationNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.repository.jpa.LocationJpaRepository;
-import com.dynamiccarsharing.carsharing.dto.LocationSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.LocationSearchCriteria;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

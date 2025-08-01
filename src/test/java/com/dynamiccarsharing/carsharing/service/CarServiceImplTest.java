@@ -9,7 +9,7 @@ import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.repository.jpa.CarJpaRepository;
-import com.dynamiccarsharing.carsharing.dto.CarSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
