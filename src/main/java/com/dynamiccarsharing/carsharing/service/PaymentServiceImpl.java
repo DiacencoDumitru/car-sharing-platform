@@ -1,6 +1,6 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.dto.PaymentSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.PaymentSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.exception.PaymentNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
@@ -34,6 +34,20 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional(readOnly = true)
     public Optional<Payment> findById(Long id) {
         return paymentRepository.findById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Payment> findAll() {
+        return (List<Payment>) paymentRepository.findAll();
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        if (paymentRepository.findById(id).isEmpty()) {
+            throw new PaymentNotFoundException("Payment with ID " + id + " not found.");
+        }
+        paymentRepository.deleteById(id);
     }
 
     @Override

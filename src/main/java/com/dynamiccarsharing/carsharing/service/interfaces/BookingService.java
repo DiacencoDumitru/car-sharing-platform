@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.carsharing.service.interfaces;
 
 import com.dynamiccarsharing.carsharing.model.Booking;
-import com.dynamiccarsharing.carsharing.dto.BookingSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 
 import java.util.List;
 import java.util.Optional;

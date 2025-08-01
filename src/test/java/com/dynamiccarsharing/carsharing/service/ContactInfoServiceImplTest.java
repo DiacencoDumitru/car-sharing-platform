@@ -4,7 +4,7 @@ import com.dynamiccarsharing.carsharing.exception.ContactInfoNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.repository.jpa.ContactInfoJpaRepository;
-import com.dynamiccarsharing.carsharing.dto.ContactInfoSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.ContactInfoSearchCriteria;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

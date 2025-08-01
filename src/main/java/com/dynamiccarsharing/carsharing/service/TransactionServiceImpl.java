@@ -1,6 +1,6 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.dto.TransactionSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.TransactionSearchCriteria;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.TransactionFilter;
 import com.dynamiccarsharing.carsharing.model.Transaction;

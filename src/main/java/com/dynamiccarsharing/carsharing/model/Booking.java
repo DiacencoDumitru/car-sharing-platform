@@ -15,7 +15,7 @@ import java.util.List;
 @EqualsAndHashCode(exclude = {"renter", "car", "pickupLocation", "transactions", "payment", "dispute"})
 @Builder(toBuilder = true)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+@NoArgsConstructor(force = true)
 @Entity
 @Table(name = "bookings")
 public class Booking {
@@ -59,6 +59,7 @@ public class Booking {
     private String disputeDescription;
 
     @With
+    @Enumerated(EnumType.STRING)
     @Column(name = "dispute_status")
     private DisputeStatus disputeStatus;
 

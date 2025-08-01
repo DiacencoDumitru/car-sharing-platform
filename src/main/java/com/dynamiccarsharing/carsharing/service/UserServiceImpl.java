@@ -1,12 +1,13 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.dto.UserSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.UserSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.UserStatus;
 import com.dynamiccarsharing.carsharing.exception.CarNotFoundException;
 import com.dynamiccarsharing.carsharing.exception.UserNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.UserFilter;
 import com.dynamiccarsharing.carsharing.model.Car;
+import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.repository.CarRepository;
 import com.dynamiccarsharing.carsharing.repository.UserRepository;
@@ -39,6 +40,29 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        if (userRepository.findById(id).isPresent()) {
+            throw new UserNotFoundException("User with ID " + id + " not found.");
+        }
+        userRepository.deleteById(id);
+    }
+
+    @Override
+    public User updateUserContactInfo(Long userId, ContactInfo contactInfo) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " not found."));
+
+        user = user.withContactInfo(contactInfo);
+        return userRepository.save(user);
     }
 
     @Override

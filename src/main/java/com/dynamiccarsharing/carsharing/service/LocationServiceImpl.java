@@ -1,6 +1,6 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.dto.LocationSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.LocationSearchCriteria;
 import com.dynamiccarsharing.carsharing.exception.LocationNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.LocationFilter;
@@ -33,6 +33,12 @@ public class LocationServiceImpl implements LocationService {
     @Transactional(readOnly = true)
     public Optional<Location> findById(Long id) {
         return locationRepository.findById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Iterable<Location> findAll() {
+        return locationRepository.findAll();
     }
 
     @Override
