@@ -1,4 +1,4 @@
-package com.dynamiccarsharing.carsharing.dto;
+package com.dynamiccarsharing.carsharing.dto.criteria;
 
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import lombok.Builder;
