@@ -31,8 +31,8 @@ public class InMemoryContactInfoRepositoryJdbcImpl implements ContactInfoReposit
     }
 
     @Override
-    public Iterable<ContactInfo> findAll() {
-        return contactInfoMap.values();
+    public List<ContactInfo> findAll() {
+        return new ArrayList<>(contactInfoMap.values());
     }
 
     @Override

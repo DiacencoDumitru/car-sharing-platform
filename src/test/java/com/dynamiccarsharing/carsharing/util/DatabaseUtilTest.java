@@ -1,26 +1,41 @@
 package com.dynamiccarsharing.carsharing.util;
 
-import com.dynamiccarsharing.carsharing.repository.*;
-import org.junit.jupiter.api.*;
-import org.mockito.Mockito;
+<<<<<<< HEAD
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.context.annotation.Import;
+=======
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+>>>>>>> fix/controller-mvc-tests
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 
 import java.sql.SQLException;
 import java.util.List;
 
-@SpringBootTest
+<<<<<<< HEAD
+=======
+// @SpringBootTest
+>>>>>>> fix/controller-mvc-tests
+@JdbcTest
 @ActiveProfiles("test")
+@Sql("/schema.sql")
+@Import(DatabaseUtil.class)
 @DisplayName("DatabaseUtil Tests")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class DatabaseUtilTest {
+
     @Autowired
     DatabaseUtil databaseUtil;
 
+/*
     @TestConfiguration
     static class TestConfig {
         @Bean
@@ -73,6 +88,7 @@ class DatabaseUtilTest {
             return Mockito.mock(TransactionRepository.class);
         }
     }
+*/
 
     @BeforeEach
     void setup() {

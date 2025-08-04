@@ -1,19 +1,35 @@
 package com.dynamiccarsharing.carsharing.service.interfaces;
 
+import com.dynamiccarsharing.carsharing.dto.CarReviewCreateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.CarReviewDto;
+import com.dynamiccarsharing.carsharing.dto.CarReviewUpdateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.CarReviewSearchCriteria;
 import com.dynamiccarsharing.carsharing.model.CarReview;
-import com.dynamiccarsharing.carsharing.dto.CarReviewSearchCriteria;
+<<<<<<< HEAD
+=======
+import com.dynamiccarsharing.carsharing.dto.criteria.CarReviewSearchCriteria;
+>>>>>>> fix/controller-mvc-tests
 
 import java.util.List;
 import java.util.Optional;
 
 public interface CarReviewService {
-    CarReview save(CarReview carReview);
 
-    Optional<CarReview> findById(Long id);
+    Optional<CarReviewDto> findById(Long id);
 
     void deleteById(Long id);
 
-    List<CarReview> findAll();
+    List<CarReviewDto> findAll();
+
+    List<CarReviewDto> findByCarId(Long carId);
+
+    CarReviewDto createReview(Long carId, CarReviewCreateRequestDto createDto);
+
+    CarReviewDto updateReview(Long reviewId, CarReviewUpdateRequestDto updateDto);
 
     List<CarReview> searchReviews(CarReviewSearchCriteria criteria);
+
+    List<CarReview> findByCarId(Long carId);
+
+    CarReview updateReviewComment(Long reviewId, String newComment);
 }

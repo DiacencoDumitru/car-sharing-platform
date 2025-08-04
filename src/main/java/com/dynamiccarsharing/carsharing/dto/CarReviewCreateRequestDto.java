@@ -6,6 +6,12 @@ import lombok.Data;
 
 @Data
 public class CarReviewCreateRequestDto {
+<<<<<<< HEAD
+
+    private Long carId;
+
+=======
+>>>>>>> fix/controller-mvc-tests
     @NotNull
     private Long reviewerId;
     @NotBlank

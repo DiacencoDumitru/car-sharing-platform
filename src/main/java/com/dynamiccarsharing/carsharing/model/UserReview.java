@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Getter
+@Setter
 @ToString
 @EqualsAndHashCode(exclude = {"user", "reviewer"})
 @Builder(toBuilder = true)

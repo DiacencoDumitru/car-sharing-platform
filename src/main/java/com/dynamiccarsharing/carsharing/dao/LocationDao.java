@@ -55,7 +55,7 @@ public class LocationDao implements LocationRepository {
     }
 
     @Override
-    public Iterable<Location> findAll() {
+    public List<Location> findAll() {
         String query = "SELECT * FROM locations";
         return databaseUtil.findMany(query, this::mapToLocation);
     }
