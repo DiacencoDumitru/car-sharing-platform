@@ -1,5 +1,15 @@
 package com.dynamiccarsharing.carsharing.controller;
 
+<<<<<<< HEAD
+import com.dynamiccarsharing.carsharing.dto.CarReviewCreateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.CarReviewDto;
+import com.dynamiccarsharing.carsharing.dto.CarReviewUpdateRequestDto;
+import com.dynamiccarsharing.carsharing.service.interfaces.CarReviewService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+=======
 import com.dynamiccarsharing.carsharing.TestApplication;
 import com.dynamiccarsharing.carsharing.dto.CarReviewCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.CarReviewUpdateRequestDto;
@@ -12,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+>>>>>>> fix/controller-mvc-tests
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -24,10 +35,17 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+<<<<<<< HEAD
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(CarReviewController.class)
+=======
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = TestApplication.class)
 @AutoConfigureMockMvc
+>>>>>>> fix/controller-mvc-tests
 class CarReviewControllerTest {
 
     @Autowired
@@ -37,7 +55,11 @@ class CarReviewControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
+<<<<<<< HEAD
+    private CarReviewService carReviewService;
+=======
     private CarReviewRepository carReviewRepository;
+>>>>>>> fix/controller-mvc-tests
 
     @Test
     @WithMockUser
@@ -47,6 +69,15 @@ class CarReviewControllerTest {
         createDto.setReviewerId(2L);
         createDto.setComment("Great car!");
 
+<<<<<<< HEAD
+        CarReviewDto savedDto = new CarReviewDto();
+        savedDto.setId(101L);
+        savedDto.setCarId(carId);
+        savedDto.setReviewerId(2L);
+        savedDto.setComment("Great car!");
+
+        when(carReviewService.createReview(eq(carId), any(CarReviewCreateRequestDto.class))).thenReturn(savedDto);
+=======
         CarReview savedReview = CarReview.builder()
                 .id(101L)
                 .car(Car.builder().id(carId).build())
@@ -55,6 +86,7 @@ class CarReviewControllerTest {
                 .build();
 
         when(carReviewRepository.save(any(CarReview.class))).thenReturn(savedReview);
+>>>>>>> fix/controller-mvc-tests
 
         mockMvc.perform(post("/api/v1/cars/{carId}/reviews", carId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -71,9 +103,17 @@ class CarReviewControllerTest {
     @WithMockUser
     void getReviewsForCar_shouldReturnReviewList() throws Exception {
         Long carId = 1L;
+<<<<<<< HEAD
+        CarReviewDto review1 = new CarReviewDto();
+        review1.setId(101L);
+        CarReviewDto review2 = new CarReviewDto();
+        review2.setId(102L);
+        when(carReviewService.findByCarId(carId)).thenReturn(List.of(review1, review2));
+=======
         CarReview review1 = CarReview.builder().id(101L).car(Car.builder().id(carId).build()).build();
         CarReview review2 = CarReview.builder().id(102L).car(Car.builder().id(carId).build()).build();
         when(carReviewRepository.findByCarId(carId)).thenReturn(List.of(review1, review2));
+>>>>>>> fix/controller-mvc-tests
 
         mockMvc.perform(get("/api/v1/cars/{carId}/reviews", carId))
                 .andExpect(status().isOk())
@@ -85,6 +125,13 @@ class CarReviewControllerTest {
     @WithMockUser
     void getReviewById_whenExists_shouldReturnOk() throws Exception {
         Long reviewId = 101L;
+<<<<<<< HEAD
+        CarReviewDto reviewDto = new CarReviewDto();
+        reviewDto.setId(reviewId);
+        when(carReviewService.findById(reviewId)).thenReturn(Optional.of(reviewDto));
+
+        mockMvc.perform(get("/api/v1/car-reviews/{reviewId}", reviewId))
+=======
         CarReview review = CarReview.builder()
                 .id(reviewId)
                 .car(Car.builder().id(1L).build())
@@ -94,6 +141,7 @@ class CarReviewControllerTest {
         when(carReviewRepository.findById(reviewId)).thenReturn(Optional.of(review));
 
         mockMvc.perform(get("/api/v1/reviews/{reviewId}", reviewId))
+>>>>>>> fix/controller-mvc-tests
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(reviewId));
     }
@@ -101,8 +149,13 @@ class CarReviewControllerTest {
     @Test
     @WithMockUser
     void getReviewById_whenNotExists_shouldReturnNotFound() throws Exception {
+<<<<<<< HEAD
+        when(carReviewService.findById(999L)).thenReturn(Optional.empty());
+        mockMvc.perform(get("/api/v1/car-reviews/{reviewId}", 999L))
+=======
         when(carReviewRepository.findById(999L)).thenReturn(Optional.empty());
         mockMvc.perform(get("/api/v1/reviews/{reviewId}", 999L))
+>>>>>>> fix/controller-mvc-tests
                 .andExpect(status().isNotFound());
     }
 
@@ -110,6 +163,18 @@ class CarReviewControllerTest {
     @WithMockUser
     void updateReview_whenExists_shouldReturnOk() throws Exception {
         Long reviewId = 101L;
+<<<<<<< HEAD
+        CarReviewUpdateRequestDto updateDto = new CarReviewUpdateRequestDto();
+        updateDto.setComment("New comment");
+
+        CarReviewDto updatedDto = new CarReviewDto();
+        updatedDto.setId(reviewId);
+        updatedDto.setComment("New comment");
+
+        when(carReviewService.updateReview(eq(reviewId), any(CarReviewUpdateRequestDto.class))).thenReturn(updatedDto);
+
+        mockMvc.perform(patch("/api/v1/car-reviews/{reviewId}", reviewId)
+=======
         CarReview existingReview = CarReview.builder().id(reviewId).comment("Old comment").build();
         CarReview updatedReview = existingReview.withComment("New comment");
 
@@ -120,6 +185,7 @@ class CarReviewControllerTest {
         when(carReviewRepository.save(any(CarReview.class))).thenReturn(updatedReview);
 
         mockMvc.perform(patch("/api/v1/reviews/{reviewId}", reviewId)
+>>>>>>> fix/controller-mvc-tests
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDto))
                         .with(csrf()))
@@ -132,6 +198,14 @@ class CarReviewControllerTest {
     @WithMockUser
     void deleteReview_whenExists_shouldReturnNoContent() throws Exception {
         Long reviewId = 101L;
+<<<<<<< HEAD
+        doNothing().when(carReviewService).deleteById(reviewId);
+
+        mockMvc.perform(delete("/api/v1/car-reviews/{reviewId}", reviewId).with(csrf()))
+                .andExpect(status().isNoContent());
+
+        verify(carReviewService, times(1)).deleteById(reviewId);
+=======
         when(carReviewRepository.findById(reviewId)).thenReturn(Optional.of(CarReview.builder().id(reviewId).build()));
         doNothing().when(carReviewRepository).deleteById(reviewId);
 
@@ -139,5 +213,6 @@ class CarReviewControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(carReviewRepository, times(1)).deleteById(reviewId);
+>>>>>>> fix/controller-mvc-tests
     }
 }

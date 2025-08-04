@@ -77,7 +77,7 @@ public class CarDao implements CarRepository {
     }
 
     @Override
-    public Iterable<Car> findAll() {
+    public List<Car> findAll() {
         String query = "SELECT c.*, l.city, l.state, l.zip_code FROM cars c " +
                 "JOIN locations l ON c.location_id = l.id";
         return databaseUtil.findMany(query, this::mapToCar);

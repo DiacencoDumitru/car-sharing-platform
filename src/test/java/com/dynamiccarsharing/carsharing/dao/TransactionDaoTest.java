@@ -133,7 +133,7 @@ class TransactionDaoTest extends BaseDaoTest {
         @Test
         @DisplayName("Should return all transactions for empty filter")
         void findByFilter_emptyFilter_shouldReturnAll() throws SQLException {
-            TransactionFilter filter = TransactionFilter.of(null, null, null, null);
+            TransactionFilter filter = TransactionFilter.of(null, null, null);
             List<Transaction> results = transactionDao.findByFilter(filter);
             assertEquals(3, results.size());
         }

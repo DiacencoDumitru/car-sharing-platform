@@ -58,7 +58,7 @@ public class ContactInfoDao implements ContactInfoRepository {
     }
 
     @Override
-    public Iterable<ContactInfo> findAll() {
+    public List<ContactInfo> findAll() {
         String query = "SELECT * FROM contact_infos";
         return databaseUtil.findMany(query, this::mapToContactInfo);
     }

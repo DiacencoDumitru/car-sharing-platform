@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 @Getter
+@Setter
 @ToString
 @EqualsAndHashCode
 @Builder(toBuilder = true)

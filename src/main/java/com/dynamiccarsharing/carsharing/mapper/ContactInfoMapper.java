@@ -14,8 +14,11 @@ public interface ContactInfoMapper {
     @Mapping(target = "id", ignore = true)
     ContactInfo toEntity(ContactInfoCreateRequestDto dto);
 
+<<<<<<< HEAD
+=======
     @Mapping(target = "id", ignore = true)
     ContactInfo toEntity(ContactInfoUpdateRequestDto dto);
 
+>>>>>>> fix/controller-mvc-tests
     void updateFromDto(ContactInfoUpdateRequestDto dto, @MappingTarget ContactInfo entity);
 }

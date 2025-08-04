@@ -1,6 +1,12 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.dto.CarSearchCriteria;
+<<<<<<< HEAD
+import com.dynamiccarsharing.carsharing.dto.CarCreateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.CarDto;
+import com.dynamiccarsharing.carsharing.dto.CarUpdateRequestDto;
+=======
+>>>>>>> fix/controller-mvc-tests
+import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.exception.CarNotFoundException;
@@ -8,9 +14,11 @@ import com.dynamiccarsharing.carsharing.exception.InvalidCarStatusException;
 import com.dynamiccarsharing.carsharing.exception.InvalidVerificationStatusException;
 import com.dynamiccarsharing.carsharing.filter.CarFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.mapper.CarMapper;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.repository.CarRepository;
 import com.dynamiccarsharing.carsharing.service.interfaces.CarService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,86 +26,106 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 @Service("carService")
 @Transactional
+@RequiredArgsConstructor
 public class CarServiceImpl implements CarService {
 
     private final CarRepository carRepository;
-
-    public CarServiceImpl(CarRepository carRepository) {
-        this.carRepository = carRepository;
-    }
+    private final CarMapper carMapper;
 
     @Override
-    public Car save(Car car) {
-        return carRepository.save(car);
+    public CarDto save(CarCreateRequestDto carDto) {
+        Car car = carMapper.toEntity(carDto);
+        Car savedCar = carRepository.save(car);
+        return carMapper.toDto(savedCar);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Car> findById(Long id) {
-        return carRepository.findById(id);
+    public Optional<CarDto> findById(Long id) {
+        return carRepository.findById(id).map(carMapper::toDto);
     }
 
     @Override
     public void deleteById(Long id) {
-        if (carRepository.findById(id).isEmpty()) {
+        if (carRepository.findById(id).isPresent()) {
+            carRepository.deleteById(id);
+        } else {
             throw new CarNotFoundException("Car with ID " + id + " not found.");
         }
-        carRepository.deleteById(id);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Iterable<Car> findAll() {
-        return carRepository.findAll();
+    public List<CarDto> findAll() {
+        return StreamSupport.stream(carRepository.findAll().spliterator(), false)
+                .map(carMapper::toDto)
+                .toList();
     }
 
     @Override
-    public Car rentCar(Long carId) {
+    public CarDto rentCar(Long carId) {
         Car car = getCarOrThrow(carId);
         if (car.getStatus() != CarStatus.AVAILABLE) {
             throw new InvalidCarStatusException("Car can only be rented if AVAILABLE");
         }
-        return carRepository.save(car.withStatus(CarStatus.RENTED));
+        Car updatedCar = carRepository.save(car.withStatus(CarStatus.RENTED));
+        return carMapper.toDto(updatedCar);
     }
 
     @Override
-    public Car returnCar(Long carId) {
+    public CarDto returnCar(Long carId) {
         Car car = getCarOrThrow(carId);
         validateCarStatus(car.getStatus(), CarStatus.RENTED, "Car can only be returned if RENTED");
-        return carRepository.save(car.withStatus(CarStatus.AVAILABLE));
+        Car updatedCar = carRepository.save(car.withStatus(CarStatus.AVAILABLE));
+        return carMapper.toDto(updatedCar);
     }
 
     @Override
-    public Car setMaintenance(Long carId) {
+    public CarDto setMaintenance(Long carId) {
         Car car = getCarOrThrow(carId);
         validateCarStatus(car.getStatus(), CarStatus.AVAILABLE, "Cannot set MAINTENANCE for a RENTED car");
-        return carRepository.save(car.withStatus(CarStatus.MAINTENANCE));
+        Car updatedCar = carRepository.save(car.withStatus(CarStatus.MAINTENANCE));
+        return carMapper.toDto(updatedCar);
     }
 
     @Override
-    public Car verifyCar(Long carId) {
+    public CarDto verifyCar(Long carId) {
         Car car = getCarOrThrow(carId);
         validateVerificationStatus(car.getVerificationStatus(), "Car can only be verified from PENDING status");
-        return carRepository.save(car.withVerificationStatus(VerificationStatus.VERIFIED));
+        Car updatedCar = carRepository.save(car.withVerificationStatus(VerificationStatus.VERIFIED));
+        return carMapper.toDto(updatedCar);
     }
 
     @Override
-    public Car rejectVerification(Long carId) {
+    public CarDto rejectVerification(Long carId) {
         Car car = getCarOrThrow(carId);
         validateVerificationStatus(car.getVerificationStatus(), "Car can only be rejected from PENDING status");
-        return carRepository.save(car.withVerificationStatus(VerificationStatus.REJECTED));
+        Car updatedCar = carRepository.save(car.withVerificationStatus(VerificationStatus.REJECTED));
+        return carMapper.toDto(updatedCar);
     }
 
     @Override
-    public Car updatePrice(Long carId, BigDecimal newPrice) {
+    public CarDto updateCar(Long carId, CarUpdateRequestDto updateDto) {
+        Car carToUpdate = getCarOrThrow(carId);
+
+        carMapper.updateCarFromDto(updateDto, carToUpdate);
+
+        Car updatedCar = carRepository.save(carToUpdate);
+        return carMapper.toDto(updatedCar);
+    }
+
+    @Override
+    public CarDto updatePrice(Long carId, BigDecimal newPrice) {
         if (newPrice != null && newPrice.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("New Price must not be negative.");
         }
         Car car = getCarOrThrow(carId);
-        return carRepository.save(car.withPrice(newPrice));
+        Car updatedCar = carRepository.save(car.withPrice(newPrice));
+        return carMapper.toDto(updatedCar);
     }
 
     @Override

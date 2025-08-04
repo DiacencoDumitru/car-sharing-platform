@@ -68,7 +68,7 @@ public class PaymentDao implements PaymentRepository {
     }
 
     @Override
-    public Iterable<Payment> findAll() {
+    public List<Payment> findAll() {
         String query = "SELECT * FROM payments";
         return databaseUtil.findMany(query, this::mapToPayment);
     }
