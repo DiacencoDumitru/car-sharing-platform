@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Getter
+@Setter
 @ToString
 @EqualsAndHashCode
 @Builder(toBuilder = true)

@@ -69,7 +69,7 @@ public class DisputeDao implements DisputeRepository {
     }
 
     @Override
-    public Iterable<Dispute> findAll() {
+    public List<Dispute> findAll() {
         String query = "SELECT * FROM disputes";
         return databaseUtil.findMany(query, this::mapToDispute);
     }

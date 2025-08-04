@@ -65,7 +65,7 @@ public class CarReviewDao implements CarReviewRepository {
     }
 
     @Override
-    public Iterable<CarReview> findAll() {
+    public List<CarReview> findAll() {
         String query = "SELECT * FROM car_reviews";
         return databaseUtil.findMany(query, this::mapToCarReview);
     }

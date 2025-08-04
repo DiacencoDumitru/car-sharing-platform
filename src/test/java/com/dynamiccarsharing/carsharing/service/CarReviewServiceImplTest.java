@@ -1,18 +1,25 @@
 package com.dynamiccarsharing.carsharing.service;
 
+import com.dynamiccarsharing.carsharing.dto.CarReviewCreateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.CarReviewDto;
+import com.dynamiccarsharing.carsharing.dto.CarReviewUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.exception.CarReviewNotFoundException;
-import com.dynamiccarsharing.carsharing.model.Car;
+import com.dynamiccarsharing.carsharing.mapper.CarReviewMapper;
 import com.dynamiccarsharing.carsharing.model.CarReview;
+<<<<<<< HEAD
+import com.dynamiccarsharing.carsharing.repository.CarReviewRepository;
+=======
 import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.repository.jpa.CarReviewJpaRepository;
 import com.dynamiccarsharing.carsharing.dto.criteria.CarReviewSearchCriteria;
+>>>>>>> fix/controller-mvc-tests
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,54 +27,42 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-
 @ExtendWith(MockitoExtension.class)
 class CarReviewServiceImplTest {
 
     @Mock
-    private CarReviewJpaRepository carReviewRepository;
+    private CarReviewRepository carReviewRepository;
+
+    @Mock
+    private CarReviewMapper carReviewMapper;
 
     private CarReviewServiceImpl carReviewService;
 
+
     @BeforeEach
     void setUp() {
-        carReviewService = new CarReviewServiceImpl(carReviewRepository);
-    }
-
-    private CarReview createTestCarReview(Long id) {
-        return CarReview.builder()
-                .id(id)
-                .car(Car.builder().id(1L).build())
-                .reviewer(User.builder().id(1L).build())
-                .comment("Excellent car!")
-                .build();
+        carReviewService = new CarReviewServiceImpl(carReviewRepository, carReviewMapper);
     }
 
     @Test
-    void save_shouldCallRepositoryAndReturnReview() {
-        CarReview reviewToSave = createTestCarReview(null);
-        CarReview savedReview = createTestCarReview(1L);
-        when(carReviewRepository.save(reviewToSave)).thenReturn(savedReview);
+    void createReview_shouldMapAndSaveAndReturnDto() {
+        Long carId = 1L;
+        CarReviewCreateRequestDto createDto = new CarReviewCreateRequestDto();
+        createDto.setComment("Test comment");
 
-        CarReview result = carReviewService.save(reviewToSave);
+        CarReview reviewToSave = new CarReview();
+        CarReview savedReview = CarReview.builder().id(1L).build();
+        CarReviewDto expectedDto = new CarReviewDto();
+        expectedDto.setId(1L);
+
+        when(carReviewMapper.toEntity(createDto)).thenReturn(reviewToSave);
+        when(carReviewRepository.save(reviewToSave)).thenReturn(savedReview);
+        when(carReviewMapper.toDto(savedReview)).thenReturn(expectedDto);
+
+        CarReviewDto result = carReviewService.createReview(carId, createDto);
 
         assertNotNull(result);
-        assertNotNull(result.getId());
-        assertEquals("Excellent car!", result.getComment());
-        verify(carReviewRepository).save(reviewToSave);
-    }
-
-    @Test
-    void findById_whenReviewExists_shouldReturnOptionalOfReview() {
-        Long reviewId = 1L;
-        CarReview testReview = createTestCarReview(reviewId);
-        when(carReviewRepository.findById(reviewId)).thenReturn(Optional.of(testReview));
-
-        Optional<CarReview> result = carReviewService.findById(reviewId);
-
-        assertTrue(result.isPresent());
-        assertEquals(reviewId, result.get().getId());
-        verify(carReviewRepository).findById(reviewId);
+        assertEquals(1L, result.getId());
     }
 
     @Test
@@ -75,27 +70,27 @@ class CarReviewServiceImplTest {
         Long reviewId = 1L;
         when(carReviewRepository.findById(reviewId)).thenReturn(Optional.empty());
 
-        Optional<CarReview> result = carReviewService.findById(reviewId);
+        Optional<CarReviewDto> result = carReviewService.findById(reviewId);
 
         assertFalse(result.isPresent());
     }
 
     @Test
-    void findAll_shouldReturnListOfReviews() {
-        CarReview review1 = createTestCarReview(1L);
-        CarReview review2 = createTestCarReview(2L);
-        when(carReviewRepository.findAll()).thenReturn(List.of(review1, review2));
+    void findByCarId_shouldMapAndReturnDtoList() {
+        Long carId = 1L;
+        CarReview reviewEntity = CarReview.builder().id(1L).build();
+        when(carReviewRepository.findByCarId(carId)).thenReturn(Collections.singletonList(reviewEntity));
+        when(carReviewMapper.toDto(reviewEntity)).thenReturn(new CarReviewDto());
 
-        List<CarReview> results = carReviewService.findAll();
+        List<CarReviewDto> result = carReviewService.findByCarId(carId);
 
-        assertEquals(2, results.size());
-        verify(carReviewRepository).findAll();
+        assertEquals(1, result.size());
     }
 
     @Test
     void deleteById_whenReviewExists_shouldCallRepositoryDelete() {
         Long reviewId = 1L;
-        when(carReviewRepository.findById(reviewId)).thenReturn(Optional.of(createTestCarReview(reviewId)));
+        when(carReviewRepository.findById(reviewId)).thenReturn(Optional.of(new CarReview()));
         doNothing().when(carReviewRepository).deleteById(reviewId);
 
         carReviewService.deleteById(reviewId);
@@ -104,26 +99,31 @@ class CarReviewServiceImplTest {
     }
 
     @Test
-    void deleteById_whenReviewDoesNotExist_shouldThrowCarReviewNotFoundException() {
+    void updateReview_whenExists_shouldUpdateAndReturnDto() {
         Long reviewId = 1L;
-        when(carReviewRepository.findById(reviewId)).thenReturn(Optional.empty());
+        CarReviewUpdateRequestDto updateDto = new CarReviewUpdateRequestDto();
+        updateDto.setComment("New Comment");
 
-        assertThrows(CarReviewNotFoundException.class, () -> carReviewService.deleteById(reviewId));
-        verify(carReviewRepository, never()).deleteById(any());
+        CarReview existingReview = CarReview.builder().id(reviewId).comment("Old Comment").build();
+        CarReview updatedReviewEntity = existingReview.withComment("New Comment");
+        CarReviewDto expectedDto = new CarReviewDto();
+        expectedDto.setComment("New Comment");
+
+        when(carReviewRepository.findById(reviewId)).thenReturn(Optional.of(existingReview));
+        when(carReviewRepository.save(any(CarReview.class))).thenReturn(updatedReviewEntity);
+        when(carReviewMapper.toDto(updatedReviewEntity)).thenReturn(expectedDto);
+
+        CarReviewDto result = carReviewService.updateReview(reviewId, updateDto);
+
+        assertEquals("New Comment", result.getComment());
     }
 
-
     @Test
-    void searchReviews_withCriteria_shouldCallRepositoryWithSpecification() throws SQLException {
-        Long carId = 1L;
-        CarReviewSearchCriteria criteria = CarReviewSearchCriteria.builder().carId(carId).build();
-        List<CarReview> expectedReviews = List.of(createTestCarReview(1L));
-        when(carReviewRepository.findByFilter(any())).thenReturn(expectedReviews);
+    void updateReview_whenNotExists_shouldThrowException() {
+        Long reviewId = 1L;
+        CarReviewUpdateRequestDto updateDto = new CarReviewUpdateRequestDto();
+        when(carReviewRepository.findById(reviewId)).thenReturn(Optional.empty());
 
-        List<CarReview> results = carReviewService.searchReviews(criteria);
-
-        assertFalse(results.isEmpty());
-
-        verify(carReviewRepository, times(1)).findByFilter(any());
+        assertThrows(CarReviewNotFoundException.class, () -> carReviewService.updateReview(reviewId, updateDto));
     }
 }

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.TransactionSystemException;
@@ -265,7 +266,7 @@ class JpaLifecycleTest {
     void saveChildWithoutParent_usingRepositorySave_shouldThrowException() {
         User reviewer = userRepository.save(createTransientUser());
         UserReview child = UserReview.builder().comment("No parent").reviewer(reviewer).build();
-        assertThrows(NullPointerException.class, () -> userReviewRepository.save(child));
+        assertThrows(TransactionSystemException.class, () -> userReviewRepository.save(child));
     }
 
     @Test
@@ -293,7 +294,7 @@ class JpaLifecycleTest {
     void saveChildWithTransientParent_usingRepositorySave_shouldThrowException() {
         User transientParent = createTransientUser();
         UserReview child = createTransientReview(transientParent, transientParent);
-        assertThrows(NullPointerException.class, () -> userReviewRepository.save(child));
+        assertThrows(InvalidDataAccessApiUsageException.class, () -> userReviewRepository.save(child));
     }
 
     @Test

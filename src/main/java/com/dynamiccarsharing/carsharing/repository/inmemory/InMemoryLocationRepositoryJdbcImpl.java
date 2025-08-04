@@ -31,8 +31,8 @@ public class InMemoryLocationRepositoryJdbcImpl implements LocationRepository {
     }
 
     @Override
-    public Iterable<Location> findAll() {
-        return locationMap.values();
+    public List<Location> findAll() {
+        return new ArrayList<>(locationMap.values());
     }
 
     @Override
