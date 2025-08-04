@@ -2,11 +2,18 @@ package com.dynamiccarsharing.carsharing.mapper;
 
 import com.dynamiccarsharing.carsharing.dto.UserCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.UserDto;
+import com.dynamiccarsharing.carsharing.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.model.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring", uses = {ContactInfoMapper.class})
+@Mapper(
+        componentModel = "spring",
+        uses = {ContactInfoMapper.class},
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+)
 public interface UserMapper {
 
     UserDto toDto(User entity);
@@ -20,4 +27,6 @@ public interface UserMapper {
     @Mapping(target = "reviewsByUser", ignore = true)
     @Mapping(target = "carReviewsByUser", ignore = true)
     User toEntity(UserCreateRequestDto dto);
+
+    void updateFromDto(UserStatusUpdateRequestDto dto, @MappingTarget User user);
 }

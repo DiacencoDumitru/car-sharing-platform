@@ -12,7 +12,7 @@ public interface Repository<T, ID> {
 
     Optional<T> findById(ID id);
 
-    Iterable<T> findAll();
+    List<T> findAll();
 
     void deleteById(ID id);
 

@@ -2,10 +2,10 @@ package com.dynamiccarsharing.carsharing.mapper;
 
 import com.dynamiccarsharing.carsharing.dto.UserReviewCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.UserReviewDto;
+import com.dynamiccarsharing.carsharing.dto.UserReviewUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.model.UserReview;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface UserReviewMapper {
@@ -19,6 +19,9 @@ public interface UserReviewMapper {
     @Mapping(source = "dto.reviewerId", target = "reviewer.id")
     @Mapping(source = "dto.comment", target = "comment")
     UserReview toEntity(UserReviewCreateRequestDto dto, Long userId);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void updateFromDto(UserReviewUpdateRequestDto dto, @MappingTarget UserReview entity);
 
     default User map(Long userId) {
         if (userId == null) {

@@ -1,5 +1,10 @@
 package com.dynamiccarsharing.carsharing.service;
 
+<<<<<<< HEAD
+import com.dynamiccarsharing.carsharing.dto.BookingCreateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.BookingDto;
+=======
+>>>>>>> fix/controller-mvc-tests
 import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
@@ -8,11 +13,13 @@ import com.dynamiccarsharing.carsharing.exception.InvalidBookingStatusException;
 import com.dynamiccarsharing.carsharing.exception.InvalidDisputeStatusException;
 import com.dynamiccarsharing.carsharing.filter.BookingFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.mapper.BookingMapper;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Dispute;
 import com.dynamiccarsharing.carsharing.repository.BookingRepository;
 import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import com.dynamiccarsharing.carsharing.service.interfaces.BookingService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,36 +30,39 @@ import java.util.Optional;
 
 @Service("bookingService")
 @Transactional
+@RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
     private final DisputeRepository disputeRepository;
-
-    public BookingServiceImpl(BookingRepository bookingRepository, DisputeRepository disputeRepository) {
-        this.bookingRepository = bookingRepository;
-        this.disputeRepository = disputeRepository;
-    }
+    private final BookingMapper bookingMapper;
 
     @Override
-    public Booking save(Booking booking) {
-        return bookingRepository.save(booking);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<Booking> findById(Long id) {
-        return bookingRepository.findById(id);
+    public BookingDto save(BookingCreateRequestDto createDto) {
+        Booking booking = bookingMapper.toEntity(createDto);
+        Booking savedBooking = bookingRepository.save(booking);
+        return bookingMapper.toDto(savedBooking);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Booking> findAll() {
-        return bookingRepository.findAll();
+    public Optional<BookingDto> findById(Long id) {
+        return bookingRepository.findById(id).map(bookingMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingDto> findAll() {
+        return bookingRepository.findAll().stream().map(bookingMapper::toDto).toList();
     }
 
     @Override
     public void deleteById(Long id) {
-        bookingRepository.deleteById(id);
+        if (bookingRepository.findById(id).isPresent()) {
+            bookingRepository.deleteById(id);
+        } else {
+            throw new BookingNotFoundException("Booking with ID " + id + " not found.");
+        }
     }
 
     @Override
@@ -62,28 +72,31 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public Booking approveBooking(Long bookingId) {
+    public BookingDto approveBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
         validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.PENDING), "Booking can only be approved from PENDING status");
-        return bookingRepository.save(booking.withStatus(TransactionStatus.APPROVED));
+        Booking updatedBooking = bookingRepository.save(booking.withStatus(TransactionStatus.APPROVED));
+        return bookingMapper.toDto(updatedBooking);
     }
 
     @Override
-    public Booking completeBooking(Long bookingId) {
+    public BookingDto completeBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
         validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.APPROVED), "Booking can only be completed from APPROVED status");
-        return bookingRepository.save(booking.withStatus(TransactionStatus.COMPLETED));
+        Booking updatedBooking = bookingRepository.save(booking.withStatus(TransactionStatus.COMPLETED));
+        return bookingMapper.toDto(updatedBooking);
     }
 
     @Override
-    public Booking cancelBooking(Long bookingId) {
+    public BookingDto cancelBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
         validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.PENDING, TransactionStatus.APPROVED), "Cannot cancel a completed booking");
-        return bookingRepository.save(booking.withStatus(TransactionStatus.CANCELED));
+        Booking updatedBooking = bookingRepository.save(booking.withStatus(TransactionStatus.CANCELED));
+        return bookingMapper.toDto(updatedBooking);
     }
 
     @Override
-    public Booking raiseDispute(Long bookingId, String disputeDescription) {
+    public BookingDto raiseDispute(Long bookingId, String disputeDescription) {
         Booking booking = getBookingOrThrow(bookingId);
         if (booking.getStatus() != TransactionStatus.COMPLETED) {
             throw new IllegalStateException("Dispute can only be raised for completed bookings");
@@ -98,14 +111,16 @@ public class BookingServiceImpl implements BookingService {
                 .build();
         disputeRepository.save(dispute);
 
-        return bookingRepository.save(booking.withDisputeStatus(DisputeStatus.OPEN).withDisputeDescription(disputeDescription));
+        Booking updatedBooking = bookingRepository.save(booking.withDisputeStatus(DisputeStatus.OPEN).withDisputeDescription(disputeDescription));
+        return bookingMapper.toDto(updatedBooking);
     }
 
     @Override
-    public Booking resolveDispute(Long bookingId) {
+    public BookingDto resolveDispute(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
         validateDisputeStatus(booking.getDisputeStatus());
-        return bookingRepository.save(booking.withDisputeStatus(DisputeStatus.RESOLVED));
+        Booking updatedBooking = bookingRepository.save(booking.withDisputeStatus(DisputeStatus.RESOLVED));
+        return bookingMapper.toDto(updatedBooking);
     }
 
     @Override

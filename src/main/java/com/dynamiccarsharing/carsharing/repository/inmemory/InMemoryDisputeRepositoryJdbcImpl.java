@@ -32,8 +32,8 @@ public class InMemoryDisputeRepositoryJdbcImpl implements DisputeRepository {
     }
 
     @Override
-    public Iterable<Dispute> findAll() {
-        return disputeMap.values();
+    public List<Dispute> findAll() {
+        return new ArrayList<>(disputeMap.values());
     }
 
     @Override
