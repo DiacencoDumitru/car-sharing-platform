@@ -1,15 +1,10 @@
 package com.dynamiccarsharing.carsharing.service;
 
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.dto.ContactInfoUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.UserCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.UserDto;
 import com.dynamiccarsharing.carsharing.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.UserSearchCriteria;
-=======
-import com.dynamiccarsharing.carsharing.dto.criteria.UserSearchCriteria;
-import com.dynamiccarsharing.carsharing.enums.UserStatus;
->>>>>>> fix/controller-mvc-tests
 import com.dynamiccarsharing.carsharing.exception.CarNotFoundException;
 import com.dynamiccarsharing.carsharing.exception.UserNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
@@ -55,29 +50,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-<<<<<<< HEAD
     public List<UserDto> findAllUsers() {
         return userRepository.findAll().stream().map(userMapper::toDto).toList();
-=======
-    public List<User> findAll() {
-        return userRepository.findAll();
->>>>>>> fix/controller-mvc-tests
     }
 
     @Override
     public void deleteById(Long id) {
-<<<<<<< HEAD
         if (userRepository.findById(id).isEmpty()) {
-=======
-        if (userRepository.findById(id).isPresent()) {
->>>>>>> fix/controller-mvc-tests
             throw new UserNotFoundException("User with ID " + id + " not found.");
         }
         userRepository.deleteById(id);
     }
 
     @Override
-<<<<<<< HEAD
     public UserDto updateUserContactInfo(Long userId, ContactInfoUpdateRequestDto updateDto) {
         User userToUpdate = getUserOrThrow(userId);
 
@@ -95,20 +80,6 @@ public class UserServiceImpl implements UserService {
         User user = getUserOrThrow(userId);
         User updatedUser = userRepository.save(user.withStatus(updateDto.getStatus()));
         return userMapper.toDto(updatedUser);
-=======
-    public User updateUserContactInfo(Long userId, ContactInfo contactInfo) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " not found."));
-
-        user = user.withContactInfo(contactInfo);
-        return userRepository.save(user);
-    }
-
-    @Override
-    public User updateUserStatus(Long userId, UserStatus newStatus) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " not found."));
-        return userRepository.save(user.withStatus(newStatus));
->>>>>>> fix/controller-mvc-tests
     }
 
     @Override

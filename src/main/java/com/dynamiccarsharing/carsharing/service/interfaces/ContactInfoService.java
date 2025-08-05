@@ -5,10 +5,6 @@ import com.dynamiccarsharing.carsharing.dto.ContactInfoDto;
 import com.dynamiccarsharing.carsharing.dto.ContactInfoUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.ContactInfoSearchCriteria;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
-<<<<<<< HEAD
-=======
-import com.dynamiccarsharing.carsharing.dto.criteria.ContactInfoSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 
 import java.util.List;
 import java.util.Optional;

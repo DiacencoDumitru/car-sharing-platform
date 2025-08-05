@@ -6,12 +6,7 @@ import com.dynamiccarsharing.carsharing.dto.LocationUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.exception.LocationNotFoundException;
 import com.dynamiccarsharing.carsharing.mapper.LocationMapper;
 import com.dynamiccarsharing.carsharing.model.Location;
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.repository.LocationRepository;
-=======
-import com.dynamiccarsharing.carsharing.repository.jpa.LocationJpaRepository;
-import com.dynamiccarsharing.carsharing.dto.criteria.LocationSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

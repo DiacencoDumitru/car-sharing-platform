@@ -1,11 +1,8 @@
 package com.dynamiccarsharing.carsharing.service;
 
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.dto.LocationCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.LocationDto;
 import com.dynamiccarsharing.carsharing.dto.LocationUpdateRequestDto;
-=======
->>>>>>> fix/controller-mvc-tests
 import com.dynamiccarsharing.carsharing.dto.criteria.LocationSearchCriteria;
 import com.dynamiccarsharing.carsharing.exception.LocationNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
@@ -46,22 +43,11 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     @Transactional(readOnly = true)
-<<<<<<< HEAD
     public List<LocationDto> findAllLocations() {
         return StreamSupport.stream(locationRepository.findAll().spliterator(), false)
                 .map(locationMapper::toDto)
                 .toList();
     }
-=======
-    public Iterable<Location> findAll() {
-        return locationRepository.findAll();
-    }
-
-    @Override
-    public Location updateLocation(Long id, Location locationDetails) {
-        Location existingLocation = locationRepository.findById(id)
-                .orElseThrow(() -> new LocationNotFoundException("Location with ID " + id + " not found."));
->>>>>>> fix/controller-mvc-tests
 
 
     @Override

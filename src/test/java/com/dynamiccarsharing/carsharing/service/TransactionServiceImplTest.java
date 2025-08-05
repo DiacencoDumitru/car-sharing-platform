@@ -4,12 +4,7 @@ import com.dynamiccarsharing.carsharing.dto.TransactionDto;
 import com.dynamiccarsharing.carsharing.mapper.TransactionMapper;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Transaction;
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.repository.TransactionRepository;
-=======
-import com.dynamiccarsharing.carsharing.repository.jpa.TransactionJpaRepository;
-import com.dynamiccarsharing.carsharing.dto.criteria.TransactionSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -5,10 +5,6 @@ import com.dynamiccarsharing.carsharing.dto.CarReviewDto;
 import com.dynamiccarsharing.carsharing.dto.CarReviewUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.CarReviewSearchCriteria;
 import com.dynamiccarsharing.carsharing.model.CarReview;
-<<<<<<< HEAD
-=======
-import com.dynamiccarsharing.carsharing.dto.criteria.CarReviewSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 
 import java.util.List;
 import java.util.Optional;
@@ -28,8 +24,4 @@ public interface CarReviewService {
     CarReviewDto updateReview(Long reviewId, CarReviewUpdateRequestDto updateDto);
 
     List<CarReview> searchReviews(CarReviewSearchCriteria criteria);
-
-    List<CarReview> findByCarId(Long carId);
-
-    CarReview updateReviewComment(Long reviewId, String newComment);
 }

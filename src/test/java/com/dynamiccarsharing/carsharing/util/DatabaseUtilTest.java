@@ -1,6 +1,5 @@
 package com.dynamiccarsharing.carsharing.util;
 
-<<<<<<< HEAD
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -8,11 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
-=======
-import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
->>>>>>> fix/controller-mvc-tests
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
@@ -20,10 +14,6 @@ import org.springframework.test.context.jdbc.Sql;
 import java.sql.SQLException;
 import java.util.List;
 
-<<<<<<< HEAD
-=======
-// @SpringBootTest
->>>>>>> fix/controller-mvc-tests
 @JdbcTest
 @ActiveProfiles("test")
 @Sql("/schema.sql")

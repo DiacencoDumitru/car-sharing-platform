@@ -1,11 +1,8 @@
 package com.dynamiccarsharing.carsharing.service;
 
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.dto.ContactInfoCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.ContactInfoDto;
 import com.dynamiccarsharing.carsharing.dto.ContactInfoUpdateRequestDto;
-=======
->>>>>>> fix/controller-mvc-tests
 import com.dynamiccarsharing.carsharing.dto.criteria.ContactInfoSearchCriteria;
 import com.dynamiccarsharing.carsharing.exception.ContactInfoNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.ContactInfoFilter;

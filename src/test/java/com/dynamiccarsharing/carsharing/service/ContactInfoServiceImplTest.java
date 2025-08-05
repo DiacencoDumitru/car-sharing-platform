@@ -6,12 +6,7 @@ import com.dynamiccarsharing.carsharing.dto.ContactInfoUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.exception.ContactInfoNotFoundException;
 import com.dynamiccarsharing.carsharing.mapper.ContactInfoMapper;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.repository.ContactInfoRepository;
-=======
-import com.dynamiccarsharing.carsharing.repository.jpa.ContactInfoJpaRepository;
-import com.dynamiccarsharing.carsharing.dto.criteria.ContactInfoSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

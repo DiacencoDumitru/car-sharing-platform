@@ -1,11 +1,8 @@
 package com.dynamiccarsharing.carsharing.service;
 
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.dto.CarReviewCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.CarReviewDto;
 import com.dynamiccarsharing.carsharing.dto.CarReviewUpdateRequestDto;
-=======
->>>>>>> fix/controller-mvc-tests
 import com.dynamiccarsharing.carsharing.dto.criteria.CarReviewSearchCriteria;
 import com.dynamiccarsharing.carsharing.exception.CarReviewNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.CarReviewFilter;
@@ -80,7 +77,6 @@ public class CarReviewServiceImpl implements CarReviewService {
     }
 
     @Override
-<<<<<<< HEAD
     public CarReviewDto updateReview(Long reviewId, CarReviewUpdateRequestDto updateDto) {
         CarReview reviewToUpdate = carReviewRepository.findById(reviewId).orElseThrow(() -> new CarReviewNotFoundException("CarReview with ID " + reviewId + " not found."));
 
@@ -88,18 +84,5 @@ public class CarReviewServiceImpl implements CarReviewService {
 
         CarReview updatedReview = carReviewRepository.save(reviewToUpdate);
         return carReviewMapper.toDto(updatedReview);
-=======
-    @Transactional(readOnly = true)
-    public List<CarReview> findByCarId(Long carId) {
-        return carReviewRepository.findByCarId(carId);
-    }
-
-    @Override
-    public CarReview updateReviewComment(Long reviewId, String newComment) {
-        CarReview review = carReviewRepository.findById(reviewId).orElseThrow(() -> new CarReviewNotFoundException("CarReview with ID " + reviewId + " not found."));
-
-        CarReview updatedReview = review.withComment(newComment);
-        return carReviewRepository.save(updatedReview);
->>>>>>> fix/controller-mvc-tests
     }
 }

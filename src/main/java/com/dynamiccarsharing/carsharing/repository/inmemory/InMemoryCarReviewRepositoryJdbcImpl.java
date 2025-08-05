@@ -45,7 +45,7 @@ public class InMemoryCarReviewRepositoryJdbcImpl implements CarReviewRepository 
     }
 
     @Override
-    public Iterable<CarReview> findAll() {
-        return carReviewMap.values();
+    public List<CarReview> findAll() {
+        return new ArrayList<>(carReviewMap.values());
     }
 }
