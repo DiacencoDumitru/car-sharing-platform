@@ -6,7 +6,7 @@ import com.dynamiccarsharing.carsharing.model.Booking;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {UserMapper.class, CarMapper.class, LocationMapper.class})
 public interface BookingMapper {
 
     @Mapping(source = "renter.id", target = "renterId")
@@ -15,9 +15,9 @@ public interface BookingMapper {
     BookingDto toDto(Booking booking);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(source = "renterId", target = "renter.id")
-    @Mapping(source = "carId", target = "car.id")
-    @Mapping(source = "pickupLocationId", target = "pickupLocation.id")
+    @Mapping(source = "renterId", target = "renter")
+    @Mapping(source = "carId", target = "car")
+    @Mapping(source = "pickupLocationId", target = "pickupLocation")
     @Mapping(target = "status", constant = "PENDING")
     @Mapping(target = "disputeDescription", ignore = true)
     @Mapping(target = "disputeStatus", ignore = true)
@@ -25,4 +25,11 @@ public interface BookingMapper {
     @Mapping(target = "payment", ignore = true)
     @Mapping(target = "dispute", ignore = true)
     Booking toEntity(BookingCreateRequestDto dto);
+
+    default Booking fromId(Long id) {
+        if (id == null) {
+            return null;
+        }
+        return Booking.builder().id(id).build();
+    }
 }

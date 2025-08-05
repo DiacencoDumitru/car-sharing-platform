@@ -35,7 +35,7 @@ public class CarReviewController {
     public ResponseEntity<CarReviewDto> getReviewById(@PathVariable Long reviewId) {
         return carReviewService.findById(reviewId)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.noContent().build());
     }
 
     @PatchMapping("/car-reviews/{reviewId}")

@@ -3,16 +3,13 @@ package com.dynamiccarsharing.carsharing.dao;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.dao.jdbc.UserSqlFilterMapper;
-import com.dynamiccarsharing.carsharing.enums.CarStatus;
-import com.dynamiccarsharing.carsharing.enums.CarType;
-import com.dynamiccarsharing.carsharing.enums.UserRole;
-import com.dynamiccarsharing.carsharing.enums.UserStatus;
-import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
+import com.dynamiccarsharing.carsharing.enums.*;
+import com.dynamiccarsharing.carsharing.exception.RepositoryException;
+import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.model.User;
-import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.repository.UserRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
@@ -52,7 +49,7 @@ public class UserDao implements UserRepository {
                     statement.setString(2, user.getRole().name());
                     statement.setString(3, user.getStatus().name());
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    throw new RepositoryException("Failed to save user", e);
                 }
             });
 

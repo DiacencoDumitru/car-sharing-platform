@@ -2,6 +2,7 @@ package com.dynamiccarsharing.carsharing.service.interfaces;
 
 import com.dynamiccarsharing.carsharing.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.BookingDto;
+import com.dynamiccarsharing.carsharing.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.model.Booking;
 
@@ -26,6 +27,8 @@ public interface BookingService {
     BookingDto raiseDispute(Long bookingId, String disputeDescription);
 
     BookingDto resolveDispute(Long bookingId);
+
+    BookingDto updateBookingStatus(Long bookingId, BookingStatusUpdateRequestDto updateDto);
 
     List<Booking> findBookingsByRenterId(Long renterId);
 

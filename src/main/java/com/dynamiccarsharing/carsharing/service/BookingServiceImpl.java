@@ -2,12 +2,11 @@ package com.dynamiccarsharing.carsharing.service;
 
 import com.dynamiccarsharing.carsharing.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.BookingDto;
+import com.dynamiccarsharing.carsharing.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
-import com.dynamiccarsharing.carsharing.exception.BookingNotFoundException;
-import com.dynamiccarsharing.carsharing.exception.InvalidBookingStatusException;
-import com.dynamiccarsharing.carsharing.exception.InvalidDisputeStatusException;
+import com.dynamiccarsharing.carsharing.exception.*;
 import com.dynamiccarsharing.carsharing.filter.BookingFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.mapper.BookingMapper;
@@ -121,6 +120,16 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public BookingDto updateBookingStatus(Long bookingId, BookingStatusUpdateRequestDto updateDto) {
+        return switch (updateDto.getStatus()) {
+            case APPROVED -> approveBooking(bookingId);
+            case CANCELED -> cancelBooking(bookingId);
+            case COMPLETED -> completeBooking(bookingId);
+            default -> throw new ValidationException("Unsupported status for update: " + updateDto.getStatus());
+        };
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<Booking> searchBookings(BookingSearchCriteria criteria) {
         Filter<Booking> filter = BookingFilter.of(
@@ -131,7 +140,7 @@ public class BookingServiceImpl implements BookingService {
         try {
             return bookingRepository.findByFilter(filter);
         } catch (SQLException e) {
-            throw new RuntimeException("Search failed due to a database error", e);
+            throw new ServiceException("Search failed due to a database error", e);
         }
     }
 

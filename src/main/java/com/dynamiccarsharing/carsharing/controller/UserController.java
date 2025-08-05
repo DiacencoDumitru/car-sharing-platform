@@ -33,7 +33,7 @@ public class UserController {
         Long userId = Long.parseLong(userDetails.getUsername());
         return userService.findUserById(userId)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.noContent().build());
     }
 
     @PatchMapping("/profile/me")
@@ -55,7 +55,7 @@ public class UserController {
     public ResponseEntity<UserDto> getUserById(@PathVariable Long userId) {
         return userService.findUserById(userId)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.noContent().build());
     }
 
     @DeleteMapping("/users/{userId}")

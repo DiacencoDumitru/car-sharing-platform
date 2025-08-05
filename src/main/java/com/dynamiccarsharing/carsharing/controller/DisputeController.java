@@ -38,7 +38,7 @@ public class DisputeController {
     public ResponseEntity<DisputeDto> getDisputeById(@PathVariable Long disputeId) {
         return disputeService.findDisputeById(disputeId)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.noContent().build());
     }
 
     @PatchMapping("/admin/disputes/{disputeId}/resolve")

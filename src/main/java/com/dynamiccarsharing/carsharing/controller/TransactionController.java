@@ -22,7 +22,7 @@ public class TransactionController {
     public ResponseEntity<TransactionDto> getTransactionById(@PathVariable Long id) {
         return transactionService.findTransactionById(id)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.noContent().build());
     }
 
     @GetMapping

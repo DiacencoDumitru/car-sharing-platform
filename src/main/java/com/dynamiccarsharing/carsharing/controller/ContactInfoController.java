@@ -29,7 +29,7 @@ public class ContactInfoController {
     public ResponseEntity<ContactInfoDto> getContactInfoById(@PathVariable Long id) {
         return contactInfoService.findContactInfoById(id)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.noContent().build());
     }
 
     @GetMapping

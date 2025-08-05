@@ -1,5 +1,6 @@
 package com.dynamiccarsharing.carsharing.repository.jpa;
 
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.filter.CarReviewFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.CarReview;
@@ -26,7 +27,7 @@ public interface CarReviewJpaRepository extends JpaRepository<CarReview, Long>, 
     @Override
     default List<CarReview> findByFilter(Filter<CarReview> filter) throws SQLException {
         if (!(filter instanceof CarReviewFilter carReviewFilter)) {
-            throw new IllegalArgumentException("Filter must be an instance of CarReviewFilter for JPA search.");
+            throw new ValidationException("Filter must be an instance of CarReviewFilter for JPA search.");
         }
         return findAll(CarReviewSpecification.withCriteria(
                 carReviewFilter.getReviewerId(),

@@ -23,7 +23,7 @@ public class BookingController {
     public ResponseEntity<BookingDto> getBookingById(@PathVariable Long bookingId) {
         return bookingService.findById(bookingId)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.noContent().build());
     }
 
     @GetMapping
@@ -40,15 +40,7 @@ public class BookingController {
 
     @PatchMapping("/{bookingId}")
     public ResponseEntity<BookingDto> updateBookingStatus(@PathVariable Long bookingId, @Valid @RequestBody BookingStatusUpdateRequestDto updateDto) {
-        BookingDto updatedBookingDto;
-        switch (updateDto.getStatus()) {
-            case APPROVED -> updatedBookingDto = bookingService.approveBooking(bookingId);
-            case CANCELED -> updatedBookingDto = bookingService.cancelBooking(bookingId);
-            case COMPLETED -> updatedBookingDto = bookingService.completeBooking(bookingId);
-            default -> {
-                return ResponseEntity.badRequest().build();
-            }
-        }
+        BookingDto updatedBookingDto = bookingService.updateBookingStatus(bookingId, updateDto);
         return ResponseEntity.ok(updatedBookingDto);
     }
 

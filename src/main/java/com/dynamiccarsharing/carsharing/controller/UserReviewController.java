@@ -37,7 +37,7 @@ public class UserReviewController {
     public ResponseEntity<UserReviewDto> getReviewById(@PathVariable Long reviewId) {
         return userReviewService.findReviewById(reviewId)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.noContent().build());
     }
 
     @PatchMapping("/user-reviews/{reviewId}")

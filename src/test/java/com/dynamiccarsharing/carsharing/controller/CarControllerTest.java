@@ -98,11 +98,11 @@ class CarControllerTest {
 
     @Test
     @WithMockUser
-    void getCarById_whenNotExists_shouldReturnNotFound() throws Exception {
+    void getCarById_whenNotExists_shouldReturnNoContent() throws Exception {
         when(carService.findById(99L)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/v1/cars/{carId}", 99L))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNoContent());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.dynamiccarsharing.carsharing.repository.jpa;
 
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.filter.CarFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.Car;
@@ -27,7 +28,7 @@ public interface CarJpaRepository extends JpaRepository<Car, Long>, JpaSpecifica
     @Override
     default List<Car> findByFilter(Filter<Car> filter) throws SQLException {
         if (!(filter instanceof CarFilter carFilter)) {
-            throw new IllegalArgumentException("Filter must be an instance of CarFilter for JPA search.");
+            throw new ValidationException("Filter must be an instance of CarFilter for JPA search.");
         }
         return findAll(CarSpecification.withCriteria(
                 carFilter.getMake(),

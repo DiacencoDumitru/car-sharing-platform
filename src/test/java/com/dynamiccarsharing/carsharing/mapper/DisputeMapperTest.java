@@ -1,47 +1,37 @@
 package com.dynamiccarsharing.carsharing.mapper;
 
-import com.dynamiccarsharing.carsharing.model.Booking;
-import com.dynamiccarsharing.carsharing.model.User;
+import com.dynamiccarsharing.carsharing.dto.DisputeCreateRequestDto;
+import com.dynamiccarsharing.carsharing.model.Dispute;
 import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@SpringBootTest
 class DisputeMapperTest {
 
-    private final DisputeMapper disputeMapper = Mappers.getMapper(DisputeMapper.class);
+    @Autowired
+    private DisputeMapper disputeMapper;
 
     @Test
-    void mapBooking_withValidId_shouldReturnBookingWithId() {
+    void toEntity_shouldCorrectlyMapIdsToNestedObjects() {
+        DisputeCreateRequestDto dto = new DisputeCreateRequestDto();
+        dto.setDescription("Test dispute");
+
         Long bookingId = 30L;
+        Long creationUserId = 40L;
 
-        Booking result = disputeMapper.mapBooking(bookingId);
-
-        assertNotNull(result);
-        assertEquals(bookingId, result.getId());
-    }
-
-    @Test
-    void mapBooking_withNullId_shouldReturnNull() {
-        Booking result = disputeMapper.mapBooking(null);
-
-        assertNull(result);
-    }
-
-    @Test
-    void mapUser_withValidId_shouldReturnUserWithId() {
-        Long userId = 40L;
-
-        User result = disputeMapper.mapUser(userId);
+        Dispute result = disputeMapper.toEntity(dto, bookingId, creationUserId);
 
         assertNotNull(result);
-        assertEquals(userId, result.getId());
-    }
+        assertEquals("Test dispute", result.getDescription());
 
-    @Test
-    void mapUser_withNullId_shouldReturnNull() {
-        User result = disputeMapper.mapUser(null);
+        assertNotNull(result.getBooking());
+        assertEquals(bookingId, result.getBooking().getId());
 
-        assertNull(result);
+        assertNotNull(result.getCreationUser());
+        assertEquals(creationUserId, result.getCreationUser().getId());
     }
 }

@@ -18,4 +18,11 @@ public interface LocationMapper {
     Location toEntity(LocationCreateRequestDto dto);
 
     void updateFromDto(LocationUpdateRequestDto dto, @MappingTarget Location entity);
+
+    default Location fromId(Long id) {
+        if (id == null) {
+            return null;
+        }
+        return Location.builder().id(id).build();
+    }
 }
