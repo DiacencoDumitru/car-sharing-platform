@@ -1,9 +1,6 @@
 package com.dynamiccarsharing.carsharing.service;
 
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.dto.TransactionDto;
-=======
->>>>>>> fix/controller-mvc-tests
 import com.dynamiccarsharing.carsharing.dto.criteria.TransactionSearchCriteria;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.TransactionFilter;

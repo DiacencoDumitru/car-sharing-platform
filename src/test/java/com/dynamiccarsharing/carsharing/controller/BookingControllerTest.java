@@ -1,6 +1,5 @@
 package com.dynamiccarsharing.carsharing.controller;
 
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.config.SecurityConfig;
 import com.dynamiccarsharing.carsharing.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.BookingDto;
@@ -30,71 +29,28 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(BookingController.class)
 @Import(SecurityConfig.class)
-=======
-import com.dynamiccarsharing.carsharing.TestApplication;
-import com.dynamiccarsharing.carsharing.dto.BookingDto;
-import com.dynamiccarsharing.carsharing.mapper.BookingMapper;
-import com.dynamiccarsharing.carsharing.model.Booking;
-import com.dynamiccarsharing.carsharing.repository.BookingRepository;
-import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.Optional;
-
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-@SpringBootTest(classes = TestApplication.class)
-@AutoConfigureMockMvc
->>>>>>> fix/controller-mvc-tests
 class BookingControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-<<<<<<< HEAD
     private BookingService bookingService;
 
     @Autowired
     private ObjectMapper objectMapper;
-=======
-    private BookingRepository bookingRepository;
-
-    @MockBean
-    private DisputeRepository disputeRepository;
-
-    @MockBean
-    private BookingMapper bookingMapper;
->>>>>>> fix/controller-mvc-tests
 
     @Test
     @WithMockUser
     void getBookingById_whenNotExists_shouldReturnNotFound() throws Exception {
-<<<<<<< HEAD
         when(bookingService.findById(999L)).thenReturn(Optional.empty());
         mockMvc.perform(get("/api/v1/bookings/{bookingId}", 999L))
-=======
-        long nonExistentBookingId = 999L;
-
-        when(bookingRepository.findById(nonExistentBookingId)).thenReturn(Optional.empty());
-
-        mockMvc.perform(get("/api/v1/bookings/{bookingId}", nonExistentBookingId))
->>>>>>> fix/controller-mvc-tests
                 .andExpect(status().isNotFound());
     }
 
     @Test
     @WithMockUser
     void getBookingById_whenExists_shouldReturnOk() throws Exception {
-<<<<<<< HEAD
         BookingDto bookingDto = new BookingDto();
         bookingDto.setId(1L);
         when(bookingService.findById(1L)).thenReturn(Optional.of(bookingDto));
@@ -220,17 +176,4 @@ class BookingControllerTest {
                         .with(csrf()))
                 .andExpect(status().isNoContent());
     }
-=======
-        long bookingId = 1L;
-        Booking booking = Booking.builder().id(bookingId).build();
-        BookingDto bookingDto = new BookingDto();
-        bookingDto.setId(bookingId);
-
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(booking));
-        when(bookingMapper.toDto(booking)).thenReturn(bookingDto);
-
-        mockMvc.perform(get("/api/v1/bookings/{bookingId}", bookingId))
-                .andExpect(status().isOk());
-    }
->>>>>>> fix/controller-mvc-tests
 }

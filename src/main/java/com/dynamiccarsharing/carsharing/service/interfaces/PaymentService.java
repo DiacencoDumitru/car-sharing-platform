@@ -5,10 +5,6 @@ import com.dynamiccarsharing.carsharing.dto.PaymentRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.PaymentSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.model.Payment;
-<<<<<<< HEAD
-=======
-import com.dynamiccarsharing.carsharing.dto.criteria.PaymentSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 
 import java.util.List;
 import java.util.Optional;
@@ -25,10 +21,6 @@ public interface PaymentService {
     PaymentDto confirmPayment(Long paymentId);
 
     PaymentDto refundPayment(Long paymentId);
-
-    List<Payment> findAll();
-
-    void deleteById(Long id);
 
     Optional<Payment> findByBookingId(Long bookingId);
 

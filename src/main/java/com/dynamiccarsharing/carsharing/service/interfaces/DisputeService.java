@@ -4,10 +4,6 @@ import com.dynamiccarsharing.carsharing.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.DisputeDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.DisputeSearchCriteria;
 import com.dynamiccarsharing.carsharing.model.Dispute;
-<<<<<<< HEAD
-=======
-import com.dynamiccarsharing.carsharing.dto.criteria.DisputeSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 
 import java.util.List;
 import java.util.Optional;
@@ -18,8 +14,6 @@ public interface DisputeService {
     Optional<DisputeDto> findDisputeById(Long id);
 
     List<DisputeDto> findAllDisputes();
-
-    Iterable<Dispute> findAll();
 
     void deleteById(Long id);
 

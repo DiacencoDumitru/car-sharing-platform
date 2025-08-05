@@ -11,14 +11,8 @@ import com.dynamiccarsharing.carsharing.mapper.UserMapper;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.model.User;
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.repository.CarRepository;
 import com.dynamiccarsharing.carsharing.repository.UserRepository;
-=======
-import com.dynamiccarsharing.carsharing.repository.jpa.CarJpaRepository;
-import com.dynamiccarsharing.carsharing.repository.jpa.UserJpaRepository;
-import com.dynamiccarsharing.carsharing.dto.criteria.UserSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

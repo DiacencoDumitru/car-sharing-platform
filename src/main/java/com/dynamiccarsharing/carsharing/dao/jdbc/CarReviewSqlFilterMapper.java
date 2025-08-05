@@ -25,9 +25,6 @@ public class CarReviewSqlFilterMapper implements SqlFilterMapper<CarReview, Filt
     private String buildSqlQuery(CarReviewFilter filter) {
         StringBuilder sb = new StringBuilder();
 
-        if (filter.getId() != null) {
-            sb.append(" AND ").append("id = ?");
-        }
         if (filter.getReviewerId() != null) {
             sb.append(" AND ").append("reviewer_id = ?");
         }
@@ -39,7 +36,7 @@ public class CarReviewSqlFilterMapper implements SqlFilterMapper<CarReview, Filt
     }
 
     private List<Object> getParameters(CarReviewFilter filter) {
-        return Stream.<Object>of(filter.getId(), filter.getReviewerId(), filter.getCarId())
+        return Stream.<Object>of(filter.getReviewerId(), filter.getCarId())
                 .filter(Objects::nonNull)
                 .toList();
     }

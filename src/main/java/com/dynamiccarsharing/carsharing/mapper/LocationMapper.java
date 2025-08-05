@@ -17,11 +17,5 @@ public interface LocationMapper {
     @Mapping(target = "id", ignore = true)
     Location toEntity(LocationCreateRequestDto dto);
 
-<<<<<<< HEAD
-=======
-    @Mapping(target = "id", ignore = true)
-    Location toEntity(LocationUpdateRequestDto dto);
-
->>>>>>> fix/controller-mvc-tests
     void updateFromDto(LocationUpdateRequestDto dto, @MappingTarget Location entity);
 }

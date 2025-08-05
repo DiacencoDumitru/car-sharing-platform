@@ -1,11 +1,8 @@
 package com.dynamiccarsharing.carsharing.service;
 
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.dto.UserReviewCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.UserReviewDto;
 import com.dynamiccarsharing.carsharing.dto.UserReviewUpdateRequestDto;
-=======
->>>>>>> fix/controller-mvc-tests
 import com.dynamiccarsharing.carsharing.dto.criteria.UserReviewSearchCriteria;
 import com.dynamiccarsharing.carsharing.exception.UserReviewNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
@@ -71,23 +68,6 @@ public class UserReviewServiceImpl implements UserReviewService {
 
     @Override
     @Transactional(readOnly = true)
-<<<<<<< HEAD
-=======
-    public List<UserReview> findUserReviewsAboutUser(Long userId) {
-        return userReviewRepository.findByUserId(userId);
-    }
-
-    @Override
-    public UserReview updateReviewComment(Long reviewId, String newComment) {
-        UserReview review = userReviewRepository.findById(reviewId).orElseThrow(() -> new UserReviewNotFoundException("UserReview with ID " + reviewId + " not found."));
-
-        UserReview updatedReview = review.withComment(newComment);
-        return userReviewRepository.save(updatedReview);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
->>>>>>> fix/controller-mvc-tests
     public List<UserReview> searchReviews(UserReviewSearchCriteria criteria) {
         Filter<UserReview> filter = UserReviewFilter.of(criteria.getUserId(), criteria.getReviewerId(), null);
         try {

@@ -8,13 +8,7 @@ import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.exception.InvalidVerificationStatusException;
 import com.dynamiccarsharing.carsharing.mapper.CarMapper;
 import com.dynamiccarsharing.carsharing.model.Car;
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.repository.CarRepository;
-=======
-import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.repository.jpa.CarJpaRepository;
-import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

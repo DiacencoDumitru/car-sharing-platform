@@ -4,10 +4,6 @@ import com.dynamiccarsharing.carsharing.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.BookingDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.model.Booking;
-<<<<<<< HEAD
-=======
-import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 
 import java.util.List;
 import java.util.Optional;

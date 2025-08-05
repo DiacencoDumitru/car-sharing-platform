@@ -5,10 +5,6 @@ import com.dynamiccarsharing.carsharing.dto.CarDto;
 import com.dynamiccarsharing.carsharing.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.model.Car;
-<<<<<<< HEAD
-=======
-import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 
 import java.math.BigDecimal;
 import java.util.List;

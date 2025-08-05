@@ -6,12 +6,7 @@ import com.dynamiccarsharing.carsharing.dto.UserReviewUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.exception.UserReviewNotFoundException;
 import com.dynamiccarsharing.carsharing.mapper.UserReviewMapper;
 import com.dynamiccarsharing.carsharing.model.UserReview;
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.repository.UserReviewRepository;
-=======
-import com.dynamiccarsharing.carsharing.repository.jpa.UserReviewJpaRepository;
-import com.dynamiccarsharing.carsharing.dto.criteria.UserReviewSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

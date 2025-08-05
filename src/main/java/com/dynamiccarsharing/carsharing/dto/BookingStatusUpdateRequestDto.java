@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-// in package com.dynamiccarsharing.carsharing.dto
->>>>>>> fix/controller-mvc-tests
 package com.dynamiccarsharing.carsharing.dto;
 
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;

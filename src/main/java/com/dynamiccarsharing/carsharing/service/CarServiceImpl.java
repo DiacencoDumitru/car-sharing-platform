@@ -1,11 +1,8 @@
 package com.dynamiccarsharing.carsharing.service;
 
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.dto.CarCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.CarDto;
 import com.dynamiccarsharing.carsharing.dto.CarUpdateRequestDto;
-=======
->>>>>>> fix/controller-mvc-tests
 import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;

@@ -1,26 +1,19 @@
 package com.dynamiccarsharing.carsharing.dao;
 
-import com.dynamiccarsharing.carsharing.TestApplication;
 import com.dynamiccarsharing.carsharing.enums.*;
-import com.dynamiccarsharing.carsharing.model.Booking;
-import com.dynamiccarsharing.carsharing.model.Car;
-import com.dynamiccarsharing.carsharing.model.ContactInfo;
-import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.model.User;
+import com.dynamiccarsharing.carsharing.model.*;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
 
-@ContextConfiguration(classes = TestApplication.class)
 @ActiveProfiles("test")
 @JdbcTest
 @Import({

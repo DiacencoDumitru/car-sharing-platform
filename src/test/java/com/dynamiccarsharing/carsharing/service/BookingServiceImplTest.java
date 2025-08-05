@@ -5,7 +5,6 @@ import com.dynamiccarsharing.carsharing.dto.BookingDto;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.exception.InvalidDisputeStatusException;
-<<<<<<< HEAD
 import com.dynamiccarsharing.carsharing.mapper.BookingMapper;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Car;
@@ -13,13 +12,6 @@ import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.repository.BookingRepository;
 import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
-=======
-import com.dynamiccarsharing.carsharing.filter.Filter;
-import com.dynamiccarsharing.carsharing.model.*;
-import com.dynamiccarsharing.carsharing.repository.jpa.BookingJpaRepository;
-import com.dynamiccarsharing.carsharing.repository.jpa.DisputeJpaRepository;
-import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
->>>>>>> fix/controller-mvc-tests
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +34,7 @@ class BookingServiceImplTest {
     private BookingRepository bookingRepository;
 
     @Mock
-    private DisputeJpaRepository disputeJpaRepository;
+    private DisputeRepository disputeRepository;
 
     @Mock
     private BookingMapper bookingMapper;
@@ -51,11 +43,7 @@ class BookingServiceImplTest {
 
     @BeforeEach
     void setUp() {
-<<<<<<< HEAD
         bookingService = new BookingServiceImpl(bookingRepository, disputeRepository, bookingMapper);
-=======
-        bookingService = new BookingServiceImpl(bookingRepository, disputeJpaRepository);
->>>>>>> fix/controller-mvc-tests
     }
 
     private Booking createTestBooking(Long id, TransactionStatus status, DisputeStatus disputeStatus) {
@@ -146,14 +134,7 @@ class BookingServiceImplTest {
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(openDisputeBooking));
         when(bookingRepository.save(any(Booking.class))).thenReturn(new Booking());
 
-<<<<<<< HEAD
         assertDoesNotThrow(() -> bookingService.resolveDispute(bookingId));
-=======
-        Booking result = bookingService.raiseDispute(bookingId, "Test dispute");
-
-        verify(disputeJpaRepository, times(1)).save(any(Dispute.class));
-        assertEquals(DisputeStatus.OPEN, result.getDisputeStatus());
->>>>>>> fix/controller-mvc-tests
     }
 
     @Test
