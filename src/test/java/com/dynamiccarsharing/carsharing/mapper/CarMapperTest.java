@@ -1,29 +1,41 @@
 package com.dynamiccarsharing.carsharing.mapper;
 
-import com.dynamiccarsharing.carsharing.model.Location;
+import com.dynamiccarsharing.carsharing.dto.CarCreateRequestDto;
+import com.dynamiccarsharing.carsharing.model.Car;
 import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@SpringBootTest
 class CarMapperTest {
 
-    private final CarMapper carMapper = Mappers.getMapper(CarMapper.class);
+    @Autowired
+    private CarMapper carMapper;
 
     @Test
-    void toLocation_withValidId_shouldReturnLocationWithId() {
-        Long locationId = 10L;
+    void fromId_withValidId_shouldReturnCarWithId() {
+        Long carId = 10L;
 
-        Location result = carMapper.toLocation(locationId);
+        Car result = carMapper.fromId(carId);
 
         assertNotNull(result);
-        assertEquals(locationId, result.getId());
+        assertEquals(carId, result.getId());
     }
 
     @Test
-    void toLocation_withNullId_shouldReturnNull() {
-        Location result = carMapper.toLocation(null);
+    void toEntity_shouldMapLocationIdToLocationObject() {
+        CarCreateRequestDto dto = new CarCreateRequestDto();
+        dto.setLocationId(5L);
+        dto.setMake("Toyota");
+        dto.setModel("Camry");
 
-        assertNull(result);
+        Car result = carMapper.toEntity(dto);
+
+        assertNotNull(result);
+        assertNotNull(result.getLocation());
+        assertEquals(5L, result.getLocation().getId());
     }
 }

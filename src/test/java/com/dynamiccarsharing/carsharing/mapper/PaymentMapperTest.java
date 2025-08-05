@@ -1,29 +1,35 @@
 package com.dynamiccarsharing.carsharing.mapper;
 
-import com.dynamiccarsharing.carsharing.model.Booking;
+import com.dynamiccarsharing.carsharing.dto.PaymentRequestDto;
+import com.dynamiccarsharing.carsharing.model.Payment;
 import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.math.BigDecimal;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@SpringBootTest
 class PaymentMapperTest {
 
-    private final PaymentMapper paymentMapper = Mappers.getMapper(PaymentMapper.class);
+    @Autowired
+    private PaymentMapper paymentMapper;
 
     @Test
-    void map_withValidBookingId_shouldReturnBookingWithId() {
+    void toEntity_shouldCorrectlyMapBookingIdToNestedBooking() {
+        PaymentRequestDto dto = new PaymentRequestDto();
+        dto.setAmount(new BigDecimal("100.00"));
+
         Long bookingId = 50L;
 
-        Booking result = paymentMapper.map(bookingId);
+        Payment result = paymentMapper.toEntity(dto, bookingId);
 
         assertNotNull(result);
-        assertEquals(bookingId, result.getId());
-    }
+        assertEquals(new BigDecimal("100.00"), result.getAmount());
 
-    @Test
-    void map_withNullBookingId_shouldReturnNull() {
-        Booking result = paymentMapper.map(null);
-
-        assertNull(result);
+        assertNotNull(result.getBooking());
+        assertEquals(bookingId, result.getBooking().getId());
     }
 }

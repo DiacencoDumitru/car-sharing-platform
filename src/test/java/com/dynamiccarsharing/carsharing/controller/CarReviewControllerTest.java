@@ -93,10 +93,10 @@ class CarReviewControllerTest {
 
     @Test
     @WithMockUser
-    void getReviewById_whenNotExists_shouldReturnNotFound() throws Exception {
+    void getReviewById_whenNotExists_shouldReturnNoContent() throws Exception {
         when(carReviewService.findById(999L)).thenReturn(Optional.empty());
         mockMvc.perform(get("/api/v1/car-reviews/{reviewId}", 999L))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNoContent());
     }
 
     @Test

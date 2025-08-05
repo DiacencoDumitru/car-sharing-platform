@@ -2,12 +2,11 @@ package com.dynamiccarsharing.carsharing.mapper;
 
 import com.dynamiccarsharing.carsharing.dto.PaymentDto;
 import com.dynamiccarsharing.carsharing.dto.PaymentRequestDto;
-import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Payment;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {BookingMapper.class})
 public interface PaymentMapper {
 
     @Mapping(source = "booking.id", target = "bookingId")
@@ -19,11 +18,4 @@ public interface PaymentMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Payment toEntity(PaymentRequestDto dto, Long bookingId);
-
-    default Booking map(Long bookingId) {
-        if (bookingId == null) {
-            return null;
-        }
-        return Booking.builder().id(bookingId).build();
-    }
 }

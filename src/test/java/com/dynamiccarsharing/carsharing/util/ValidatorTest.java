@@ -1,11 +1,13 @@
 package com.dynamiccarsharing.carsharing.util;
 
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ValidatorTest {
 
@@ -20,8 +22,8 @@ class ValidatorTest {
     }
 
     @Test
-    void validateId_withNegativeId_shouldThrowIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> Validator.validateId(-1L, "Test ID"));
+    void validateId_withNegativeId_shouldThrowValidationException() {
+        assertThrows(ValidationException.class, () -> Validator.validateId(-1L, "Test ID"));
     }
 
     @Test
@@ -30,13 +32,13 @@ class ValidatorTest {
     }
 
     @Test
-    void validateNonEmptyString_withNullString_shouldThrowIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> Validator.validateNonEmptyString(null, "Field"));
+    void validateNonEmptyString_withNullString_shouldThrowValidationException() {
+        assertThrows(ValidationException.class, () -> Validator.validateNonEmptyString(null, "Field"));
     }
 
     @Test
-    void validateNonEmptyString_withEmptyString_shouldThrowIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> Validator.validateNonEmptyString(" ", "Field"));
+    void validateNonEmptyString_withEmptyString_shouldThrowValidationException() {
+        assertThrows(ValidationException.class, () -> Validator.validateNonEmptyString(" ", "Field"));
     }
 
     @Test
@@ -50,8 +52,8 @@ class ValidatorTest {
     }
 
     @Test
-    void validateOptionalString_withEmptyString_shouldThrowIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> Validator.validateOptionalString(" ", "Optional Field"));
+    void validateOptionalString_withEmptyString_shouldThrowValidationException() {
+        assertThrows(ValidationException.class, () -> Validator.validateOptionalString(" ", "Optional Field"));
     }
 
     @Test
@@ -65,8 +67,8 @@ class ValidatorTest {
     }
 
     @Test
-    void validateNonNegativeDouble_withNegativeValue_shouldThrowIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> Validator.validateNonNegativeDouble(-5.0, "Price"));
+    void validateNonNegativeDouble_withNegativeValue_shouldThrowValidationException() {
+        assertThrows(ValidationException.class, () -> Validator.validateNonNegativeDouble(-5.0, "Price"));
     }
 
     @Test
@@ -75,8 +77,8 @@ class ValidatorTest {
     }
 
     @Test
-    void validateNonNull_withNullObject_shouldThrowIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> Validator.validateNonNull(null, "Object"));
+    void validateNonNull_withNullObject_shouldThrowValidationException() {
+        assertThrows(ValidationException.class, () -> Validator.validateNonNull(null, "Object"));
     }
 
     @Test
@@ -85,13 +87,13 @@ class ValidatorTest {
     }
 
     @Test
-    void validateEmail_withNullEmail_shouldThrowIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> Validator.validateEmail(null, "Email"));
+    void validateEmail_withNullEmail_shouldThrowValidationException() {
+        assertThrows(ValidationException.class, () -> Validator.validateEmail(null, "Email"));
     }
 
     @Test
-    void validateEmail_withInvalidEmail_shouldThrowIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> Validator.validateEmail("invalid-email", "Email"));
+    void validateEmail_withInvalidEmail_shouldThrowValidationException() {
+        assertThrows(ValidationException.class, () -> Validator.validateEmail("invalid-email", "Email"));
     }
 
     @Test
@@ -102,15 +104,15 @@ class ValidatorTest {
     }
 
     @Test
-    void validateDates_withNullStart_shouldThrowIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> Validator.validateDates(null, LocalDateTime.now(), "Start", "End"));
+    void validateDates_withNullStart_shouldThrowValidationException() {
+        assertThrows(ValidationException.class, () -> Validator.validateDates(null, LocalDateTime.now(), "Start", "End"));
     }
 
     @Test
-    void validateDates_withStartAfterEnd_shouldThrowIllegalArgumentException() {
+    void validateDates_withStartAfterEnd_shouldThrowValidationException() {
         LocalDateTime start = LocalDateTime.now();
         LocalDateTime end = start.minusDays(1);
-        assertThrows(IllegalArgumentException.class, () -> Validator.validateDates(start, end, "Start", "End"));
+        assertThrows(ValidationException.class, () -> Validator.validateDates(start, end, "Start", "End"));
     }
 
     @Test
@@ -119,7 +121,7 @@ class ValidatorTest {
     }
 
     @Test
-    void validateNonNullList_withNullList_shouldThrowIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> Validator.validateNonNullList(null, "List"));
+    void validateNonNullList_withNullList_shouldThrowValidationException() {
+        assertThrows(ValidationException.class, () -> Validator.validateNonNullList(null, "List"));
     }
 }

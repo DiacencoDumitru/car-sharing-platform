@@ -1,5 +1,6 @@
 package com.dynamiccarsharing.carsharing.repository.jpa;
 
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.LocationFilter;
 import com.dynamiccarsharing.carsharing.model.Location;
@@ -29,7 +30,7 @@ public interface LocationJpaRepository extends JpaRepository<Location, Long>, Jp
     @Override
     default List<Location> findByFilter(Filter<Location> filter) throws SQLException {
         if (!(filter instanceof LocationFilter locationFilter)) {
-            throw new IllegalArgumentException("Filter must be an instance of LocationFilter for JPA search.");
+            throw new ValidationException("Filter must be an instance of LocationFilter for JPA search.");
         }
         return findAll(LocationSpecification.withCriteria(
                 locationFilter.getZipCode(),

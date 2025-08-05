@@ -6,6 +6,7 @@ import com.dynamiccarsharing.carsharing.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.exception.InvalidVerificationStatusException;
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.mapper.CarMapper;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.repository.CarRepository;
@@ -175,6 +176,6 @@ class CarServiceImplTest {
     void updatePrice_withNegativePrice_shouldThrowException() {
         Long carId = 1L;
 
-        assertThrows(IllegalArgumentException.class, () -> carService.updatePrice(carId, new BigDecimal("-10")));
+        assertThrows(ValidationException.class, () -> carService.updatePrice(carId, new BigDecimal("-10")));
     }
 }

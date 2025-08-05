@@ -4,17 +4,16 @@ import com.dynamiccarsharing.carsharing.dto.CarCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.CarDto;
 import com.dynamiccarsharing.carsharing.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.model.Car;
-import com.dynamiccarsharing.carsharing.model.Location;
 import org.mapstruct.*;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring", uses = {LocationMapper.class}, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface CarMapper {
 
     @Mapping(source = "location.id", target = "locationId")
     CarDto toDto(Car car);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(source = "locationId", target = "location.id")
+    @Mapping(source = "locationId", target = "location")
     @Mapping(target = "status", constant = "AVAILABLE")
     @Mapping(target = "verificationStatus", constant = "PENDING")
     @Mapping(target = "owners", ignore = true)
@@ -26,10 +25,10 @@ public interface CarMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     Car updateCarFromDto(CarUpdateRequestDto dto, @MappingTarget Car car);
 
-    default Location toLocation(Long locationId) {
-        if (locationId == null) {
+    default Car fromId(Long id) {
+        if (id == null) {
             return null;
         }
-        return Location.builder().id(locationId).build();
+        return Car.builder().id(id).build();
     }
 }

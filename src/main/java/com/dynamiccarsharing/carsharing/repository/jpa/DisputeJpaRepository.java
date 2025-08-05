@@ -1,6 +1,7 @@
 package com.dynamiccarsharing.carsharing.repository.jpa;
 
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.filter.DisputeFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.Dispute;
@@ -27,7 +28,7 @@ public interface DisputeJpaRepository extends JpaRepository<Dispute, Long>, JpaS
     @Override
     default List<Dispute> findByFilter(Filter<Dispute> filter) throws SQLException {
         if (!(filter instanceof DisputeFilter disputeFilter)) {
-            throw new IllegalArgumentException("Filter must be an instance of DisputeFilter for JPA search.");
+            throw new ValidationException("Filter must be an instance of DisputeFilter for JPA search.");
         }
         return findAll(DisputeSpecification.withCriteria(
                 disputeFilter.getBookingId(),

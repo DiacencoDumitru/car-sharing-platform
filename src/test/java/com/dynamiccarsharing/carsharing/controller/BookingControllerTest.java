@@ -5,6 +5,7 @@ import com.dynamiccarsharing.carsharing.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.BookingDto;
 import com.dynamiccarsharing.carsharing.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.service.interfaces.BookingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -42,10 +43,10 @@ class BookingControllerTest {
 
     @Test
     @WithMockUser
-    void getBookingById_whenNotExists_shouldReturnNotFound() throws Exception {
+    void getBookingById_whenNotExists_shouldReturnNotContent() throws Exception {
         when(bookingService.findById(999L)).thenReturn(Optional.empty());
         mockMvc.perform(get("/api/v1/bookings/{bookingId}", 999L))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -114,7 +115,8 @@ class BookingControllerTest {
         updatedDto.setId(1L);
         updatedDto.setStatus(TransactionStatus.APPROVED);
 
-        when(bookingService.approveBooking(1L)).thenReturn(updatedDto);
+        when(bookingService.updateBookingStatus(anyLong(), any(BookingStatusUpdateRequestDto.class)))
+                .thenReturn(updatedDto);
 
         mockMvc.perform(patch("/api/v1/bookings/{bookingId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -159,6 +161,9 @@ class BookingControllerTest {
     void updateBookingStatus_withInvalidStatus_shouldReturnBadRequest() throws Exception {
         BookingStatusUpdateRequestDto updateDto = new BookingStatusUpdateRequestDto();
         updateDto.setStatus(TransactionStatus.PENDING);
+
+        when(bookingService.updateBookingStatus(anyLong(), any(BookingStatusUpdateRequestDto.class)))
+                .thenThrow(new ValidationException("Unsupported status for update"));
 
         mockMvc.perform(patch("/api/v1/bookings/{bookingId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)

@@ -6,6 +6,7 @@ import com.dynamiccarsharing.carsharing.dto.UserDto;
 import com.dynamiccarsharing.carsharing.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.UserSearchCriteria;
 import com.dynamiccarsharing.carsharing.exception.CarNotFoundException;
+import com.dynamiccarsharing.carsharing.exception.ServiceException;
 import com.dynamiccarsharing.carsharing.exception.UserNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.UserFilter;
@@ -98,7 +99,7 @@ public class UserServiceImpl implements UserService {
         try {
             return userRepository.findByFilter(filter);
         } catch (SQLException e) {
-            throw new RuntimeException("Search for users failed", e);
+            throw new ServiceException("Search for users failed", e);
         }
     }
 

@@ -30,7 +30,7 @@ public class PaymentController {
     public ResponseEntity<PaymentDto> getPaymentById(@PathVariable Long paymentId) {
         return paymentService.findPaymentById(paymentId)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.noContent().build());
     }
 
 

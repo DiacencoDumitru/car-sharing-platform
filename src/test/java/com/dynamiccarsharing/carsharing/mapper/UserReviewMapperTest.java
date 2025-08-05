@@ -1,6 +1,6 @@
 package com.dynamiccarsharing.carsharing.mapper;
 
-import com.dynamiccarsharing.carsharing.model.User;
+import com.dynamiccarsharing.carsharing.model.UserReview;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
@@ -14,7 +14,7 @@ class UserReviewMapperTest {
     void map_withValidUserId_shouldReturnUserWithId() {
         Long userId = 60L;
 
-        User result = userReviewMapper.map(userId);
+        UserReview result = userReviewMapper.fromId(userId);
 
         assertNotNull(result);
         assertEquals(userId, result.getId());
@@ -22,7 +22,7 @@ class UserReviewMapperTest {
 
     @Test
     void map_withNullUserId_shouldReturnNull() {
-        User result = userReviewMapper.map(null);
+        UserReview result = userReviewMapper.fromId(null);
 
         assertNull(result);
     }

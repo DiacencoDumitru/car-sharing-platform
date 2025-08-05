@@ -29,7 +29,7 @@ public class LocationController {
     public ResponseEntity<LocationDto> getLocationById(@PathVariable Long id) {
         return locationService.findLocationById(id)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.noContent().build());
     }
 
     @GetMapping

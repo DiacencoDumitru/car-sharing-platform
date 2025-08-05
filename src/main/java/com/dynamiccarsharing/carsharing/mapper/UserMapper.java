@@ -20,6 +20,7 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", constant = "ACTIVE")
+    @Mapping(target = "role", constant = "RENTER")
     @Mapping(target = "cars", ignore = true)
     @Mapping(target = "bookings", ignore = true)
     @Mapping(target = "disputes", ignore = true)
@@ -29,4 +30,11 @@ public interface UserMapper {
     User toEntity(UserCreateRequestDto dto);
 
     void updateFromDto(UserStatusUpdateRequestDto dto, @MappingTarget User user);
+
+    default User fromId(Long id) {
+        if (id == null) {
+            return null;
+        }
+        return User.builder().id(id).build();
+    }
 }

@@ -9,6 +9,7 @@ import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.exception.CarNotFoundException;
 import com.dynamiccarsharing.carsharing.exception.InvalidCarStatusException;
 import com.dynamiccarsharing.carsharing.exception.InvalidVerificationStatusException;
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.filter.CarFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.mapper.CarMapper;
@@ -118,7 +119,7 @@ public class CarServiceImpl implements CarService {
     @Override
     public CarDto updatePrice(Long carId, BigDecimal newPrice) {
         if (newPrice != null && newPrice.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("New Price must not be negative.");
+            throw new ValidationException("New Price must not be negative.");
         }
         Car car = getCarOrThrow(carId);
         Car updatedCar = carRepository.save(car.withPrice(newPrice));

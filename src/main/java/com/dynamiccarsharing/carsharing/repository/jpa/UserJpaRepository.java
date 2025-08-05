@@ -2,6 +2,7 @@ package com.dynamiccarsharing.carsharing.repository.jpa;
 
 import com.dynamiccarsharing.carsharing.enums.UserRole;
 import com.dynamiccarsharing.carsharing.enums.UserStatus;
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.UserFilter;
 import com.dynamiccarsharing.carsharing.model.User;
@@ -37,7 +38,7 @@ public interface UserJpaRepository extends JpaRepository<User, Long>, JpaSpecifi
     @Override
     default List<User> findByFilter(Filter<User> filter) throws SQLException {
         if (!(filter instanceof UserFilter userFilter)) {
-            throw new IllegalArgumentException("Filter must be an instance of UserFilter for JPA search.");
+            throw new ValidationException("Filter must be an instance of UserFilter for JPA search.");
         }
         return findAll(UserSpecification.withCriteria(
                 userFilter.getEmail(),
