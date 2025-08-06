@@ -2,6 +2,7 @@ package com.dynamiccarsharing.carsharing.service;
 
 import com.dynamiccarsharing.carsharing.dto.TransactionDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.TransactionSearchCriteria;
+import com.dynamiccarsharing.carsharing.exception.ServiceException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.TransactionFilter;
 import com.dynamiccarsharing.carsharing.mapper.TransactionMapper;
@@ -55,7 +56,7 @@ public class TransactionServiceImpl implements TransactionService {
         try {
             return transactionRepository.findByFilter(filter);
         } catch (SQLException e) {
-            throw new RuntimeException("Search for transactions failed", e);
+            throw new ServiceException("Search for transactions failed", e);
         }
     }
 }

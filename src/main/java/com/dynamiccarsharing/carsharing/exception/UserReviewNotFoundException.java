@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(value = HttpStatus.NOT_FOUND)
-public class UserReviewNotFoundException extends RuntimeException {
+public class UserReviewNotFoundException extends ResourceNotFoundException {
 
     public UserReviewNotFoundException(String message) {
         super(message);
