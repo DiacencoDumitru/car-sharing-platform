@@ -5,6 +5,7 @@ import com.dynamiccarsharing.carsharing.dto.ContactInfoDto;
 import com.dynamiccarsharing.carsharing.dto.ContactInfoUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.ContactInfoSearchCriteria;
 import com.dynamiccarsharing.carsharing.exception.ContactInfoNotFoundException;
+import com.dynamiccarsharing.carsharing.exception.ServiceException;
 import com.dynamiccarsharing.carsharing.filter.ContactInfoFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.mapper.ContactInfoMapper;
@@ -87,7 +88,7 @@ public class ContactInfoServiceImpl implements ContactInfoService {
         try {
             return contactInfoRepository.findByFilter(filter);
         } catch (SQLException e) {
-            throw new RuntimeException("Search for contact info failed", e);
+            throw new ServiceException("Search for contact info failed", e);
         }
     }
 }

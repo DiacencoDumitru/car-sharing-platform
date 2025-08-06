@@ -1,14 +1,12 @@
 package com.dynamiccarsharing.carsharing.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 @Data
-@Getter
-@Setter
 public class UserReviewUpdateRequestDto {
     @NotBlank(message = "Comment cannot be blank.")
+    @Size(min = 10, max = 1000, message = "Comment must be between 10 and 1000 characters.")
     private String comment;
 }

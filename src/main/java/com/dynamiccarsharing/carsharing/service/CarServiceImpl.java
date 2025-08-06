@@ -6,10 +6,7 @@ import com.dynamiccarsharing.carsharing.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
-import com.dynamiccarsharing.carsharing.exception.CarNotFoundException;
-import com.dynamiccarsharing.carsharing.exception.InvalidCarStatusException;
-import com.dynamiccarsharing.carsharing.exception.InvalidVerificationStatusException;
-import com.dynamiccarsharing.carsharing.exception.ValidationException;
+import com.dynamiccarsharing.carsharing.exception.*;
 import com.dynamiccarsharing.carsharing.filter.CarFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.mapper.CarMapper;
@@ -140,7 +137,7 @@ public class CarServiceImpl implements CarService {
         try {
             return carRepository.findByFilter(filter);
         } catch (SQLException e) {
-            throw new RuntimeException("Search for cars failed due to a database error", e);
+            throw new ServiceException("Search for cars failed due to a database error", e);
         }
     }
 
