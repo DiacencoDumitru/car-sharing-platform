@@ -4,10 +4,10 @@ import com.dynamiccarsharing.carsharing.dto.CarCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.CarDto;
 import com.dynamiccarsharing.carsharing.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
-import com.dynamiccarsharing.carsharing.model.Car;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 public interface CarService {
@@ -17,7 +17,7 @@ public interface CarService {
 
     void deleteById(Long id);
 
-    List<CarDto> findAll();
+    Page<CarDto> findAll(CarSearchCriteria criteria, Pageable pageable);
 
     CarDto rentCar(Long carId);
 
@@ -32,6 +32,4 @@ public interface CarService {
     CarDto updateCar(Long carId, CarUpdateRequestDto updateDto);
 
     CarDto updatePrice(Long carId, BigDecimal newPrice);
-
-    List<Car> searchCars(CarSearchCriteria criteria);
 }

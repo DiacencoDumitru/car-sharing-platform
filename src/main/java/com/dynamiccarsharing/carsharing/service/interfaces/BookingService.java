@@ -5,6 +5,8 @@ import com.dynamiccarsharing.carsharing.dto.BookingDto;
 import com.dynamiccarsharing.carsharing.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.model.Booking;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +16,7 @@ public interface BookingService {
 
     Optional<BookingDto> findById(Long id);
 
-    List<BookingDto> findAll();
+    Page<BookingDto> findAll(Pageable pageable);
 
     void deleteById(Long id);
 

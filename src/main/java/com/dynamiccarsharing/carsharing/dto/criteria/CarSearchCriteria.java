@@ -3,17 +3,27 @@ package com.dynamiccarsharing.carsharing.dto.criteria;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
-import com.dynamiccarsharing.carsharing.model.Location;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
+import java.math.BigDecimal;
+import java.util.List;
+
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CarSearchCriteria {
     private String make;
     private String model;
-    private CarStatus status;
-    private Location location;
+    private Long locationId;
     private CarType type;
     private VerificationStatus verificationStatus;
+
+    private List<CarStatus> statusIn;
+
+    private BigDecimal priceGreaterThan;
+    private BigDecimal priceLessThan;
 }

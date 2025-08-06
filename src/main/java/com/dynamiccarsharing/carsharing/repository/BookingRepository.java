@@ -8,6 +8,4 @@ public interface BookingRepository extends Repository<Booking, Long> {
 
     List<Booking> findByRenterId(Long renterId);
 
-    @Override
-    List<Booking> findAll();
 }

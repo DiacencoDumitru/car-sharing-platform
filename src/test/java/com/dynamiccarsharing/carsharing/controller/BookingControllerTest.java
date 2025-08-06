@@ -13,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -61,14 +64,19 @@ class BookingControllerTest {
 
     @Test
     @WithMockUser
-    void getAllBookings_whenExists_shouldReturnOk() throws Exception {
+    void getAllBookings_whenExists_shouldReturnPaginatedBookings() throws Exception {
         BookingDto bookingDto1 = new BookingDto();
         bookingDto1.setId(1L);
         BookingDto bookingDto2 = new BookingDto();
         bookingDto2.setId(2L);
-        when(bookingService.findAll()).thenReturn(List.of(bookingDto1, bookingDto2));
+        Page<BookingDto> bookingPage = new PageImpl<>(List.of(bookingDto1, bookingDto2));
+
+        when(bookingService.findAll(any(Pageable.class))).thenReturn(bookingPage);
+
         mockMvc.perform(get("/api/v1/bookings"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(2));
     }
 
     @Test
