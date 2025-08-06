@@ -1,11 +1,12 @@
-package dto.criteria;
+package com.dynamiccarsharing.carsharing.criteria;
 
 import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
-import com.dynamiccarsharing.carsharing.model.Location;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,15 +18,15 @@ class CarSearchCriteriaTest {
         String make = "Honda";
         String model = "Civic";
         CarStatus status = CarStatus.AVAILABLE;
-        Location location = Location.builder().id(5L).build();
+        Long locationId = 5L;
         CarType type = CarType.SEDAN;
         VerificationStatus verificationStatus = VerificationStatus.VERIFIED;
 
         CarSearchCriteria criteria = CarSearchCriteria.builder()
                 .make(make)
                 .model(model)
-                .status(status)
-                .location(location)
+                .statusIn(List.of(status))
+                .locationId(locationId)
                 .type(type)
                 .verificationStatus(verificationStatus)
                 .build();
@@ -33,8 +34,8 @@ class CarSearchCriteriaTest {
         assertNotNull(criteria);
         assertEquals(make, criteria.getMake());
         assertEquals(model, criteria.getModel());
-        assertEquals(status, criteria.getStatus());
-        assertEquals(location, criteria.getLocation());
+        assertEquals(List.of(status), criteria.getStatusIn());
+        assertEquals(locationId, criteria.getLocationId());
         assertEquals(type, criteria.getType());
         assertEquals(verificationStatus, criteria.getVerificationStatus());
     }

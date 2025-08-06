@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,9 +34,11 @@ public interface CarJpaRepository extends JpaRepository<Car, Long>, JpaSpecifica
         return findAll(CarSpecification.withCriteria(
                 carFilter.getMake(),
                 carFilter.getModel(),
-                carFilter.getStatus(),
-                carFilter.getLocation().getId(),
+                carFilter.getStatus() != null ? List.of(carFilter.getStatus()) : Collections.emptyList(),
+                carFilter.getLocation() != null ? carFilter.getLocation().getId() : null,
                 carFilter.getType(),
+                null,
+                null,
                 carFilter.getVerificationStatus()
         ));
     }

@@ -4,6 +4,7 @@ import com.dynamiccarsharing.carsharing.config.SecurityConfig;
 import com.dynamiccarsharing.carsharing.dto.CarCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.CarDto;
 import com.dynamiccarsharing.carsharing.dto.CarUpdateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.service.interfaces.CarService;
@@ -13,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -107,15 +111,18 @@ class CarControllerTest {
 
     @Test
     @WithMockUser
-    void getAllCars_shouldReturnCarList() throws Exception {
+    void getAllCars_shouldReturnPaginatedCars() throws Exception {
         CarDto carDto = new CarDto();
         carDto.setId(1L);
-        when(carService.findAll()).thenReturn(Collections.singletonList(carDto));
+        Page<CarDto> carPage = new PageImpl<>(Collections.singletonList(carDto));
+
+        when(carService.findAll(any(CarSearchCriteria.class), any(Pageable.class))).thenReturn(carPage);
 
         mockMvc.perform(get("/api/v1/cars"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(1L));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     @Test

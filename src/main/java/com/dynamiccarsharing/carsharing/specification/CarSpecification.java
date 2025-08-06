@@ -6,6 +6,9 @@ import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.model.Car;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 public class CarSpecification {
 
     private CarSpecification() {
@@ -23,6 +26,10 @@ public class CarSpecification {
         return (root, query, cb) -> status != null ? cb.equal(root.get("status"), status) : null;
     }
 
+    public static Specification<Car> hasStatusIn(List<CarStatus> statuses) {
+        return (root, query, cb) -> (statuses != null && !statuses.isEmpty()) ? root.get("status").in(statuses) : null;
+    }
+
     public static Specification<Car> hasLocationId(Long locationId) {
         return (root, query, cb) -> locationId != null ? cb.equal(root.get("location").get("id"), locationId) : null;
     }
@@ -31,17 +38,27 @@ public class CarSpecification {
         return (root, query, cb) -> type != null ? cb.equal(root.get("type"), type) : null;
     }
 
+    public static Specification<Car> priceGreaterThan(BigDecimal price) {
+        return (root, query, cb) -> price != null ? cb.greaterThanOrEqualTo(root.get("price"), price) : null;
+    }
+
+    public static Specification<Car> priceLessThan(BigDecimal price) {
+        return (root, query, cb) -> price != null ? cb.lessThanOrEqualTo(root.get("price"), price) : null;
+    }
+
     public static Specification<Car> hasVerificationStatus(VerificationStatus status) {
         return (root, query, cb) -> status != null ? cb.equal(root.get("verificationStatus"), status) : null;
     }
 
-    public static Specification<Car> withCriteria(String make, String model, CarStatus status, Long locationId, CarType type, VerificationStatus verificationStatus) {
+    public static Specification<Car> withCriteria(String make, String model, List<CarStatus> statusIn, Long locationId, CarType type, BigDecimal priceGreaterThan, BigDecimal priceLessThan, VerificationStatus verificationStatus) {
         return Specification
                 .where(hasMake(make))
                 .and(hasModel(model))
-                .and(hasStatus(status))
+                .and(hasStatusIn(statusIn))
                 .and(hasLocationId(locationId))
                 .and(hasType(type))
+                .and(priceGreaterThan(priceGreaterThan))
+                .and(priceLessThan(priceLessThan))
                 .and(hasVerificationStatus(verificationStatus));
     }
 }

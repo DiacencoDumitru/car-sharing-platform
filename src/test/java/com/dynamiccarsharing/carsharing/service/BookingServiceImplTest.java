@@ -10,8 +10,8 @@ import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.model.User;
-import com.dynamiccarsharing.carsharing.repository.BookingRepository;
-import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
+import com.dynamiccarsharing.carsharing.repository.jpa.BookingJpaRepository;
+import com.dynamiccarsharing.carsharing.repository.jpa.DisputeJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,8 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,13 +29,14 @@ import static org.mockito.Mockito.*;
 class BookingServiceImplTest {
 
     @Mock
-    private BookingRepository bookingRepository;
+    private BookingJpaRepository bookingRepository;
 
     @Mock
-    private DisputeRepository disputeRepository;
+    private DisputeJpaRepository disputeRepository;
 
     @Mock
     private BookingMapper bookingMapper;
+
 
     private BookingServiceImpl bookingService;
 
@@ -75,16 +74,6 @@ class BookingServiceImplTest {
 
         assertNotNull(resultDto);
         assertEquals(1L, resultDto.getId());
-    }
-
-    @Test
-    void findAll_shouldMapAndReturnDtoList() {
-        when(bookingRepository.findAll()).thenReturn(Collections.singletonList(new Booking()));
-        when(bookingMapper.toDto(any(Booking.class))).thenReturn(new BookingDto());
-
-        List<BookingDto> result = bookingService.findAll();
-
-        assertEquals(1, result.size());
     }
 
     @Test

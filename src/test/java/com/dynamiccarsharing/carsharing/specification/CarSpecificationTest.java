@@ -60,7 +60,7 @@ class CarSpecificationTest {
 
     @Test
     void whenFilteringWithCriteria_shouldReturnMatchingCars() {
-        Specification<Car> spec = CarSpecification.withCriteria("Honda", null, CarStatus.AVAILABLE, savedLocation.getId(), CarType.SEDAN, null);
+        Specification<Car> spec = CarSpecification.withCriteria("Honda", null, List.of(CarStatus.AVAILABLE), savedLocation.getId(), CarType.SEDAN, null, null, null);
         List<Car> results = carRepository.findAll(spec);
         assertEquals(1, results.size());
         assertEquals("Civic", results.get(0).getModel());

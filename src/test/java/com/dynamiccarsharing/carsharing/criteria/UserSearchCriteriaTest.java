@@ -1,4 +1,4 @@
-package dto.criteria;
+package com.dynamiccarsharing.carsharing.criteria;
 
 import com.dynamiccarsharing.carsharing.dto.criteria.UserSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.UserRole;

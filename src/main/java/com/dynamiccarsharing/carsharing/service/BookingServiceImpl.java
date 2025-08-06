@@ -12,10 +12,12 @@ import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.mapper.BookingMapper;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Dispute;
-import com.dynamiccarsharing.carsharing.repository.BookingRepository;
-import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
+import com.dynamiccarsharing.carsharing.repository.jpa.BookingJpaRepository;
+import com.dynamiccarsharing.carsharing.repository.jpa.DisputeJpaRepository;
 import com.dynamiccarsharing.carsharing.service.interfaces.BookingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,8 +31,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
-    private final BookingRepository bookingRepository;
-    private final DisputeRepository disputeRepository;
+    private final BookingJpaRepository bookingRepository;
+
+    private final DisputeJpaRepository disputeRepository;
+
     private final BookingMapper bookingMapper;
 
     @Override
@@ -48,8 +52,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingDto> findAll() {
-        return bookingRepository.findAll().stream().map(bookingMapper::toDto).toList();
+    public Page<BookingDto> findAll(Pageable pageable) {
+        Page<Booking> bookingPage = bookingRepository.findAll(pageable);
+        return bookingPage.map(bookingMapper::toDto);
     }
 
     @Override
