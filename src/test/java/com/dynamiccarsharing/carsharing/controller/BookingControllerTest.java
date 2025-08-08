@@ -4,6 +4,7 @@ import com.dynamiccarsharing.carsharing.config.SecurityConfig;
 import com.dynamiccarsharing.carsharing.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.BookingDto;
 import com.dynamiccarsharing.carsharing.dto.BookingStatusUpdateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.service.interfaces.BookingService;
@@ -71,9 +72,11 @@ class BookingControllerTest {
         bookingDto2.setId(2L);
         Page<BookingDto> bookingPage = new PageImpl<>(List.of(bookingDto1, bookingDto2));
 
-        when(bookingService.findAll(any(Pageable.class))).thenReturn(bookingPage);
+        when(bookingService.findAll(any(BookingSearchCriteria.class), any(Pageable.class))).thenReturn(bookingPage);
 
-        mockMvc.perform(get("/api/v1/bookings"))
+        mockMvc.perform(get("/api/v1/bookings")
+                        .param("page", "0")
+                        .param("size", "2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
                 .andExpect(jsonPath("$.totalElements").value(2));

@@ -16,7 +16,7 @@ public interface BookingService {
 
     Optional<BookingDto> findById(Long id);
 
-    Page<BookingDto> findAll(Pageable pageable);
+    Page<BookingDto> findAll(BookingSearchCriteria criteria, Pageable pageable);
 
     void deleteById(Long id);
 

@@ -1,20 +1,20 @@
 package com.dynamiccarsharing.carsharing.dao;
 
+import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.enums.UserRole;
 import com.dynamiccarsharing.carsharing.enums.UserStatus;
 import com.dynamiccarsharing.carsharing.exception.ValidationException;
-import com.dynamiccarsharing.carsharing.model.Booking;
-import com.dynamiccarsharing.carsharing.model.Car;
-import com.dynamiccarsharing.carsharing.model.ContactInfo;
-import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.model.User;
 import com.dynamiccarsharing.carsharing.filter.BookingFilter;
+import com.dynamiccarsharing.carsharing.model.*;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.sql.SQLException;
@@ -185,6 +185,76 @@ class BookingDaoTest extends BaseDaoTest {
             BookingFilter filter = BookingFilter.of(null, null, null);
             List<Booking> results = bookingDao.findByFilter(filter);
             assertEquals(3, results.size());
+        }
+    }
+
+    @Nested
+    @DisplayName("findAll with Criteria and Pagination")
+    class FindAllPaginatedOperations {
+        private User anotherUser;
+        private Car anotherCar;
+
+        @BeforeEach
+        void setUpData() throws SQLException {
+            ContactInfo ci = createContactInfo("another@user.com", "111222333", "Another", "User");
+            anotherUser = createUser(ci, UserRole.RENTER, UserStatus.ACTIVE);
+            anotherCar = createCar("ANOTHER-CAR", "Honda", "Civic", testLocation);
+
+            createBooking(testUser, testCar, testLocation, TransactionStatus.PENDING);
+            createBooking(testUser, anotherCar, testLocation, TransactionStatus.COMPLETED);
+            createBooking(anotherUser, testCar, testLocation, TransactionStatus.PENDING);
+        }
+
+        @Test
+        @DisplayName("Should find bookings by renter ID")
+        void findAll_byRenterId_shouldReturnMatching() {
+            BookingSearchCriteria criteria = new BookingSearchCriteria(anotherUser.getId(), null, null, null, null);
+            Pageable pageable = PageRequest.of(0, 10);
+
+            Page<Booking> results = bookingDao.findAll(criteria, pageable);
+
+            assertEquals(1, results.getTotalElements());
+            assertEquals(anotherUser.getId(), results.getContent().get(0).getRenter().getId());
+        }
+
+        @Test
+        @DisplayName("Should find bookings by car ID")
+        void findAll_byCarId_shouldReturnMatching() {
+            BookingSearchCriteria criteria = new BookingSearchCriteria(null, anotherCar.getId(), null, null, null);
+            Page<Booking> results = bookingDao.findAll(criteria, PageRequest.of(0, 10));
+
+            assertEquals(1, results.getTotalElements());
+            assertEquals(anotherCar.getId(), results.getContent().get(0).getCar().getId());
+        }
+
+        @Test
+        @DisplayName("Should find bookings by status")
+        void findAll_byStatus_shouldReturnMatching() {
+            BookingSearchCriteria criteria = new BookingSearchCriteria(null, null, TransactionStatus.PENDING, null, null);
+            Page<Booking> results = bookingDao.findAll(criteria, PageRequest.of(0, 10));
+
+            assertEquals(2, results.getTotalElements());
+        }
+
+        @Test
+        @DisplayName("Should find bookings by multiple criteria")
+        void findAll_byMultipleCriteria_shouldReturnMatching() {
+            BookingSearchCriteria criteria = new BookingSearchCriteria(testUser.getId(), null, TransactionStatus.PENDING, null, null);
+            Page<Booking> results = bookingDao.findAll(criteria, PageRequest.of(0, 10));
+
+            assertEquals(1, results.getTotalElements());
+            Booking result = results.getContent().get(0);
+            assertEquals(testUser.getId(), result.getRenter().getId());
+            assertEquals(testCar.getId(), result.getCar().getId());
+            assertEquals(TransactionStatus.PENDING, result.getStatus());
+        }
+
+        @Test
+        @DisplayName("Should return all bookings for empty criteria")
+        void findAll_withEmptyCriteria_shouldReturnAll() {
+            BookingSearchCriteria criteria = new BookingSearchCriteria();
+            Page<Booking> results = bookingDao.findAll(criteria, PageRequest.of(0, 10));
+            assertEquals(3, results.getTotalElements());
         }
     }
 }

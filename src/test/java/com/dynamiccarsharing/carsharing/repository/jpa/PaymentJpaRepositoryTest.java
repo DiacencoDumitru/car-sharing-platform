@@ -27,11 +27,11 @@ class PaymentJpaRepositoryTest {
     @Autowired
     private PaymentJpaRepository paymentRepository;
     @Autowired
-    private BookingJpaRepository bookingRepository;
+    private InternalBookingJpaRepository bookingRepository;
     @Autowired
     private UserJpaRepository userRepository;
     @Autowired
-    private CarJpaRepository carRepository;
+    private InternalCarJpaRepository carRepository;
     @Autowired
     private LocationJpaRepository locationRepository;
     @Autowired
@@ -45,9 +45,9 @@ class PaymentJpaRepositoryTest {
         User user = userRepository.save(User.builder().role(RENTER).status(ACTIVE).contactInfo(ci).build());
         Location location = locationRepository.save(Location.builder().city("Test").state("TS").zipCode("123").build());
         Car car = carRepository.save(Car.builder().make("Test").model("Car").status(AVAILABLE).verificationStatus(VERIFIED).registrationNumber("CAR1").price(BigDecimal.TEN).type(SEDAN).location(location).build());
-        
+
         booking1 = bookingRepository.save(Booking.builder().renter(user).car(car).status(TransactionStatus.COMPLETED).startTime(LocalDateTime.now()).endTime(LocalDateTime.now().plusDays(1)).pickupLocation(location).build());
-        
+
         paymentRepository.save(Payment.builder().booking(booking1).amount(BigDecimal.TEN).status(TransactionStatus.COMPLETED).paymentMethod(PaymentType.CREDIT_CARD).createdAt(LocalDateTime.now()).build());
     }
 

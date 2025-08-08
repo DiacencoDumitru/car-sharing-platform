@@ -28,13 +28,13 @@ class TransactionSpecificationTest {
     private TransactionJpaRepository transactionRepository;
 
     @Autowired
-    private BookingJpaRepository bookingRepository;
+    private InternalBookingJpaRepository bookingRepository;
 
     @Autowired
     private UserJpaRepository userRepository;
 
     @Autowired
-    private CarJpaRepository carRepository;
+    private InternalCarJpaRepository carRepository;
 
     @Autowired
     private LocationJpaRepository locationRepository;

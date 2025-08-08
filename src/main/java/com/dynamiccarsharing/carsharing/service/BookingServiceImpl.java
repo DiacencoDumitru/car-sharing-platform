@@ -12,8 +12,8 @@ import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.mapper.BookingMapper;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Dispute;
-import com.dynamiccarsharing.carsharing.repository.jpa.BookingJpaRepository;
-import com.dynamiccarsharing.carsharing.repository.jpa.DisputeJpaRepository;
+import com.dynamiccarsharing.carsharing.repository.BookingRepository;
+import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import com.dynamiccarsharing.carsharing.service.interfaces.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,9 +31,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
 
-    private final BookingJpaRepository bookingRepository;
+    private final BookingRepository bookingRepository;
 
-    private final DisputeJpaRepository disputeRepository;
+    private final DisputeRepository disputeRepository;
 
     private final BookingMapper bookingMapper;
 
@@ -52,8 +52,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BookingDto> findAll(Pageable pageable) {
-        Page<Booking> bookingPage = bookingRepository.findAll(pageable);
+    public Page<BookingDto> findAll(BookingSearchCriteria criteria, Pageable pageable) {
+        Page<Booking> bookingPage = bookingRepository.findAll(criteria, pageable);
         return bookingPage.map(bookingMapper::toDto);
     }
 

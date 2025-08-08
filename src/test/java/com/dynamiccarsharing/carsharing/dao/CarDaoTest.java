@@ -1,16 +1,19 @@
 package com.dynamiccarsharing.carsharing.dao;
 
+import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
+import com.dynamiccarsharing.carsharing.filter.CarFilter;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.filter.CarFilter;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
@@ -120,6 +123,46 @@ class CarDaoTest extends BaseDaoTest {
         @DisplayName("Should not throw exception when deleting non-existent car")
         void deleteById_nonExistentId_shouldNotThrow() {
             assertDoesNotThrow(() -> carDao.deleteById(999L));
+        }
+    }
+
+    @Nested
+    @DisplayName("findAll with Criteria and Pagination")
+    class FindAllPaginatedOperations {
+
+        @BeforeEach
+        void setUpData() {
+            Car toyotaSedan = buildUnsavedCar("TS-01", "Toyota", "Camry").withType(CarType.SEDAN);
+            carDao.save(toyotaSedan);
+
+            Car toyotaSuv = buildUnsavedCar("TS-02", "Toyota", "RAV4").withType(CarType.SUV);
+            carDao.save(toyotaSuv);
+
+            Car hondaRented = buildUnsavedCar("HN-01", "Honda", "Civic").withStatus(CarStatus.RENTED);
+            carDao.save(hondaRented);
+
+            Car fordOtherLocation = buildUnsavedCar("FD-01", "Ford", "Focus").withLocation(secondLocation);
+            carDao.save(fordOtherLocation);
+        }
+
+        @Test
+        @DisplayName("Should find cars by multiple criteria")
+        void findAll_byMultipleCriteria_shouldReturnMatching() {
+            CarSearchCriteria criteria = CarSearchCriteria.builder().make("Toyota").statusIn(List.of(CarStatus.AVAILABLE)).build();
+            Page<Car> results = carDao.findAll(criteria, PageRequest.of(0, 10));
+
+            assertEquals(2, results.getTotalElements());
+            assertTrue(results.getContent().stream().anyMatch(c -> c.getRegistrationNumber().equals("TS-01")));
+            assertTrue(results.getContent().stream().anyMatch(c -> c.getRegistrationNumber().equals("TS-02")));
+        }
+
+        @Test
+        @DisplayName("Should return all cars for empty criteria")
+        void findAll_emptyFilter_shouldReturnAll() {
+            CarSearchCriteria criteria = new CarSearchCriteria();
+            Page<Car> results = carDao.findAll(criteria, PageRequest.of(0, 10));
+
+            assertEquals(4, results.getTotalElements());
         }
     }
 

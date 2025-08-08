@@ -10,7 +10,7 @@ import com.dynamiccarsharing.carsharing.exception.InvalidVerificationStatusExcep
 import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.mapper.CarMapper;
 import com.dynamiccarsharing.carsharing.model.Car;
-import com.dynamiccarsharing.carsharing.repository.jpa.CarJpaRepository;
+import com.dynamiccarsharing.carsharing.repository.CarRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -33,7 +32,7 @@ import static org.mockito.Mockito.*;
 class CarServiceImplTest {
 
     @Mock
-    private CarJpaRepository carRepository;
+    private CarRepository carRepository;
 
     @Mock
     private CarMapper carMapper;
@@ -81,25 +80,6 @@ class CarServiceImplTest {
 
         assertTrue(result.isPresent());
         assertEquals(carId, result.get().getId());
-    }
-
-    @Test
-    void findAll_shouldReturnPaginatedDtos() {
-        CarSearchCriteria criteria = new CarSearchCriteria();
-        Pageable pageable = Pageable.unpaged();
-
-        Car carEntity = createTestCar(1L, CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
-        Page<Car> carPage = new PageImpl<>(Collections.singletonList(carEntity));
-        CarDto expectedDto = new CarDto();
-
-        when(carRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(carPage);
-        when(carMapper.toDto(any(Car.class))).thenReturn(expectedDto);
-
-        Page<CarDto> resultPage = carService.findAll(criteria, pageable);
-
-        assertEquals(1, resultPage.getTotalElements());
-        assertEquals(1, resultPage.getContent().size());
-        verify(carRepository, times(1)).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
@@ -188,5 +168,23 @@ class CarServiceImplTest {
         Long carId = 1L;
 
         assertThrows(ValidationException.class, () -> carService.updatePrice(carId, new BigDecimal("-10")));
+    }
+
+    @Test
+    void findAll_shouldCallRepositoryAndReturnPaginatedDtos() {
+        CarSearchCriteria criteria = new CarSearchCriteria();
+        Pageable pageable = Pageable.unpaged();
+
+        Car carEntity = new Car();
+        Page<Car> carPage = new PageImpl<>(Collections.singletonList(carEntity));
+        CarDto expectedDto = new CarDto();
+
+        when(carRepository.findAll(criteria, pageable)).thenReturn(carPage);
+        when(carMapper.toDto(any(Car.class))).thenReturn(expectedDto);
+
+        Page<CarDto> resultPage = carService.findAll(criteria, pageable);
+
+        assertEquals(1, resultPage.getTotalElements());
+        verify(carRepository).findAll(criteria, pageable);
     }
 }

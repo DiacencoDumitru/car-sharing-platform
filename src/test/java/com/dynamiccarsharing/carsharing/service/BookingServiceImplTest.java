@@ -2,6 +2,7 @@ package com.dynamiccarsharing.carsharing.service;
 
 import com.dynamiccarsharing.carsharing.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.BookingDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.exception.InvalidDisputeStatusException;
@@ -10,15 +11,20 @@ import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.model.User;
-import com.dynamiccarsharing.carsharing.repository.jpa.BookingJpaRepository;
-import com.dynamiccarsharing.carsharing.repository.jpa.DisputeJpaRepository;
+import com.dynamiccarsharing.carsharing.repository.BookingRepository;
+import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,10 +35,10 @@ import static org.mockito.Mockito.*;
 class BookingServiceImplTest {
 
     @Mock
-    private BookingJpaRepository bookingRepository;
+    private BookingRepository bookingRepository;
 
     @Mock
-    private DisputeJpaRepository disputeRepository;
+    private DisputeRepository disputeRepository;
 
     @Mock
     private BookingMapper bookingMapper;
@@ -57,6 +63,26 @@ class BookingServiceImplTest {
                 .pickupLocation(Location.builder().id(1L).build())
                 .build();
     }
+
+    @Test
+    void findAll_withCriteria_shouldCallRepositoryAndMapper() {
+        BookingSearchCriteria criteria = new BookingSearchCriteria();
+        Pageable pageable = PageRequest.of(0, 10);
+        Booking booking = new Booking();
+        Page<Booking> bookingPage = new PageImpl<>(List.of(booking));
+        BookingDto bookingDto = new BookingDto();
+
+        when(bookingRepository.findAll(criteria, pageable)).thenReturn(bookingPage);
+        when(bookingMapper.toDto(any(Booking.class))).thenReturn(bookingDto);
+
+        Page<BookingDto> resultPage = bookingService.findAll(criteria, pageable);
+
+        assertNotNull(resultPage);
+        assertEquals(1, resultPage.getTotalElements());
+        verify(bookingRepository).findAll(criteria, pageable);
+        verify(bookingMapper).toDto(booking);
+    }
+
 
     @Test
     void save_shouldMapAndReturnDto() {
