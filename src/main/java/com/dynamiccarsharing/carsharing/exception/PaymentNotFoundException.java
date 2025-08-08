@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(value = HttpStatus.NOT_FOUND)
-public class PaymentNotFoundException extends RuntimeException {
+public class PaymentNotFoundException extends ResourceNotFoundException {
 
     public PaymentNotFoundException(String message) {
         super(message);

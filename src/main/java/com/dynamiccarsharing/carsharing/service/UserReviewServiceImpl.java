@@ -4,6 +4,7 @@ import com.dynamiccarsharing.carsharing.dto.UserReviewCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.UserReviewDto;
 import com.dynamiccarsharing.carsharing.dto.UserReviewUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.UserReviewSearchCriteria;
+import com.dynamiccarsharing.carsharing.exception.ServiceException;
 import com.dynamiccarsharing.carsharing.exception.UserReviewNotFoundException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.UserReviewFilter;
@@ -73,7 +74,7 @@ public class UserReviewServiceImpl implements UserReviewService {
         try {
             return userReviewRepository.findByFilter(filter);
         } catch (SQLException e) {
-            throw new RuntimeException("Search for user reviews failed", e);
+            throw new ServiceException("Search for user reviews failed", e);
         }
     }
 }

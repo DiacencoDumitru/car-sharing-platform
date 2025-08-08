@@ -5,6 +5,7 @@ import com.dynamiccarsharing.carsharing.dto.DisputeDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.DisputeSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.exception.DisputeNotFoundException;
+import com.dynamiccarsharing.carsharing.exception.ServiceException;
 import com.dynamiccarsharing.carsharing.filter.DisputeFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.mapper.DisputeMapper;
@@ -77,7 +78,7 @@ public class DisputeServiceImpl implements DisputeService {
         try {
             return disputeRepository.findByFilter(filter);
         } catch (SQLException e) {
-            throw new RuntimeException("Search for dispute failed", e);
+            throw new ServiceException("Search for dispute failed", e);
         }
     }
 

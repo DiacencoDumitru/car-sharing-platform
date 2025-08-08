@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(value = HttpStatus.BAD_REQUEST)
-public class InvalidPriceException extends RuntimeException {
+public class InvalidPriceException extends ConflictException {
     public InvalidPriceException(String message) {
         super(message);
     }
