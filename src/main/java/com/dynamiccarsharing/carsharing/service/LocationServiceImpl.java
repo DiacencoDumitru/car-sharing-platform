@@ -5,6 +5,7 @@ import com.dynamiccarsharing.carsharing.dto.LocationDto;
 import com.dynamiccarsharing.carsharing.dto.LocationUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.LocationSearchCriteria;
 import com.dynamiccarsharing.carsharing.exception.LocationNotFoundException;
+import com.dynamiccarsharing.carsharing.exception.ServiceException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.LocationFilter;
 import com.dynamiccarsharing.carsharing.mapper.LocationMapper;
@@ -18,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
 
 @Service("locationService")
 @Transactional
@@ -44,7 +44,7 @@ public class LocationServiceImpl implements LocationService {
     @Override
     @Transactional(readOnly = true)
     public List<LocationDto> findAllLocations() {
-        return StreamSupport.stream(locationRepository.findAll().spliterator(), false)
+        return locationRepository.findAll().stream()
                 .map(locationMapper::toDto)
                 .toList();
     }
@@ -80,7 +80,7 @@ public class LocationServiceImpl implements LocationService {
         try {
             return locationRepository.findByFilter(filter);
         } catch (SQLException e) {
-            throw new RuntimeException("Search for locations failed", e);
+            throw new ServiceException("Search for locations failed", e);
         }
     }
 }

@@ -5,6 +5,7 @@ import com.dynamiccarsharing.carsharing.dto.PaymentRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.PaymentSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.exception.PaymentNotFoundException;
+import com.dynamiccarsharing.carsharing.exception.ServiceException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.PaymentFilter;
 import com.dynamiccarsharing.carsharing.mapper.PaymentMapper;
@@ -103,7 +104,7 @@ public class PaymentServiceImpl implements PaymentService {
         try {
             return paymentRepository.findByFilter(filter);
         } catch (SQLException e) {
-            throw new RuntimeException("Search for payments failed", e);
+            throw new ServiceException("Search for payments failed", e);
         }
     }
 }

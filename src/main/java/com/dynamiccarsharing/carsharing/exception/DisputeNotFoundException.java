@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(value = HttpStatus.NOT_FOUND)
-public class DisputeNotFoundException extends RuntimeException {
+public class DisputeNotFoundException extends ResourceNotFoundException {
 
     public DisputeNotFoundException(String message) {
         super(message);

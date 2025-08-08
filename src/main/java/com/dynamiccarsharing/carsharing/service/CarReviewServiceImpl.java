@@ -5,6 +5,7 @@ import com.dynamiccarsharing.carsharing.dto.CarReviewDto;
 import com.dynamiccarsharing.carsharing.dto.CarReviewUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.CarReviewSearchCriteria;
 import com.dynamiccarsharing.carsharing.exception.CarReviewNotFoundException;
+import com.dynamiccarsharing.carsharing.exception.ServiceException;
 import com.dynamiccarsharing.carsharing.filter.CarReviewFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.mapper.CarReviewMapper;
@@ -72,7 +73,7 @@ public class CarReviewServiceImpl implements CarReviewService {
         try {
             return carReviewRepository.findByFilter(filter);
         } catch (SQLException e) {
-            throw new RuntimeException("Search for car reviews failed", e);
+            throw new ServiceException("Search for car reviews failed", e);
         }
     }
 
