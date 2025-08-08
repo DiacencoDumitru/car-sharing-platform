@@ -1,6 +1,7 @@
 package com.dynamiccarsharing.carsharing.repository.jpa;
 
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.PaymentFilter;
 import com.dynamiccarsharing.carsharing.model.Payment;
@@ -28,7 +29,7 @@ public interface PaymentJpaRepository extends JpaRepository<Payment, Long>, JpaS
     @Override
     default List<Payment> findByFilter(Filter<Payment> filter) throws SQLException {
         if (!(filter instanceof PaymentFilter paymentFilter)) {
-            throw new IllegalArgumentException("Filter must be an instance of PaymentFilter for JPA search.");
+            throw new ValidationException("Filter must be an instance of PaymentFilter for JPA search.");
         }
         return findAll(PaymentSpecification.withCriteria(
                 paymentFilter.getBookingId(),

@@ -10,48 +10,41 @@ import java.util.Objects;
 
 @Getter
 public class PaymentFilter implements Filter<Payment> {
-    private final Long id;
     private final Long bookingId;
     private final BigDecimal amount;
     private final TransactionStatus status;
     private final PaymentType paymentMethod;
 
-    private PaymentFilter(Long id, Long bookingId, BigDecimal amount, TransactionStatus status, PaymentType paymentMethod) {
-        this.id = id;
+    private PaymentFilter(Long bookingId, BigDecimal amount, TransactionStatus status, PaymentType paymentMethod) {
         this.bookingId = bookingId;
         this.amount = amount;
         this.status = status;
         this.paymentMethod = paymentMethod;
     }
 
-    public static PaymentFilter of(Long id, Long bookingId, BigDecimal amount, TransactionStatus status, PaymentType paymentMethod) {
-        return new PaymentFilter(id, bookingId, amount, status, paymentMethod);
-    }
-
-    public static PaymentFilter ofId(Long id) {
-        return new PaymentFilter(id, null, null, null, null);
+    public static PaymentFilter of(Long bookingId, BigDecimal amount, TransactionStatus status, PaymentType paymentMethod) {
+        return new PaymentFilter(bookingId, amount, status, paymentMethod);
     }
 
     public static PaymentFilter ofBookingId(Long bookingId) {
-        return new PaymentFilter(null, bookingId, null, null, null);
+        return new PaymentFilter(bookingId, null, null, null);
     }
 
     public static PaymentFilter ofAmount(BigDecimal amount) {
-        return new PaymentFilter(null, null, amount, null, null);
+        return new PaymentFilter(null, amount, null, null);
     }
 
     public static PaymentFilter ofStatus(TransactionStatus status) {
-        return new PaymentFilter(null, null, null, status, null);
+        return new PaymentFilter(null, null, status, null);
     }
 
     public static PaymentFilter ofPaymentMethod(PaymentType paymentMethod) {
-        return new PaymentFilter(null, null, null, null, paymentMethod);
+        return new PaymentFilter(null, null, null, paymentMethod);
     }
 
     @Override
     public boolean test(Payment payment) {
         boolean matches = true;
-        if (id != null) matches &= Objects.equals(payment.getId(), id);
         if (bookingId != null) matches &= Objects.equals(payment.getBooking().getId(), bookingId);
         if (amount != null) matches &= payment.getAmount().equals(amount);
         if (status != null) matches &= payment.getStatus() == status;

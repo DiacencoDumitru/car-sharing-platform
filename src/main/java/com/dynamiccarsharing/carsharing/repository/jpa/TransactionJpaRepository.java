@@ -1,6 +1,7 @@
 package com.dynamiccarsharing.carsharing.repository.jpa;
 
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.TransactionFilter;
 import com.dynamiccarsharing.carsharing.model.Transaction;
@@ -27,7 +28,7 @@ public interface TransactionJpaRepository extends JpaRepository<Transaction, Lon
     @Override
     default List<Transaction> findByFilter(Filter<Transaction> filter) throws SQLException {
         if (!(filter instanceof TransactionFilter transactionFilter)) {
-            throw new IllegalArgumentException("Filter must be an instance of TransactionFilter for JPA search.");
+            throw new ValidationException("Filter must be an instance of TransactionFilter for JPA search.");
         }
         return findAll(TransactionSpecification.withCriteria(
                 transactionFilter.getBookingId(),

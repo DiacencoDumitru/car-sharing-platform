@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Getter
+@Setter
 @ToString
 @EqualsAndHashCode(exclude = {"car", "reviewer"})
 @Builder(toBuilder = true)

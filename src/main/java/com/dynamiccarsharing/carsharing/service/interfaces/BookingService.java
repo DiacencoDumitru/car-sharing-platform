@@ -1,29 +1,34 @@
 package com.dynamiccarsharing.carsharing.service.interfaces;
 
+import com.dynamiccarsharing.carsharing.dto.BookingCreateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.BookingDto;
+import com.dynamiccarsharing.carsharing.dto.BookingStatusUpdateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.model.Booking;
-import com.dynamiccarsharing.carsharing.dto.BookingSearchCriteria;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface BookingService {
-    Booking save(Booking booking);
+    BookingDto save(BookingCreateRequestDto booking);
 
-    Optional<Booking> findById(Long id);
+    Optional<BookingDto> findById(Long id);
 
-    List<Booking> findAll();
+    List<BookingDto> findAll();
 
     void deleteById(Long id);
 
-    Booking approveBooking(Long bookingId);
+    BookingDto approveBooking(Long bookingId);
 
-    Booking completeBooking(Long bookingId);
+    BookingDto completeBooking(Long bookingId);
 
-    Booking cancelBooking(Long bookingId);
+    BookingDto cancelBooking(Long bookingId);
 
-    Booking raiseDispute(Long bookingId, String disputeDescription);
+    BookingDto raiseDispute(Long bookingId, String disputeDescription);
 
-    Booking resolveDispute(Long bookingId);
+    BookingDto resolveDispute(Long bookingId);
+
+    BookingDto updateBookingStatus(Long bookingId, BookingStatusUpdateRequestDto updateDto);
 
     List<Booking> findBookingsByRenterId(Long renterId);
 

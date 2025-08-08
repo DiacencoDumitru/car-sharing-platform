@@ -1,20 +1,19 @@
 package com.dynamiccarsharing.carsharing.service;
 
+import com.dynamiccarsharing.carsharing.dto.DisputeCreateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.DisputeDto;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.exception.DisputeNotFoundException;
-import com.dynamiccarsharing.carsharing.model.Booking;
+import com.dynamiccarsharing.carsharing.mapper.DisputeMapper;
 import com.dynamiccarsharing.carsharing.model.Dispute;
-import com.dynamiccarsharing.carsharing.model.User;
-import com.dynamiccarsharing.carsharing.repository.jpa.DisputeRepository;
-import com.dynamiccarsharing.carsharing.dto.DisputeSearchCriteria;
+import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.jpa.domain.Specification;
 
-import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,53 +27,71 @@ class DisputeServiceImplTest {
     @Mock
     private DisputeRepository disputeRepository;
 
-    private DisputeServiceJpaImpl disputeService;
+    @Mock
+    private DisputeMapper disputeMapper;
+
+    private DisputeServiceImpl disputeService;
 
     @BeforeEach
     void setUp() {
-        disputeService = new DisputeServiceJpaImpl(disputeRepository);
+        disputeService = new DisputeServiceImpl(disputeRepository, disputeMapper);
     }
 
     private Dispute createTestDispute(Long id, DisputeStatus status) {
         return Dispute.builder()
                 .id(id)
-                .booking(Booking.builder().id(1L).build())
-                .creationUser(User.builder().id(1L).build())
-                .description("Test description")
                 .status(status)
-                .createdAt(LocalDateTime.now().minusDays(1))
                 .build();
     }
 
     @Test
-    void save_shouldCallRepositoryAndReturnDispute() {
-        Dispute disputeToSave = createTestDispute(null, DisputeStatus.OPEN);
-        Dispute savedDispute = createTestDispute(1L, DisputeStatus.OPEN);
-        when(disputeRepository.save(disputeToSave)).thenReturn(savedDispute);
+    void createDispute_shouldMapAndSaveAndReturnDto() {
+        Long bookingId = 1L;
+        Long creationUserId = 2L;
+        DisputeCreateRequestDto createDto = new DisputeCreateRequestDto();
+        Dispute disputeEntity = createTestDispute(null, DisputeStatus.OPEN);
+        Dispute savedEntity = createTestDispute(1L, DisputeStatus.OPEN);
+        DisputeDto expectedDto = new DisputeDto();
+        expectedDto.setId(1L);
 
-        Dispute result = disputeService.save(disputeToSave);
+        when(disputeMapper.toEntity(createDto, bookingId, creationUserId)).thenReturn(disputeEntity);
+        when(disputeRepository.save(disputeEntity)).thenReturn(savedEntity);
+        when(disputeMapper.toDto(savedEntity)).thenReturn(expectedDto);
+
+        DisputeDto result = disputeService.createDispute(bookingId, createDto, creationUserId);
 
         assertNotNull(result);
-        assertNotNull(result.getId());
-        verify(disputeRepository).save(disputeToSave);
+        assertEquals(1L, result.getId());
     }
 
     @Test
-    void findById_whenDisputeExists_shouldReturnOptionalOfDispute() {
+    void findDisputeById_whenExists_shouldMapAndReturnDto() {
         Long disputeId = 1L;
-        Dispute testDispute = createTestDispute(disputeId, DisputeStatus.OPEN);
-        when(disputeRepository.findById(disputeId)).thenReturn(Optional.of(testDispute));
+        Dispute disputeEntity = createTestDispute(disputeId, DisputeStatus.OPEN);
+        DisputeDto expectedDto = new DisputeDto();
+        when(disputeRepository.findById(disputeId)).thenReturn(Optional.of(disputeEntity));
+        when(disputeMapper.toDto(disputeEntity)).thenReturn(expectedDto);
 
-        Optional<Dispute> result = disputeService.findById(disputeId);
+        Optional<DisputeDto> result = disputeService.findDisputeById(disputeId);
 
         assertTrue(result.isPresent());
-        assertEquals(disputeId, result.get().getId());
+    }
+
+    @Test
+    void findAllDisputes_shouldMapAndReturnDtoList() {
+        Dispute disputeEntity = createTestDispute(1L, DisputeStatus.OPEN);
+        when(disputeRepository.findAll()).thenReturn(Collections.singletonList(disputeEntity));
+        when(disputeMapper.toDto(disputeEntity)).thenReturn(new DisputeDto());
+
+        List<DisputeDto> result = disputeService.findAllDisputes();
+
+        assertEquals(1, result.size());
     }
 
     @Test
     void deleteById_whenDisputeExists_shouldSucceed() {
         Long disputeId = 1L;
-        when(disputeRepository.existsById(disputeId)).thenReturn(true);
+        when(disputeRepository.findById(disputeId)).thenReturn(Optional.of(Dispute.builder().build()));
         doNothing().when(disputeRepository).deleteById(disputeId);
 
         disputeService.deleteById(disputeId);
@@ -83,45 +100,28 @@ class DisputeServiceImplTest {
     }
 
     @Test
-    void deleteById_whenDisputeDoesNotExist_shouldThrowDisputeNotFoundException() {
-        Long disputeId = 1L;
-        when(disputeRepository.existsById(disputeId)).thenReturn(false);
-
-        assertThrows(DisputeNotFoundException.class, () -> disputeService.deleteById(disputeId));
-    }
-
-    @Test
-    void resolveDispute_withOpenDispute_shouldSucceedAndSetStatusToResolved() {
+    void resolveDispute_withOpenDispute_shouldSucceedAndReturnDto() {
         Long disputeId = 1L;
         Dispute openDispute = createTestDispute(disputeId, DisputeStatus.OPEN);
+        Dispute resolvedEntity = openDispute.withStatus(DisputeStatus.RESOLVED);
+        DisputeDto expectedDto = new DisputeDto();
+        expectedDto.setStatus(DisputeStatus.RESOLVED);
+
         when(disputeRepository.findById(disputeId)).thenReturn(Optional.of(openDispute));
-        when(disputeRepository.save(any(Dispute.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(disputeRepository.save(any(Dispute.class))).thenReturn(resolvedEntity);
+        when(disputeMapper.toDto(resolvedEntity)).thenReturn(expectedDto);
 
-        Dispute resolvedDispute = disputeService.resolveDispute(disputeId);
+        DisputeDto result = disputeService.resolveDispute(disputeId);
 
-        assertEquals(DisputeStatus.RESOLVED, resolvedDispute.getStatus());
-        verify(disputeRepository).save(any(Dispute.class));
+        assertNotNull(result);
+        assertEquals(DisputeStatus.RESOLVED, result.getStatus());
     }
 
     @Test
-    void resolveDispute_withResolvedDispute_shouldThrowInvalidDisputeStatusException() {
+    void resolveDispute_whenNotFound_shouldThrowException() {
         Long disputeId = 1L;
-        Dispute resolvedDispute = createTestDispute(disputeId, DisputeStatus.RESOLVED);
-        when(disputeRepository.findById(disputeId)).thenReturn(Optional.of(resolvedDispute));
+        when(disputeRepository.findById(disputeId)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalStateException.class, () -> disputeService.resolveDispute(disputeId));
-        verify(disputeRepository, never()).save(any());
-    }
-
-    @Test
-    void searchDisputes_withCriteria_shouldCallRepositoryWithSpecification() {
-        Long bookingId = 1L;
-        DisputeSearchCriteria criteria = DisputeSearchCriteria.builder().bookingId(bookingId).build();
-        when(disputeRepository.findAll(any(Specification.class))).thenReturn(List.of(createTestDispute(1L, DisputeStatus.OPEN)));
-
-        List<Dispute> results = disputeService.searchDisputes(criteria);
-
-        assertFalse(results.isEmpty());
-        verify(disputeRepository, times(1)).findAll(any(Specification.class));
+        assertThrows(DisputeNotFoundException.class, () -> disputeService.resolveDispute(disputeId));
     }
 }

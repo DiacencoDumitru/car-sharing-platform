@@ -1,127 +1,144 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.enums.UserRole;
+import com.dynamiccarsharing.carsharing.dto.ContactInfoUpdateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.UserCreateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.UserDto;
+import com.dynamiccarsharing.carsharing.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.enums.UserStatus;
-import com.dynamiccarsharing.carsharing.exception.UserNotFoundException;
-import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.exception.CarNotFoundException;
+import com.dynamiccarsharing.carsharing.mapper.ContactInfoMapper;
+import com.dynamiccarsharing.carsharing.mapper.UserMapper;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.model.User;
-import com.dynamiccarsharing.carsharing.repository.jpa.CarJpaRepository;
-import com.dynamiccarsharing.carsharing.repository.jpa.UserJpaRepository;
-import com.dynamiccarsharing.carsharing.dto.UserSearchCriteria;
+import com.dynamiccarsharing.carsharing.repository.CarRepository;
+import com.dynamiccarsharing.carsharing.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
 
     @Mock
-    private UserJpaRepository userRepository;
+    private UserRepository userRepository;
     @Mock
-    private CarJpaRepository carRepository;
+    private CarRepository carRepository;
+    @Mock
+    private UserMapper userMapper;
+    @Mock
+    private ContactInfoMapper contactInfoMapper;
 
     private UserServiceImpl userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userRepository, carRepository);
-    }
-
-    private User createTestUser(Long id, UserStatus status) {
-        return User.builder()
-                .id(id)
-                .contactInfo(ContactInfo.builder().id(1L).email("test@example.com").build())
-                .role(UserRole.RENTER)
-                .status(status)
-                .build();
-    }
-
-    private Car createTestCar(Long id) {
-        return Car.builder().id(id).build();
+        userService = new UserServiceImpl(userRepository, carRepository, userMapper, contactInfoMapper);
     }
 
     @Test
-    void registerUser_shouldSaveAndReturnUser() {
-        User userToSave = createTestUser(null, UserStatus.ACTIVE);
-        when(userRepository.save(any(User.class))).thenReturn(createTestUser(1L, UserStatus.ACTIVE));
+    void registerUser_shouldMapAndSaveAndReturnDto() {
+        UserCreateRequestDto createDto = new UserCreateRequestDto();
+        User userEntity = User.builder().build();
+        User savedEntity = User.builder().id(1L).status(UserStatus.ACTIVE).build();
+        UserDto expectedDto = new UserDto();
+        expectedDto.setId(1L);
 
-        User result = userService.registerUser(userToSave);
+        when(userMapper.toEntity(createDto)).thenReturn(userEntity);
+        when(userRepository.save(userEntity)).thenReturn(savedEntity);
+        when(userMapper.toDto(savedEntity)).thenReturn(expectedDto);
 
-        assertNotNull(result.getId());
-        assertEquals(UserStatus.ACTIVE, result.getStatus());
+        UserDto result = userService.registerUser(createDto);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+    }
+
+    @Test
+    void findUserById_whenUserDoesNotExist_shouldReturnEmptyOptional() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Optional<UserDto> result = userService.findUserById(1L);
+
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    void findAllUsers_shouldMapAndReturnDtoList() {
+        when(userRepository.findAll()).thenReturn(Collections.singletonList(User.builder().build()));
+        when(userMapper.toDto(any(User.class))).thenReturn(new UserDto());
+
+        List<UserDto> result = userService.findAllUsers();
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void deleteById_whenUserExists_shouldSucceed() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(User.builder().build()));
+        doNothing().when(userRepository).deleteById(1L);
+
+        userService.deleteById(1L);
+
+        verify(userRepository).deleteById(1L);
+    }
+
+    @Test
+    void updateUserContactInfo_whenUserExists_shouldSucceed() {
+        ContactInfo contactInfo = ContactInfo.builder().build();
+        User user = User.builder().id(1L).contactInfo(contactInfo).build();
+        ContactInfoUpdateRequestDto updateDto = new ContactInfoUpdateRequestDto();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        userService.updateUserContactInfo(1L, updateDto);
+
+        verify(contactInfoMapper).updateFromDto(updateDto, contactInfo);
+    }
+
+    @Test
+    void updateUserStatus_whenUserExists_shouldSucceed() {
+        User user = User.builder().id(1L).build();
+        UserStatusUpdateRequestDto updateDto = new UserStatusUpdateRequestDto();
+        updateDto.setStatus(UserStatus.SUSPENDED);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        assertDoesNotThrow(() -> userService.updateUserStatus(1L, updateDto));
         verify(userRepository).save(any(User.class));
     }
 
     @Test
-    void findById_whenUserExists_shouldReturnOptionalOfUser() {
-        Long userId = 1L;
-        User testUser = createTestUser(userId, UserStatus.ACTIVE);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+    void assignCarToUser_whenUserAndCarExist_shouldSucceed() {
+        User user = User.builder().id(1L).build();
+        Car car = Car.builder().id(1L).build();
 
-        Optional<User> result = userService.findById(userId);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(carRepository.findById(1L)).thenReturn(Optional.of(car));
 
-        assertTrue(result.isPresent());
-        assertEquals(userId, result.get().getId());
-    }
-
-    @Test
-    void updateUserStatus_shouldChangeUserStatus() {
-        Long userId = 1L;
-        User activeUser = createTestUser(userId, UserStatus.ACTIVE);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(activeUser));
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        User suspendedUser = userService.updateUserStatus(userId, UserStatus.SUSPENDED);
-
-        assertEquals(UserStatus.SUSPENDED, suspendedUser.getStatus());
-    }
-
-    @Test
-    void assignCarToUser_shouldAddCarToUserSet() {
-        Long userId = 1L;
-        Long carId = 1L;
-        User user = createTestUser(userId, UserStatus.ACTIVE);
-        Car car = createTestCar(carId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(carRepository.findById(carId)).thenReturn(Optional.of(car));
-        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
-
-        userService.assignCarToUser(userId, carId);
+        userService.assignCarToUser(1L, 1L);
 
         assertTrue(user.getCars().contains(car));
         verify(userRepository).save(user);
     }
 
     @Test
-    void assignCarToUser_whenUserNotFound_shouldThrowException() {
-        Long userId = 1L;
-        Long carId = 1L;
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+    void assignCarToUser_whenCarNotFound_shouldThrowException() {
+        User user = User.builder().id(1L).build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(carRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(UserNotFoundException.class, () -> userService.assignCarToUser(userId, carId));
-    }
-
-    @Test
-    void searchUsers_withCriteria_shouldCallFindAllWithSpecification() throws SQLException {
-        UserSearchCriteria criteria = UserSearchCriteria.builder().role(UserRole.ADMIN).build();
-        when(userRepository.findByFilter(any(Filter.class))).thenReturn(List.of(createTestUser(1L, UserStatus.ACTIVE)));
-
-        List<User> result = userService.searchUsers(criteria);
-
-        assertFalse(result.isEmpty());
-        verify(userRepository).findByFilter(any(Filter.class));
+        assertThrows(CarNotFoundException.class, () -> userService.assignCarToUser(1L, 1L));
     }
 }

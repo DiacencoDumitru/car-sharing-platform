@@ -15,7 +15,7 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class InMemoryDisputeRepositoryJdbcImplTest {
+class InMemoryDisputeJpaRepositoryJdbcImplTest {
 
     private InMemoryDisputeRepositoryJdbcImpl repository;
 

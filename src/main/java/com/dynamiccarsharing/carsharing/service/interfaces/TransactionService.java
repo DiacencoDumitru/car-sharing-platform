@@ -1,15 +1,16 @@
 package com.dynamiccarsharing.carsharing.service.interfaces;
 
+import com.dynamiccarsharing.carsharing.dto.TransactionDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.TransactionSearchCriteria;
 import com.dynamiccarsharing.carsharing.model.Transaction;
-import com.dynamiccarsharing.carsharing.dto.TransactionSearchCriteria;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface TransactionService {
-    Optional<Transaction> findById(Long id);
+    Optional<TransactionDto> findTransactionById(Long id);
 
-    List<Transaction> findAll();
+    List<TransactionDto> findAllTransactions();
 
     List<Transaction> findTransactionsByBookingId(Long bookingId);
 

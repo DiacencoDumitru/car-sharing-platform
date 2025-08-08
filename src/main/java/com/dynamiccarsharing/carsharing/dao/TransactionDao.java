@@ -5,9 +5,10 @@ import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.dao.jdbc.TransactionSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
+import com.dynamiccarsharing.carsharing.exception.RepositoryException;
+import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Transaction;
-import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.repository.TransactionRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
@@ -46,7 +47,7 @@ public class TransactionDao implements TransactionRepository {
                     statement.setString(4, transaction.getPaymentMethod().name());
                     statement.setTimestamp(5, Timestamp.valueOf(creationTime));
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    throw new RepositoryException("Failed to save transaction", e);
                 }
             });
 

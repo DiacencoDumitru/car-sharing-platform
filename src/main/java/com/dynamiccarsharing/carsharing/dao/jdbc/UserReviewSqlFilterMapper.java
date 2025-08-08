@@ -25,9 +25,6 @@ public class UserReviewSqlFilterMapper implements SqlFilterMapper<UserReview, Fi
     private String buildSqlQuery(UserReviewFilter filter) {
         StringBuilder sb = new StringBuilder();
 
-        if (filter.getId() != null) {
-            sb.append(" AND ").append("id = ?");
-        }
         if (filter.getUserId() != null) {
             sb.append(" AND ").append("user_id = ?");
         }
@@ -42,7 +39,7 @@ public class UserReviewSqlFilterMapper implements SqlFilterMapper<UserReview, Fi
     }
 
     private List<Object> getParameters(UserReviewFilter filter) {
-        return Stream.<Object>of(filter.getId(), filter.getUserId(), filter.getReviewerId(), filter.getComment())
+        return Stream.<Object>of(filter.getUserId(), filter.getReviewerId(), filter.getComment())
                 .filter(Objects::nonNull)
                 .toList();
     }

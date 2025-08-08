@@ -3,6 +3,7 @@ package com.dynamiccarsharing.carsharing.dao;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.enums.UserRole;
 import com.dynamiccarsharing.carsharing.enums.UserStatus;
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
@@ -46,7 +47,7 @@ class BookingDaoTest extends BaseDaoTest {
 
     private Booking createUnsavedBooking(TransactionStatus status, LocalDateTime start, LocalDateTime end) {
         if (!start.isBefore(end)) {
-            throw new IllegalArgumentException("Start time must be before end time");
+            throw new ValidationException("Start time must be before end time");
         }
         return Booking.builder()
                 .renter(testUser)

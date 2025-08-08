@@ -4,10 +4,11 @@ import com.dynamiccarsharing.carsharing.dao.jdbc.DisputeSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
+import com.dynamiccarsharing.carsharing.exception.RepositoryException;
+import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Dispute;
 import com.dynamiccarsharing.carsharing.model.User;
-import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
@@ -46,7 +47,7 @@ public class DisputeDao implements DisputeRepository {
                     statement.setTimestamp(5, Timestamp.valueOf(creationTime));
                     statement.setTimestamp(6, dispute.getResolvedAt() != null ? Timestamp.valueOf(dispute.getResolvedAt()) : null);
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    throw new RepositoryException("Failed to save dispute", e);
                 }
             });
 
@@ -69,7 +70,7 @@ public class DisputeDao implements DisputeRepository {
     }
 
     @Override
-    public Iterable<Dispute> findAll() {
+    public List<Dispute> findAll() {
         String query = "SELECT * FROM disputes";
         return databaseUtil.findMany(query, this::mapToDispute);
     }

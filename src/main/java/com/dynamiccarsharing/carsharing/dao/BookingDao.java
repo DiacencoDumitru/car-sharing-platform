@@ -6,6 +6,7 @@ import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
+import com.dynamiccarsharing.carsharing.exception.RepositoryException;
 import com.dynamiccarsharing.carsharing.model.*;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.repository.BookingRepository;
@@ -46,7 +47,7 @@ public class BookingDao implements BookingRepository {
                     statement.setString(7, booking.getDisputeDescription());
                     statement.setString(8, booking.getDisputeStatus() != null ? booking.getDisputeStatus().name() : null);
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    throw new RepositoryException("Failed to insert booking", e);
                 }
             });
 
@@ -127,7 +128,7 @@ public class BookingDao implements BookingRepository {
                         .updatedAt(rs.getTimestamp("updated_at") != null ? rs.getTimestamp("updated_at").toLocalDateTime() : null)
                         .build();
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                throw new RepositoryException("Failed to map transaction", e);
             }
         }, bookingId);
     }

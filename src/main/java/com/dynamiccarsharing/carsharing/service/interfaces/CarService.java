@@ -1,32 +1,37 @@
 package com.dynamiccarsharing.carsharing.service.interfaces;
 
+import com.dynamiccarsharing.carsharing.dto.CarCreateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.CarDto;
+import com.dynamiccarsharing.carsharing.dto.CarUpdateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.model.Car;
-import com.dynamiccarsharing.carsharing.dto.CarSearchCriteria;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 public interface CarService {
-    Car save(Car car);
+    CarDto save(CarCreateRequestDto carDto);
 
-    Optional<Car> findById(Long id);
+    Optional<CarDto> findById(Long id);
 
     void deleteById(Long id);
 
-    Iterable<Car> findAll();
+    List<CarDto> findAll();
 
-    Car rentCar(Long carId);
+    CarDto rentCar(Long carId);
 
-    Car returnCar(Long carId);
+    CarDto returnCar(Long carId);
 
-    Car setMaintenance(Long carId);
+    CarDto setMaintenance(Long carId);
 
-    Car verifyCar(Long carId);
+    CarDto verifyCar(Long carId);
 
-    Car rejectVerification(Long carId);
+    CarDto rejectVerification(Long carId);
 
-    Car updatePrice(Long carId, BigDecimal newPrice);
+    CarDto updateCar(Long carId, CarUpdateRequestDto updateDto);
+
+    CarDto updatePrice(Long carId, BigDecimal newPrice);
 
     List<Car> searchCars(CarSearchCriteria criteria);
 }
