@@ -52,9 +52,9 @@ public class InMemoryCarRepositoryJdbcImpl implements CarRepository {
         List<Car> filteredCars = carMap.values().stream().filter(filter::test).toList();
 
         int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), filteredCars.size());
+        int end = Math.min(start + pageable.getPageSize(), filteredCars.size());
 
-        List<Car> pageContent = (start <= end) ? filteredCars.subList(start, end) : List.of();
+        List<Car> pageContent = start <= end ? filteredCars.subList(start, end) : List.of();
 
         return new PageImpl<>(pageContent, pageable, filteredCars.size());
     }

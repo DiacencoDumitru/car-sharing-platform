@@ -27,7 +27,7 @@ public class CarSpecification {
     }
 
     public static Specification<Car> hasStatusIn(List<CarStatus> statuses) {
-        return (root, query, cb) -> (statuses != null && !statuses.isEmpty()) ? root.get("status").in(statuses) : null;
+        return (root, query, cb) -> statuses != null && !statuses.isEmpty() ? root.get("status").in(statuses) : null;
     }
 
     public static Specification<Car> hasLocationId(Long locationId) {

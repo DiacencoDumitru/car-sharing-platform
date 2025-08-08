@@ -10,7 +10,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class InMemoryBookingRepositoryJdbcImpl implements BookingRepository {
     private final Map<Long, Booking> bookingMap = new HashMap<>();
@@ -44,12 +43,12 @@ public class InMemoryBookingRepositoryJdbcImpl implements BookingRepository {
     @Override
     public Page<Booking> findAll(BookingSearchCriteria criteria, Pageable pageable) {
         Filter<Booking> filter = BookingFilter.of(criteria.getRenterId(), criteria.getCarId(), criteria.getStatus());
-        List<Booking> filteredBookings = bookingMap.values().stream().filter(filter::test).collect(Collectors.toList());
+        List<Booking> filteredBookings = bookingMap.values().stream().filter(filter::test).toList();
 
         int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), filteredBookings.size());
+        int end = Math.min(start + pageable.getPageSize(), filteredBookings.size());
 
-        List<Booking> pageContent = (start <= end) ? filteredBookings.subList(start, end) : List.of();
+        List<Booking> pageContent = start <= end ? filteredBookings.subList(start, end) : List.of();
 
         return new PageImpl<>(pageContent, pageable, filteredBookings.size());
     }

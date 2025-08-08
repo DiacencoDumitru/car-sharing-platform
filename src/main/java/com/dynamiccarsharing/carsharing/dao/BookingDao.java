@@ -96,9 +96,9 @@ public class BookingDao implements BookingRepository {
             List<Booking> filteredBookings = findByFilter(filter);
 
             int start = (int) pageable.getOffset();
-            int end = Math.min((start + pageable.getPageSize()), filteredBookings.size());
+            int end = Math.min(start + pageable.getPageSize(), filteredBookings.size());
 
-            List<Booking> pageContent = (start <= end) ? filteredBookings.subList(start, end) : List.of();
+            List<Booking> pageContent = start <= end ? filteredBookings.subList(start, end) : List.of();
 
             return new PageImpl<>(pageContent, pageable, filteredBookings.size());
         } catch (SQLException e) {
