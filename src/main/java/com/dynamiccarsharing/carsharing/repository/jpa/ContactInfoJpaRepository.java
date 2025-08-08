@@ -1,5 +1,6 @@
 package com.dynamiccarsharing.carsharing.repository.jpa;
 
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.filter.ContactInfoFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
@@ -32,7 +33,7 @@ public interface ContactInfoJpaRepository extends JpaRepository<ContactInfo, Lon
     @Override
     default List<ContactInfo> findByFilter(Filter<ContactInfo> filter) throws SQLException {
         if (!(filter instanceof ContactInfoFilter contactInfoFilter)) {
-            throw new IllegalArgumentException("Filter must be an instance of ContactInfoFilter for JPA search.");
+            throw new ValidationException("Filter must be an instance of ContactInfoFilter for JPA search.");
         }
         return findAll(ContactInfoSpecification.withCriteria(
                 contactInfoFilter.getFirstName(),

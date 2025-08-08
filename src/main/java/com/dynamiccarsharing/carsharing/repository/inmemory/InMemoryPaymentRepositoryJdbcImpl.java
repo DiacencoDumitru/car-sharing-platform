@@ -32,8 +32,8 @@ public class InMemoryPaymentRepositoryJdbcImpl implements PaymentRepository {
     }
 
     @Override
-    public Iterable<Payment> findAll() {
-        return paymentMap.values();
+    public List<Payment> findAll() {
+        return new ArrayList<>(paymentMap.values());
     }
 
     @Override

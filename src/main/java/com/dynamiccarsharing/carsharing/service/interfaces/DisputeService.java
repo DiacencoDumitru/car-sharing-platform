@@ -1,21 +1,23 @@
 package com.dynamiccarsharing.carsharing.service.interfaces;
 
+import com.dynamiccarsharing.carsharing.dto.DisputeCreateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.DisputeDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.DisputeSearchCriteria;
 import com.dynamiccarsharing.carsharing.model.Dispute;
-import com.dynamiccarsharing.carsharing.dto.DisputeSearchCriteria;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface DisputeService {
-    Dispute save(Dispute dispute);
+    DisputeDto createDispute(Long bookingId, DisputeCreateRequestDto createDto, Long creationUserId);
 
-    Optional<Dispute> findById(Long id);
+    Optional<DisputeDto> findDisputeById(Long id);
+
+    List<DisputeDto> findAllDisputes();
 
     void deleteById(Long id);
 
-    Dispute resolveDispute(Long disputeId);
-
-    Dispute updateDisputeDescription(Long disputeId, String newDescription);
+    DisputeDto resolveDispute(Long disputeId);
 
     List<Dispute> searchDisputes(DisputeSearchCriteria criteria);
 }

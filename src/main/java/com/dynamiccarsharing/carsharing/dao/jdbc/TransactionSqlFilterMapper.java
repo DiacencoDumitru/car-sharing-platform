@@ -24,9 +24,6 @@ public class TransactionSqlFilterMapper implements SqlFilterMapper<Transaction, 
     private String buildSqlQuery(TransactionFilter filter) {
         StringBuilder sb = new StringBuilder();
 
-        if (filter.getId() != null) {
-            sb.append(" AND ").append("id = ?");
-        }
         if (filter.getBookingId() != null) {
             sb.append(" AND ").append("booking_id = ?");
         }
@@ -42,7 +39,6 @@ public class TransactionSqlFilterMapper implements SqlFilterMapper<Transaction, 
 
     private List<Object> getParameters(TransactionFilter filter) {
         return Stream.<Object>of(
-                        filter.getId(),
                         filter.getBookingId(),
                         filter.getStatus() != null ? filter.getStatus().name() : null,
                         filter.getPaymentMethod() != null ? filter.getPaymentMethod().name() : null

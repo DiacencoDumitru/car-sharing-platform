@@ -1,23 +1,35 @@
 package com.dynamiccarsharing.carsharing.dao;
 
 import com.dynamiccarsharing.carsharing.enums.*;
-import com.dynamiccarsharing.carsharing.model.Booking;
-import com.dynamiccarsharing.carsharing.model.Car;
-import com.dynamiccarsharing.carsharing.model.ContactInfo;
-import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.model.User;
+import com.dynamiccarsharing.carsharing.model.*;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
 
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;
 
-@SpringBootTest
 @ActiveProfiles("test")
+@JdbcTest
+@Import({
+        DatabaseUtil.class,
+        BookingDao.class,
+        CarDao.class,
+        UserDao.class,
+        DisputeDao.class,
+        ContactInfoDao.class,
+        LocationDao.class,
+        PaymentDao.class,
+        TransactionDao.class,
+        CarReviewDao.class,
+        UserReviewDao.class
+})
+@Sql(scripts = "/schema.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 public abstract class BaseDaoTest {
 
     @Autowired

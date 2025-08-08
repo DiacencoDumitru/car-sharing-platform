@@ -3,8 +3,9 @@ package com.dynamiccarsharing.carsharing.dao;
 import com.dynamiccarsharing.carsharing.dao.jdbc.LocationSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
-import com.dynamiccarsharing.carsharing.model.Location;
+import com.dynamiccarsharing.carsharing.exception.RepositoryException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.repository.LocationRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
@@ -36,7 +37,7 @@ public class LocationDao implements LocationRepository {
                     statement.setString(2, location.getState());
                     statement.setString(3, location.getZipCode());
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    throw new RepositoryException("Failed to save location", e);
                 }
             });
             return location.toBuilder().id(newId).build();
@@ -55,7 +56,7 @@ public class LocationDao implements LocationRepository {
     }
 
     @Override
-    public Iterable<Location> findAll() {
+    public List<Location> findAll() {
         String query = "SELECT * FROM locations";
         return databaseUtil.findMany(query, this::mapToLocation);
     }

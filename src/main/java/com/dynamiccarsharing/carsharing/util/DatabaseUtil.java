@@ -1,5 +1,6 @@
 package com.dynamiccarsharing.carsharing.util;
 
+import com.dynamiccarsharing.carsharing.exception.DataAccessException;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -31,7 +32,7 @@ public class DatabaseUtil {
             setParameters(preparedStatement, args);
             preparedStatement.execute();
         } catch (SQLException e) {
-            throw new RuntimeException("Database execute failed for query: " + query, e);
+            throw new DataAccessException("Database execute failed for query: " + query, e);
         }
     }
 
@@ -41,7 +42,7 @@ public class DatabaseUtil {
             consumer.accept(preparedStatement);
             preparedStatement.execute();
         } catch (SQLException e) {
-            throw new RuntimeException("Database execute failed for query: " + query, e);
+            throw new DataAccessException("Database execute failed for query: " + query, e);
         }
     }
 
@@ -58,7 +59,7 @@ public class DatabaseUtil {
                 return result;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Database findOne failed for query: " + query, e);
+            throw new DataAccessException("Database findOne failed for query: " + query, e);
         }
         return null;
     }
@@ -73,7 +74,7 @@ public class DatabaseUtil {
                 results.add(mapper.apply(resultSet));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Database findMany failed for query: " + query, e);
+            throw new DataAccessException("Database findMany failed for query: " + query, e);
         }
         return results;
     }
@@ -97,7 +98,7 @@ public class DatabaseUtil {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Database executeUpdateWithGeneratedKeys failed for query: " + query, e);
+            throw new DataAccessException("Database executeUpdateWithGeneratedKeys failed for query: " + query, e);
         }
     }
 }

@@ -1,11 +1,14 @@
 package com.dynamiccarsharing.carsharing.service;
 
-import com.dynamiccarsharing.carsharing.dto.TransactionSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.TransactionDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.TransactionSearchCriteria;
 import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.filter.TransactionFilter;
+import com.dynamiccarsharing.carsharing.mapper.TransactionMapper;
 import com.dynamiccarsharing.carsharing.model.Transaction;
 import com.dynamiccarsharing.carsharing.repository.TransactionRepository;
 import com.dynamiccarsharing.carsharing.service.interfaces.TransactionService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,24 +18,24 @@ import java.util.Optional;
 
 @Service("transactionService")
 @Transactional
+@RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final TransactionMapper transactionMapper;
 
-    public TransactionServiceImpl(TransactionRepository transactionRepository) {
-        this.transactionRepository = transactionRepository;
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<TransactionDto> findTransactionById(Long id) {
+        return transactionRepository.findById(id).map(transactionMapper::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Transaction> findById(Long id) {
-        return transactionRepository.findById(id);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Transaction> findAll() {
-        return transactionRepository.findAll();
+    public List<TransactionDto> findAllTransactions() {
+        return transactionRepository.findAll().stream()
+                .map(transactionMapper::toDto)
+                .toList();
     }
 
     @Override
@@ -45,7 +48,6 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional(readOnly = true)
     public List<Transaction> searchTransactions(TransactionSearchCriteria criteria) {
         Filter<Transaction> filter = TransactionFilter.of(
-                null,
                 criteria.getBookingId(),
                 criteria.getStatus(),
                 criteria.getPaymentMethod()

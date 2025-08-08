@@ -32,8 +32,8 @@ public class InMemoryCarRepositoryJdbcImpl implements CarRepository {
     }
 
     @Override
-    public Iterable<Car> findAll() {
-        return carMap.values();
+    public List<Car> findAll() {
+        return new ArrayList<>(carMap.values());
     }
 
     public List<Car> findByStatus(CarStatus status) {

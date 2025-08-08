@@ -3,8 +3,9 @@ package com.dynamiccarsharing.carsharing.dao;
 import com.dynamiccarsharing.carsharing.dao.jdbc.ContactInfoSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
-import com.dynamiccarsharing.carsharing.model.ContactInfo;
+import com.dynamiccarsharing.carsharing.exception.RepositoryException;
 import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.repository.ContactInfoRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
@@ -38,7 +39,7 @@ public class ContactInfoDao implements ContactInfoRepository {
                     statement.setString(3, entity.getFirstName());
                     statement.setString(4, entity.getLastName());
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    throw new RepositoryException("Failed to save contact information", e);
                 }
             });
 
@@ -58,7 +59,7 @@ public class ContactInfoDao implements ContactInfoRepository {
     }
 
     @Override
-    public Iterable<ContactInfo> findAll() {
+    public List<ContactInfo> findAll() {
         String query = "SELECT * FROM contact_infos";
         return databaseUtil.findMany(query, this::mapToContactInfo);
     }

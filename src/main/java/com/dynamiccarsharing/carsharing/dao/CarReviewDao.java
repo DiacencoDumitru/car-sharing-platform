@@ -3,10 +3,11 @@ package com.dynamiccarsharing.carsharing.dao;
 import com.dynamiccarsharing.carsharing.dao.jdbc.CarReviewSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
+import com.dynamiccarsharing.carsharing.exception.RepositoryException;
+import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.CarReview;
 import com.dynamiccarsharing.carsharing.model.User;
-import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.repository.CarReviewRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
@@ -39,7 +40,7 @@ public class CarReviewDao implements CarReviewRepository {
                     statement.setLong(2, carReview.getReviewer().getId());
                     statement.setString(3, carReview.getComment());
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    throw new RepositoryException("Failed to save car review", e);
                 }
             });
 
@@ -65,7 +66,7 @@ public class CarReviewDao implements CarReviewRepository {
     }
 
     @Override
-    public Iterable<CarReview> findAll() {
+    public List<CarReview> findAll() {
         String query = "SELECT * FROM car_reviews";
         return databaseUtil.findMany(query, this::mapToCarReview);
     }

@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 @Getter
+@Setter
 @ToString
 @EqualsAndHashCode(exclude = {"location", "owners", "bookings", "reviews"})
 @Builder(toBuilder = true)

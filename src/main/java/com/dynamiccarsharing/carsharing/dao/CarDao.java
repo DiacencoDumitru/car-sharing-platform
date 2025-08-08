@@ -6,6 +6,7 @@ import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
+import com.dynamiccarsharing.carsharing.exception.RepositoryException;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.filter.Filter;
@@ -46,7 +47,7 @@ public class CarDao implements CarRepository {
                     statement.setString(7, car.getType().name());
                     statement.setString(8, car.getVerificationStatus().name());
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    throw new RepositoryException("Failed to save car entity", e);
                 }
             });
 
@@ -77,7 +78,7 @@ public class CarDao implements CarRepository {
     }
 
     @Override
-    public Iterable<Car> findAll() {
+    public List<Car> findAll() {
         String query = "SELECT c.*, l.city, l.state, l.zip_code FROM cars c " +
                 "JOIN locations l ON c.location_id = l.id";
         return databaseUtil.findMany(query, this::mapToCar);
