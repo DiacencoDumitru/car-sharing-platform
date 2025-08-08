@@ -100,9 +100,9 @@ public class CarDao implements CarRepository {
             List<Car> filteredCars = findByFilter(filter);
 
             int start = (int) pageable.getOffset();
-            int end = Math.min((start + pageable.getPageSize()), filteredCars.size());
+            int end = Math.min(start + pageable.getPageSize(), filteredCars.size());
 
-            List<Car> pageContent = (start <= end) ? filteredCars.subList(start, end) : List.of();
+            List<Car> pageContent = start <= end ? filteredCars.subList(start, end) : List.of();
 
             return new PageImpl<>(pageContent, pageable, filteredCars.size());
         } catch (SQLException e) {
