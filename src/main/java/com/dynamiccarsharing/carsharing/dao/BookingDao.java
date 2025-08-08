@@ -3,15 +3,20 @@ package com.dynamiccarsharing.carsharing.dao;
 import com.dynamiccarsharing.carsharing.dao.jdbc.BookingSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
+import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.PaymentType;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.exception.RepositoryException;
-import com.dynamiccarsharing.carsharing.model.*;
+import com.dynamiccarsharing.carsharing.filter.BookingFilter;
 import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.model.*;
 import com.dynamiccarsharing.carsharing.repository.BookingRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
@@ -82,6 +87,23 @@ public class BookingDao implements BookingRepository {
         String query = "SELECT b.*, l.city, l.state, l.zip_code FROM bookings b " +
                 "JOIN locations l ON b.pickup_location_id = l.id";
         return databaseUtil.findMany(query, this::mapToBooking);
+    }
+
+    @Override
+    public Page<Booking> findAll(BookingSearchCriteria criteria, Pageable pageable) {
+        try {
+            Filter<Booking> filter = BookingFilter.of(criteria.getRenterId(), criteria.getCarId(), criteria.getStatus());
+            List<Booking> filteredBookings = findByFilter(filter);
+
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), filteredBookings.size());
+
+            List<Booking> pageContent = (start <= end) ? filteredBookings.subList(start, end) : List.of();
+
+            return new PageImpl<>(pageContent, pageable, filteredBookings.size());
+        } catch (SQLException e) {
+            throw new RepositoryException("Failed to find bookings by filter", e);
+        }
     }
 
     @Override

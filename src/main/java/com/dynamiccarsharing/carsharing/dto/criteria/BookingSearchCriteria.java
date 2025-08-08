@@ -1,13 +1,14 @@
 package com.dynamiccarsharing.carsharing.dto.criteria;
 
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BookingSearchCriteria {
     private Long renterId;
     private Long carId;

@@ -2,6 +2,7 @@ package com.dynamiccarsharing.carsharing.repository.jpa;
 
 import com.dynamiccarsharing.carsharing.filter.ContactInfoFilter;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
+import com.dynamiccarsharing.carsharing.repository.ContactInfoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

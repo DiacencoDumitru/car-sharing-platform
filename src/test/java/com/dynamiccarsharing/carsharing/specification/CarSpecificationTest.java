@@ -5,7 +5,7 @@ import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.repository.jpa.CarJpaRepository;
+import com.dynamiccarsharing.carsharing.repository.jpa.InternalCarJpaRepository;
 import com.dynamiccarsharing.carsharing.repository.jpa.LocationJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CarSpecificationTest {
 
     @Autowired
-    private CarJpaRepository carRepository;
+    private InternalCarJpaRepository carRepository;
 
     @Autowired
     private LocationJpaRepository locationRepository;

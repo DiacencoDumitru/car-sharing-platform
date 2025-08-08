@@ -1,17 +1,26 @@
 package com.dynamiccarsharing.carsharing.repository.inmemory;
 
+import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.enums.UserRole;
 import com.dynamiccarsharing.carsharing.enums.UserStatus;
-import com.dynamiccarsharing.carsharing.model.*;
 import com.dynamiccarsharing.carsharing.filter.BookingFilter;
+import com.dynamiccarsharing.carsharing.model.Booking;
+import com.dynamiccarsharing.carsharing.model.Car;
+import com.dynamiccarsharing.carsharing.model.Location;
+import com.dynamiccarsharing.carsharing.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -154,6 +163,26 @@ class InMemoryBookingRepositoryJdbcImplTest {
             assertEquals(2, filteredBookings.size());
             assertTrue(filteredBookings.contains(booking1));
             assertTrue(filteredBookings.contains(booking3));
+        }
+
+        @Test
+        void findAll_withCriteriaAndPagination_shouldReturnCorrectPage() {
+            User renter = createStubUser(1L);
+            Car car = createStubCar(1L, Location.builder().id(1L).build());
+            repository.save(createTestBooking(1L, TransactionStatus.PENDING, renter, car));
+            repository.save(createTestBooking(2L, TransactionStatus.PENDING, renter, car));
+            repository.save(createTestBooking(3L, TransactionStatus.PENDING, renter, car));
+            repository.save(createTestBooking(4L, TransactionStatus.COMPLETED, renter, car));
+
+            BookingSearchCriteria criteria = new BookingSearchCriteria(null, null, TransactionStatus.PENDING, null, null);
+            Pageable pageable = PageRequest.of(0, 2);
+
+            Page<Booking> resultPage = repository.findAll(criteria, pageable);
+
+            assertEquals(3, resultPage.getTotalElements());
+            assertEquals(2, resultPage.getContent().size());
+            assertEquals(2, resultPage.getTotalPages());
+            assertEquals(0, resultPage.getNumber());
         }
     }
 }

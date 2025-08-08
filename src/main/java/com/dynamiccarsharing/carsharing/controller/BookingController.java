@@ -28,8 +28,8 @@ public class BookingController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<BookingDto>> getAllBookings(Pageable pageable) {
-        Page<BookingDto> bookingPage = bookingService.findAll(pageable);
+    public ResponseEntity<Page<BookingDto>> getAllBookings(BookingSearchCriteria criteria, Pageable pageable) {
+        Page<BookingDto> bookingPage = bookingService.findAll(criteria, pageable);
         return ResponseEntity.ok(bookingPage);
     }
 

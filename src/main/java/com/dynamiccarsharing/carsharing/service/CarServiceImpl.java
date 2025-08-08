@@ -12,13 +12,11 @@ import com.dynamiccarsharing.carsharing.exception.InvalidVerificationStatusExcep
 import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.mapper.CarMapper;
 import com.dynamiccarsharing.carsharing.model.Car;
-import com.dynamiccarsharing.carsharing.repository.jpa.CarJpaRepository;
+import com.dynamiccarsharing.carsharing.repository.CarRepository;
 import com.dynamiccarsharing.carsharing.service.interfaces.CarService;
-import com.dynamiccarsharing.carsharing.specification.CarSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +28,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CarServiceImpl implements CarService {
 
-    private final CarJpaRepository carRepository;
+    private final CarRepository carRepository;
     private final CarMapper carMapper;
 
     @Override
@@ -58,21 +56,10 @@ public class CarServiceImpl implements CarService {
     @Override
     @Transactional(readOnly = true)
     public Page<CarDto> findAll(CarSearchCriteria criteria, Pageable pageable) {
-        Specification<Car> spec = CarSpecification.withCriteria(
-                criteria.getMake(),
-                criteria.getModel(),
-                criteria.getStatusIn(),
-                criteria.getLocationId(),
-                criteria.getType(),
-                criteria.getPriceGreaterThan(),
-                criteria.getPriceLessThan(),
-                criteria.getVerificationStatus()
-        );
-
-        Page<Car> carPage = carRepository.findAll(spec, pageable);
-
+        Page<Car> carPage = carRepository.findAll(criteria, pageable);
         return carPage.map(carMapper::toDto);
     }
+
 
     @Override
     public CarDto rentCar(Long carId) {

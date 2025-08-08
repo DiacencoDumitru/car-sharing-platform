@@ -5,6 +5,7 @@ import com.dynamiccarsharing.carsharing.enums.UserStatus;
 import com.dynamiccarsharing.carsharing.filter.UserFilter;
 import com.dynamiccarsharing.carsharing.model.ContactInfo;
 import com.dynamiccarsharing.carsharing.model.User;
+import com.dynamiccarsharing.carsharing.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
