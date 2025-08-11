@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 @Profile("jpa")
-public interface InternalBookingJpaRepository extends JpaRepository<Booking, Long>, JpaSpecificationExecutor<Booking> {
+interface InternalBookingJpaRepository extends JpaRepository<Booking, Long>, JpaSpecificationExecutor<Booking> {
 
     List<Booking> findByRenterId(Long renterId);
 

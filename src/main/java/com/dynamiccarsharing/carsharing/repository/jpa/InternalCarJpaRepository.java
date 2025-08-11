@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @Repository
 @Profile("jpa")
-public interface InternalCarJpaRepository extends JpaRepository<Car, Long>, JpaSpecificationExecutor<Car> {
+interface InternalCarJpaRepository extends JpaRepository<Car, Long>, JpaSpecificationExecutor<Car> {
     Optional<Car> findByRegistrationNumber(String registrationNumber);
 
     List<Car> findByMakeAndModel(String make, String model);
