@@ -1,20 +1,25 @@
 package com.dynamiccarsharing.carsharing.repository.jpa;
 
+import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
-import com.dynamiccarsharing.carsharing.filter.BookingFilter;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.model.User;
+import com.dynamiccarsharing.carsharing.repository.BookingRepository;
+import com.dynamiccarsharing.carsharing.repository.CarRepository;
+import com.dynamiccarsharing.carsharing.repository.LocationRepository;
+import com.dynamiccarsharing.carsharing.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static com.dynamiccarsharing.carsharing.enums.CarStatus.AVAILABLE;
 import static com.dynamiccarsharing.carsharing.enums.CarType.SEDAN;
@@ -22,18 +27,20 @@ import static com.dynamiccarsharing.carsharing.enums.UserRole.RENTER;
 import static com.dynamiccarsharing.carsharing.enums.UserStatus.ACTIVE;
 import static com.dynamiccarsharing.carsharing.enums.VerificationStatus.VERIFIED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @DataJpaTest
-class BookingJpaRepositoryTest {
+@Import({BookingJpaRepositoryImpl.class, CarJpaRepositoryImpl.class})
+class BookingJpaRepositoryImplTest {
 
     @Autowired
-    private BookingJpaRepository bookingRepository;
+    private BookingRepository bookingRepository;
     @Autowired
-    private UserJpaRepository userRepository;
+    private CarRepository carRepository;
     @Autowired
-    private CarJpaRepository carRepository;
+    private UserRepository userRepository;
     @Autowired
-    private LocationJpaRepository locationRepository;
+    private LocationRepository locationRepository;
 
     private User renter1;
     private Car car1;
@@ -50,12 +57,13 @@ class BookingJpaRepositoryTest {
     }
 
     @Test
-    void findByFilter_withCriteria_returnsMatchingBookings() throws SQLException {
-        BookingFilter filter = BookingFilter.of(renter1.getId(), car1.getId(), TransactionStatus.PENDING);
+    void findAll_withCriteria_returnsMatchingBookings() {
+        BookingSearchCriteria criteria = new BookingSearchCriteria(renter1.getId(), car1.getId(), TransactionStatus.PENDING, null, null);
 
-        List<Booking> results = bookingRepository.findByFilter(filter);
+        Page<Booking> results = bookingRepository.findAll(criteria, PageRequest.of(0, 10));
 
-        assertEquals(1, results.size());
-        assertEquals(renter1.getId(), results.get(0).getRenter().getId());
+        assertFalse(results.isEmpty());
+        assertEquals(1, results.getTotalElements());
+        assertEquals(renter1.getId(), results.getContent().get(0).getRenter().getId());
     }
 }

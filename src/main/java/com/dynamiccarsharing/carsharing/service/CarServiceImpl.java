@@ -6,22 +6,22 @@ import com.dynamiccarsharing.carsharing.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
-import com.dynamiccarsharing.carsharing.exception.*;
-import com.dynamiccarsharing.carsharing.filter.CarFilter;
-import com.dynamiccarsharing.carsharing.filter.Filter;
+import com.dynamiccarsharing.carsharing.exception.CarNotFoundException;
+import com.dynamiccarsharing.carsharing.exception.InvalidCarStatusException;
+import com.dynamiccarsharing.carsharing.exception.InvalidVerificationStatusException;
+import com.dynamiccarsharing.carsharing.exception.ValidationException;
 import com.dynamiccarsharing.carsharing.mapper.CarMapper;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.repository.CarRepository;
 import com.dynamiccarsharing.carsharing.service.interfaces.CarService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.sql.SQLException;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.StreamSupport;
 
 @Service("carService")
 @Transactional
@@ -55,11 +55,11 @@ public class CarServiceImpl implements CarService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CarDto> findAll() {
-        return StreamSupport.stream(carRepository.findAll().spliterator(), false)
-                .map(carMapper::toDto)
-                .toList();
+    public Page<CarDto> findAll(CarSearchCriteria criteria, Pageable pageable) {
+        Page<Car> carPage = carRepository.findAll(criteria, pageable);
+        return carPage.map(carMapper::toDto);
     }
+
 
     @Override
     public CarDto rentCar(Long carId) {
@@ -121,24 +121,6 @@ public class CarServiceImpl implements CarService {
         Car car = getCarOrThrow(carId);
         Car updatedCar = carRepository.save(car.withPrice(newPrice));
         return carMapper.toDto(updatedCar);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Car> searchCars(CarSearchCriteria criteria) {
-        Filter<Car> filter = CarFilter.of(
-                criteria.getMake(),
-                criteria.getModel(),
-                criteria.getStatus(),
-                criteria.getLocation(),
-                criteria.getType(),
-                criteria.getVerificationStatus()
-        );
-        try {
-            return carRepository.findByFilter(filter);
-        } catch (SQLException e) {
-            throw new ServiceException("Search for cars failed due to a database error", e);
-        }
     }
 
     private Car getCarOrThrow(Long carId) {

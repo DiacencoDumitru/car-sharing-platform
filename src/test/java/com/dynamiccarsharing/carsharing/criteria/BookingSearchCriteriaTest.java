@@ -1,4 +1,4 @@
-package dto.criteria;
+package com.dynamiccarsharing.carsharing.criteria;
 
 import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;

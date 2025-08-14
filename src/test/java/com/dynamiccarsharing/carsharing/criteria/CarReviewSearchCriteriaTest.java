@@ -1,25 +1,25 @@
-package dto.criteria;
+package com.dynamiccarsharing.carsharing.criteria;
 
-import com.dynamiccarsharing.carsharing.dto.criteria.UserReviewSearchCriteria;
+import com.dynamiccarsharing.carsharing.dto.criteria.CarReviewSearchCriteria;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class UserReviewSearchCriteriaTest {
+class CarReviewSearchCriteriaTest {
 
     @Test
     void builder_withAllFields_setsAndGetsAllFields() {
-        Long userId = 1L;
+        Long carId = 1L;
         Long reviewerId = 2L;
 
-        UserReviewSearchCriteria criteria = UserReviewSearchCriteria.builder()
-                .userId(userId)
+        CarReviewSearchCriteria criteria = CarReviewSearchCriteria.builder()
+                .carId(carId)
                 .reviewerId(reviewerId)
                 .build();
 
         assertNotNull(criteria);
-        assertEquals(userId, criteria.getUserId());
+        assertEquals(carId, criteria.getCarId());
         assertEquals(reviewerId, criteria.getReviewerId());
     }
 }

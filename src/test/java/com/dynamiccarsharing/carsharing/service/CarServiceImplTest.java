@@ -3,6 +3,7 @@ package com.dynamiccarsharing.carsharing.service;
 import com.dynamiccarsharing.carsharing.dto.CarCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.CarDto;
 import com.dynamiccarsharing.carsharing.dto.CarUpdateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.exception.InvalidVerificationStatusException;
@@ -15,10 +16,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -77,18 +80,6 @@ class CarServiceImplTest {
 
         assertTrue(result.isPresent());
         assertEquals(carId, result.get().getId());
-    }
-
-    @Test
-    void findAll_shouldMapAndReturnDtoList() {
-        Car carEntity = createTestCar(1L, CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
-        CarDto expectedDto = new CarDto();
-        when(carRepository.findAll()).thenReturn(Collections.singletonList(carEntity));
-        when(carMapper.toDto(carEntity)).thenReturn(expectedDto);
-
-        List<CarDto> result = carService.findAll();
-
-        assertEquals(1, result.size());
     }
 
     @Test
@@ -177,5 +168,23 @@ class CarServiceImplTest {
         Long carId = 1L;
 
         assertThrows(ValidationException.class, () -> carService.updatePrice(carId, new BigDecimal("-10")));
+    }
+
+    @Test
+    void findAll_shouldCallRepositoryAndReturnPaginatedDtos() {
+        CarSearchCriteria criteria = new CarSearchCriteria();
+        Pageable pageable = Pageable.unpaged();
+
+        Car carEntity = new Car();
+        Page<Car> carPage = new PageImpl<>(Collections.singletonList(carEntity));
+        CarDto expectedDto = new CarDto();
+
+        when(carRepository.findAll(criteria, pageable)).thenReturn(carPage);
+        when(carMapper.toDto(any(Car.class))).thenReturn(expectedDto);
+
+        Page<CarDto> resultPage = carService.findAll(criteria, pageable);
+
+        assertEquals(1, resultPage.getTotalElements());
+        verify(carRepository).findAll(criteria, pageable);
     }
 }

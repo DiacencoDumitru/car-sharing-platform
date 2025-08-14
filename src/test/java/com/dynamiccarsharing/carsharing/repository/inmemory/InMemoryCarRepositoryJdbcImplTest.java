@@ -1,18 +1,24 @@
 package com.dynamiccarsharing.carsharing.repository.inmemory;
 
+import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
+import com.dynamiccarsharing.carsharing.filter.CarFilter;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.filter.CarFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -142,6 +148,24 @@ class InMemoryCarRepositoryJdbcImplTest {
             assertTrue(filteredCars.contains(car1));
             assertTrue(filteredCars.contains(car3));
             assertFalse(filteredCars.contains(car2));
+        }
+
+        @Test
+        void findAll_withCriteriaAndPagination_shouldReturnCorrectPage() {
+            repository.save(createTestCar(1L, "Model 3", CarStatus.AVAILABLE));
+            repository.save(createTestCar(2L, "Model S", CarStatus.AVAILABLE));
+            repository.save(createTestCar(3L, "Model X", CarStatus.AVAILABLE));
+            repository.save(createTestCar(4L, "CyberTruck", CarStatus.RENTED));
+
+            CarSearchCriteria criteria = CarSearchCriteria.builder().statusIn(List.of(CarStatus.AVAILABLE)).build();
+            Pageable pageable = PageRequest.of(0, 2);
+
+            Page<Car> resultPage = repository.findAll(criteria, pageable);
+
+            assertEquals(3, resultPage.getTotalElements());
+            assertEquals(2, resultPage.getContent().size());
+            assertEquals(2, resultPage.getTotalPages());
+            assertEquals(0, resultPage.getNumber());
         }
     }
 }

@@ -2,6 +2,7 @@ package com.dynamiccarsharing.carsharing.service;
 
 import com.dynamiccarsharing.carsharing.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.BookingDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.DisputeStatus;
 import com.dynamiccarsharing.carsharing.enums.TransactionStatus;
 import com.dynamiccarsharing.carsharing.exception.InvalidDisputeStatusException;
@@ -17,9 +18,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +42,7 @@ class BookingServiceImplTest {
 
     @Mock
     private BookingMapper bookingMapper;
+
 
     private BookingServiceImpl bookingService;
 
@@ -60,6 +65,26 @@ class BookingServiceImplTest {
     }
 
     @Test
+    void findAll_withCriteria_shouldCallRepositoryAndMapper() {
+        BookingSearchCriteria criteria = new BookingSearchCriteria();
+        Pageable pageable = PageRequest.of(0, 10);
+        Booking booking = new Booking();
+        Page<Booking> bookingPage = new PageImpl<>(List.of(booking));
+        BookingDto bookingDto = new BookingDto();
+
+        when(bookingRepository.findAll(criteria, pageable)).thenReturn(bookingPage);
+        when(bookingMapper.toDto(any(Booking.class))).thenReturn(bookingDto);
+
+        Page<BookingDto> resultPage = bookingService.findAll(criteria, pageable);
+
+        assertNotNull(resultPage);
+        assertEquals(1, resultPage.getTotalElements());
+        verify(bookingRepository).findAll(criteria, pageable);
+        verify(bookingMapper).toDto(booking);
+    }
+
+
+    @Test
     void save_shouldMapAndReturnDto() {
         BookingCreateRequestDto createDto = new BookingCreateRequestDto();
         Booking bookingEntity = createTestBooking(null, TransactionStatus.PENDING, null);
@@ -75,16 +100,6 @@ class BookingServiceImplTest {
 
         assertNotNull(resultDto);
         assertEquals(1L, resultDto.getId());
-    }
-
-    @Test
-    void findAll_shouldMapAndReturnDtoList() {
-        when(bookingRepository.findAll()).thenReturn(Collections.singletonList(new Booking()));
-        when(bookingMapper.toDto(any(Booking.class))).thenReturn(new BookingDto());
-
-        List<BookingDto> result = bookingService.findAll();
-
-        assertEquals(1, result.size());
     }
 
     @Test

@@ -1,8 +1,13 @@
 package com.dynamiccarsharing.carsharing.repository.inmemory;
 
+import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
+import com.dynamiccarsharing.carsharing.filter.BookingFilter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.repository.BookingRepository;
-import com.dynamiccarsharing.carsharing.filter.Filter;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.util.*;
 
@@ -33,6 +38,19 @@ public class InMemoryBookingRepositoryJdbcImpl implements BookingRepository {
     @Override
     public List<Booking> findAll() {
         return new ArrayList<>(bookingMap.values());
+    }
+
+    @Override
+    public Page<Booking> findAll(BookingSearchCriteria criteria, Pageable pageable) {
+        Filter<Booking> filter = BookingFilter.of(criteria.getRenterId(), criteria.getCarId(), criteria.getStatus());
+        List<Booking> filteredBookings = bookingMap.values().stream().filter(filter::test).toList();
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), filteredBookings.size());
+
+        List<Booking> pageContent = start <= end ? filteredBookings.subList(start, end) : List.of();
+
+        return new PageImpl<>(pageContent, pageable, filteredBookings.size());
     }
 
     @Override

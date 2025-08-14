@@ -8,10 +8,10 @@ import com.dynamiccarsharing.carsharing.model.Booking;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
 import com.dynamiccarsharing.carsharing.model.User;
-import com.dynamiccarsharing.carsharing.repository.jpa.BookingJpaRepository;
-import com.dynamiccarsharing.carsharing.repository.jpa.CarJpaRepository;
-import com.dynamiccarsharing.carsharing.repository.jpa.LocationJpaRepository;
-import com.dynamiccarsharing.carsharing.repository.jpa.UserJpaRepository;
+import com.dynamiccarsharing.carsharing.repository.LocationRepository;
+import com.dynamiccarsharing.carsharing.repository.UserRepository;
+import com.dynamiccarsharing.carsharing.repository.jpa.InternalBookingJpaRepository;
+import com.dynamiccarsharing.carsharing.repository.jpa.InternalCarJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +31,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BookingSpecificationTest {
 
     @Autowired
-    private BookingJpaRepository bookingRepository;
+    private InternalBookingJpaRepository bookingRepository;
     @Autowired
-    private UserJpaRepository userRepository;
+    private UserRepository userRepository;
     @Autowired
-    private CarJpaRepository carRepository;
+    private InternalCarJpaRepository carRepository;
     @Autowired
-    private LocationJpaRepository locationRepository;
+    private LocationRepository locationRepository;
 
     private User renter1, renter2;
     private Car car1, car2;

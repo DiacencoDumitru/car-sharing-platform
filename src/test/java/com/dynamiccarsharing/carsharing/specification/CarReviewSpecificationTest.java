@@ -26,7 +26,7 @@ class CarReviewSpecificationTest {
     private CarReviewJpaRepository reviewRepository;
 
     @Autowired
-    private CarJpaRepository carRepository;
+    private InternalCarJpaRepository carRepository;
 
     @Autowired
     private UserJpaRepository userRepository;

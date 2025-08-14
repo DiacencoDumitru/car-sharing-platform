@@ -1,13 +1,19 @@
 package com.dynamiccarsharing.carsharing.repository.jpa;
 
+import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.filter.CarFilter;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
+import com.dynamiccarsharing.carsharing.repository.CarRepository;
+import com.dynamiccarsharing.carsharing.repository.LocationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -18,12 +24,14 @@ import static com.dynamiccarsharing.carsharing.enums.VerificationStatus.VERIFIED
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DataJpaTest
-class CarJpaRepositoryTest {
+@Import({CarJpaRepositoryImpl.class})
+class CarJpaRepositoryImplTest {
 
     @Autowired
-    private CarJpaRepository carRepository;
+    private CarRepository carRepository;
+
     @Autowired
-    private LocationJpaRepository locationRepository;
+    private LocationRepository locationRepository;
 
     private Location savedLocation;
 
@@ -42,5 +50,15 @@ class CarJpaRepositoryTest {
 
         assertEquals(1, results.size());
         assertEquals("Honda", results.get(0).getMake());
+    }
+
+    @Test
+    void findAll_withCriteria_returnsMatchingCars() {
+        CarSearchCriteria criteria = CarSearchCriteria.builder().make("Honda").statusIn(List.of(CarStatus.AVAILABLE)).build();
+
+        Page<Car> results = carRepository.findAll(criteria, PageRequest.of(0, 10));
+
+        assertEquals(1, results.getTotalElements());
+        assertEquals("Honda", results.getContent().get(0).getMake());
     }
 }

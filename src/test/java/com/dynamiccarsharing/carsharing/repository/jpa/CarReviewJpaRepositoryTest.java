@@ -29,7 +29,7 @@ class CarReviewJpaRepositoryTest {
     @Autowired
     private CarReviewJpaRepository carReviewRepository;
     @Autowired
-    private CarJpaRepository carRepository;
+    private InternalCarJpaRepository carRepository;
     @Autowired
     private UserJpaRepository userRepository;
     @Autowired
