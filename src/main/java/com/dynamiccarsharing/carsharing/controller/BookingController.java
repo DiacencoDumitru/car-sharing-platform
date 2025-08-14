@@ -3,14 +3,15 @@ package com.dynamiccarsharing.carsharing.controller;
 import com.dynamiccarsharing.carsharing.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.BookingDto;
 import com.dynamiccarsharing.carsharing.dto.BookingStatusUpdateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.carsharing.service.interfaces.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/bookings")
@@ -27,9 +28,9 @@ public class BookingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingDto>> getAllBookings() {
-        List<BookingDto> bookingDtos = bookingService.findAll().stream().toList();
-        return ResponseEntity.ok(bookingDtos);
+    public ResponseEntity<Page<BookingDto>> getAllBookings(BookingSearchCriteria criteria, Pageable pageable) {
+        Page<BookingDto> bookingPage = bookingService.findAll(criteria, pageable);
+        return ResponseEntity.ok(bookingPage);
     }
 
     @PostMapping

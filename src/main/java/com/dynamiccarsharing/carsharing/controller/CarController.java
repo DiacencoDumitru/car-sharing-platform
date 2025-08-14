@@ -3,14 +3,15 @@ package com.dynamiccarsharing.carsharing.controller;
 import com.dynamiccarsharing.carsharing.dto.CarCreateRequestDto;
 import com.dynamiccarsharing.carsharing.dto.CarDto;
 import com.dynamiccarsharing.carsharing.dto.CarUpdateRequestDto;
+import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.service.interfaces.CarService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("api/v1/cars")
@@ -33,9 +34,9 @@ public class CarController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CarDto>> getAllCars() {
-        List<CarDto> carDtos = carService.findAll();
-        return ResponseEntity.ok(carDtos);
+    public ResponseEntity<Page<CarDto>> getAllCars(CarSearchCriteria criteria, Pageable pageable) {
+        Page<CarDto> carPage = carService.findAll(criteria, pageable);
+        return ResponseEntity.ok(carPage);
     }
 
     @PatchMapping("/{carId}")

@@ -3,16 +3,21 @@ package com.dynamiccarsharing.carsharing.dao;
 import com.dynamiccarsharing.carsharing.dao.jdbc.CarSqlFilterMapper;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.carsharing.dao.jdbc.SqlFilterMapper;
+import com.dynamiccarsharing.carsharing.dto.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.carsharing.enums.CarStatus;
 import com.dynamiccarsharing.carsharing.enums.CarType;
 import com.dynamiccarsharing.carsharing.enums.VerificationStatus;
 import com.dynamiccarsharing.carsharing.exception.RepositoryException;
+import com.dynamiccarsharing.carsharing.filter.CarFilter;
+import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.model.Car;
 import com.dynamiccarsharing.carsharing.model.Location;
-import com.dynamiccarsharing.carsharing.filter.Filter;
 import com.dynamiccarsharing.carsharing.repository.CarRepository;
 import com.dynamiccarsharing.carsharing.util.DatabaseUtil;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
@@ -82,6 +87,27 @@ public class CarDao implements CarRepository {
         String query = "SELECT c.*, l.city, l.state, l.zip_code FROM cars c " +
                 "JOIN locations l ON c.location_id = l.id";
         return databaseUtil.findMany(query, this::mapToCar);
+    }
+
+    @Override
+    public Page<Car> findAll(CarSearchCriteria criteria, Pageable pageable) {
+        try {
+            Filter<Car> filter = CarFilter.of(criteria.getMake(), criteria.getModel(),
+                    criteria.getStatusIn() != null && !criteria.getStatusIn().isEmpty() ? criteria.getStatusIn().get(0) : null,
+                    criteria.getLocationId() != null ? Location.builder().id(criteria.getLocationId()).build() : null,
+                    criteria.getType(), criteria.getVerificationStatus());
+
+            List<Car> filteredCars = findByFilter(filter);
+
+            int start = (int) pageable.getOffset();
+            int end = Math.min(start + pageable.getPageSize(), filteredCars.size());
+
+            List<Car> pageContent = start <= end ? filteredCars.subList(start, end) : List.of();
+
+            return new PageImpl<>(pageContent, pageable, filteredCars.size());
+        } catch (SQLException e) {
+            throw new RepositoryException("Failed to find cars by filter", e);
+        }
     }
 
     @Override

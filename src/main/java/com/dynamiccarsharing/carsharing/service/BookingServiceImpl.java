@@ -16,6 +16,8 @@ import com.dynamiccarsharing.carsharing.repository.BookingRepository;
 import com.dynamiccarsharing.carsharing.repository.DisputeRepository;
 import com.dynamiccarsharing.carsharing.service.interfaces.BookingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +32,9 @@ import java.util.Optional;
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
+
     private final DisputeRepository disputeRepository;
+
     private final BookingMapper bookingMapper;
 
     @Override
@@ -48,8 +52,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingDto> findAll() {
-        return bookingRepository.findAll().stream().map(bookingMapper::toDto).toList();
+    public Page<BookingDto> findAll(BookingSearchCriteria criteria, Pageable pageable) {
+        Page<Booking> bookingPage = bookingRepository.findAll(criteria, pageable);
+        return bookingPage.map(bookingMapper::toDto);
     }
 
     @Override
