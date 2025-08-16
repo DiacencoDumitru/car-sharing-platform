@@ -12,10 +12,19 @@
     <groupId>org.example</groupId>
     <artifactId>DynamicCarSharing</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
     <name>DynamicCarSharing</name>
     <url>http://maven.apache.org</url>
+    <modules>
+        <module>common-utils</module>
+
+        <module>car-service</module>
+        <module>user-service</module>
+        <module>dispute-service</module>
+        <module>booking-service</module>
+        <module>api-contracts</module>
+    </modules>
 
     <properties>
         <java.version>17</java.version>
@@ -98,6 +107,10 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
     </dependencies>
 
