@@ -1,11 +1,11 @@
 package com.dynamiccarsharing.user.service.interfaces;
 
 
-import com.dynamiccarsharing.user.criteria.UserSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.ContactInfoUpdateRequestDto;
-import com.dynamiccarsharing.contracts.dto.UserCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
-import com.dynamiccarsharing.contracts.dto.UserStatusUpdateRequestDto;
+import com.dynamiccarsharing.user.criteria.UserSearchCriteria;
+import com.dynamiccarsharing.user.dto.ContactInfoUpdateRequestDto;
+import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
+import com.dynamiccarsharing.user.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.user.model.User;
 
 import java.util.List;

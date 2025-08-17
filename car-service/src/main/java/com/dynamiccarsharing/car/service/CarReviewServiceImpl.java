@@ -1,9 +1,9 @@
 package com.dynamiccarsharing.car.service;
 
 import com.dynamiccarsharing.car.criteria.CarReviewSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.CarReviewCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.CarReviewDto;
-import com.dynamiccarsharing.contracts.dto.CarReviewUpdateRequestDto;
+import com.dynamiccarsharing.car.dto.CarReviewCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarReviewDto;
+import com.dynamiccarsharing.car.dto.CarReviewUpdateRequestDto;
 import com.dynamiccarsharing.car.exception.CarReviewNotFoundException;
 import com.dynamiccarsharing.car.filter.CarReviewFilter;
 import com.dynamiccarsharing.car.mapper.CarReviewMapper;
@@ -15,6 +15,7 @@ import com.dynamiccarsharing.contracts.dto.UserDto;
 import com.dynamiccarsharing.util.exception.ServiceException;
 import com.dynamiccarsharing.util.exception.ValidationException;
 import com.dynamiccarsharing.util.filter.Filter;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,8 +33,14 @@ public class CarReviewServiceImpl implements CarReviewService {
     private final CarReviewRepository carReviewRepository;
     private final CarRepository carRepository;
     private final CarReviewMapper carReviewMapper;
+    private final WebClient.Builder webClientBuilder;
 
-    private final WebClient userWebClient;
+    private WebClient userWebClient;
+
+    @PostConstruct
+    public void init() {
+        this.userWebClient = webClientBuilder.baseUrl("http://user-service").build();
+    }
 
     @Override
     public CarReviewDto createReview(Long carId, CarReviewCreateRequestDto createDto) {

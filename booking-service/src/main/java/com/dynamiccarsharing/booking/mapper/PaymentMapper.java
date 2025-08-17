@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.booking.mapper;
 
-import com.dynamiccarsharing.contracts.dto.PaymentDto;
-import com.dynamiccarsharing.contracts.dto.PaymentRequestDto;
+import com.dynamiccarsharing.booking.dto.PaymentDto;
+import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
 import com.dynamiccarsharing.booking.model.Payment;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

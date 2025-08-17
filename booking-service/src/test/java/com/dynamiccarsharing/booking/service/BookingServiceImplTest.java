@@ -1,15 +1,15 @@
 package com.dynamiccarsharing.booking.service;
 
 import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.BookingCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.BookingDto;
-import com.dynamiccarsharing.contracts.enums.TransactionStatus;
+import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.booking.mapper.BookingMapper;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
+import com.dynamiccarsharing.contracts.dto.BookingDto;
 import com.dynamiccarsharing.contracts.dto.CarDto;
-import com.dynamiccarsharing.contracts.enums.CarStatus;
 import com.dynamiccarsharing.contracts.dto.UserDto;
+import com.dynamiccarsharing.contracts.enums.CarStatus;
+import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.util.exception.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -41,6 +42,8 @@ class BookingServiceImplTest {
     @Mock
     private BookingMapper bookingMapper;
     @Mock
+    private WebClient.Builder webClientBuilder;
+    @Mock
     private WebClient userWebClient;
     @Mock
     private WebClient carWebClient;
@@ -49,7 +52,14 @@ class BookingServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        bookingService = new BookingServiceImpl(bookingRepository, bookingMapper, userWebClient, carWebClient);
+        bookingService = new BookingServiceImpl(
+                bookingRepository,
+                bookingMapper,
+                webClientBuilder
+        );
+
+        ReflectionTestUtils.setField(bookingService, "userWebClient", userWebClient);
+        ReflectionTestUtils.setField(bookingService, "carWebClient", carWebClient);
     }
 
     private BookingCreateRequestDto createTestBookingDto() {
@@ -71,6 +81,7 @@ class BookingServiceImplTest {
                 .build();
     }
 
+    @Test
     @DisplayName("save() should create booking when user and car are valid")
     void save_whenValid_shouldMapAndReturnDto() {
         BookingCreateRequestDto createDto = createTestBookingDto();

@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.dispute.controller;
 
-import com.dynamiccarsharing.contracts.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.DisputeDto;
+import com.dynamiccarsharing.dispute.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.dispute.service.interfaces.DisputeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

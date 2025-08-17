@@ -2,11 +2,11 @@ package com.dynamiccarsharing.booking.controller;
 
 import com.dynamiccarsharing.booking.config.SecurityConfig;
 import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.BookingCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.BookingDto;
-import com.dynamiccarsharing.contracts.dto.BookingStatusUpdateRequestDto;
-import com.dynamiccarsharing.contracts.enums.TransactionStatus;
+import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
+import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
+import com.dynamiccarsharing.contracts.dto.BookingDto;
+import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.util.exception.ValidationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

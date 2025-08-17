@@ -1,13 +1,11 @@
 package com.dynamiccarsharing.user.service;
 
-import com.dynamiccarsharing.contracts.dto.ContactInfoUpdateRequestDto;
-import com.dynamiccarsharing.contracts.dto.UserCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
-import com.dynamiccarsharing.contracts.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.user.criteria.UserSearchCriteria;
-import com.dynamiccarsharing.util.exception.ServiceException;
+import com.dynamiccarsharing.user.dto.ContactInfoUpdateRequestDto;
+import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
+import com.dynamiccarsharing.user.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.user.exception.UserNotFoundException;
-import com.dynamiccarsharing.util.filter.Filter;
 import com.dynamiccarsharing.user.filter.UserFilter;
 import com.dynamiccarsharing.user.mapper.ContactInfoMapper;
 import com.dynamiccarsharing.user.mapper.UserMapper;
@@ -15,6 +13,8 @@ import com.dynamiccarsharing.user.model.ContactInfo;
 import com.dynamiccarsharing.user.model.User;
 import com.dynamiccarsharing.user.repository.UserRepository;
 import com.dynamiccarsharing.user.service.interfaces.UserService;
+import com.dynamiccarsharing.util.exception.ServiceException;
+import com.dynamiccarsharing.util.filter.Filter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

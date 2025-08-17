@@ -191,9 +191,8 @@ class CarDaoTest extends CarBaseDaoTest {
     @DisplayName("Filter Operations")
     class FilterOperations {
 
-        // Create all test data in a single method to ensure consistency
-        private void setUpTestData() throws SQLException {
-            // Toyota cars in testLocation
+        private void setUpTestData() {
+
             Car toyotaSedan = createCar("TS-01", "Toyota", "Camry", testLocation);
             toyotaSedan.setType(CarType.SEDAN);
             carDao.save(toyotaSedan);
@@ -202,12 +201,10 @@ class CarDaoTest extends CarBaseDaoTest {
             toyotaSuv.setType(CarType.SUV);
             carDao.save(toyotaSuv);
 
-            // Honda car (rented) in testLocation
             Car hondaRented = createCar("HN-01", "Honda", "Civic", testLocation);
             hondaRented.setStatus(CarStatus.RENTED);
             carDao.save(hondaRented);
 
-            // Ford car in secondLocation
             Car fordOtherLocation = createCar("FD-01", "Ford", "Focus", secondLocation);
             carDao.save(fordOtherLocation);
         }

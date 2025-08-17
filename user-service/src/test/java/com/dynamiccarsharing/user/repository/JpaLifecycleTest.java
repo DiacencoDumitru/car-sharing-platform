@@ -7,7 +7,6 @@ import com.dynamiccarsharing.user.model.User;
 import com.dynamiccarsharing.user.model.UserReview;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
-import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -274,7 +273,7 @@ class JpaLifecycleTest {
         User reviewer = userRepository.save(createTransientUser());
         UserReview child = UserReview.builder().comment("No parent user").reviewer(reviewer).build();
 
-        assertThrows(ConstraintViolationException.class, () -> {
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class, () -> {
             userReviewRepository.save(child);
             entityManager.flush();
         });
@@ -286,7 +285,7 @@ class JpaLifecycleTest {
         User reviewer = userRepository.save(createTransientUser());
         UserReview child = UserReview.builder().comment("No parent user").reviewer(reviewer).build();
 
-        assertThrows(ConstraintViolationException.class, () -> {
+        assertThrows(org.hibernate.PropertyValueException.class, () -> {
             transactionTemplate.executeWithoutResult(status -> {
                 entityManager.persist(child);
                 entityManager.flush();
@@ -300,7 +299,7 @@ class JpaLifecycleTest {
         User reviewer = userRepository.save(createTransientUser());
         UserReview child = UserReview.builder().comment("No parent").reviewer(reviewer).build();
 
-        assertThrows(ConstraintViolationException.class, () -> {
+        assertThrows(org.hibernate.PropertyValueException.class, () -> {
             transactionTemplate.executeWithoutResult(status -> {
                 entityManager.merge(child);
                 entityManager.flush();

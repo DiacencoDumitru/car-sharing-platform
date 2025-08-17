@@ -1,9 +1,9 @@
 package com.dynamiccarsharing.car.service.interfaces;
 
 import com.dynamiccarsharing.car.criteria.CarSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.CarCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.contracts.dto.CarDto;
-import com.dynamiccarsharing.contracts.dto.CarUpdateRequestDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

@@ -1,9 +1,9 @@
 package com.dynamiccarsharing.user.service;
 
-import com.dynamiccarsharing.user.criteria.ContactInfoSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.ContactInfoCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.ContactInfoDto;
-import com.dynamiccarsharing.contracts.dto.ContactInfoUpdateRequestDto;
+import com.dynamiccarsharing.user.criteria.ContactInfoSearchCriteria;
+import com.dynamiccarsharing.user.dto.ContactInfoCreateRequestDto;
+import com.dynamiccarsharing.user.dto.ContactInfoUpdateRequestDto;
 import com.dynamiccarsharing.user.exception.ContactInfoNotFoundException;
 import com.dynamiccarsharing.user.filter.ContactInfoFilter;
 import com.dynamiccarsharing.user.mapper.ContactInfoMapper;

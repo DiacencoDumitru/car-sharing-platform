@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.dispute.mapper;
 
-import com.dynamiccarsharing.contracts.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.DisputeDto;
+import com.dynamiccarsharing.dispute.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.dispute.model.Dispute;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

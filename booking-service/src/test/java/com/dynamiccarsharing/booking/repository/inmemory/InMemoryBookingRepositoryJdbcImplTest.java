@@ -77,7 +77,6 @@ class InMemoryBookingRepositoryJdbcImplTest {
 
         @Test
         void deleteById_withExistingId_shouldRemoveBooking() {
-            // FIX: Replaced undefined variables with concrete Long IDs
             Booking booking = createTestBooking(1L, TransactionStatus.PENDING, 100L, 200L, 300L);
             repository.save(booking);
 

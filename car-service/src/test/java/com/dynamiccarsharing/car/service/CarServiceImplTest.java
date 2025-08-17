@@ -1,15 +1,15 @@
 package com.dynamiccarsharing.car.service;
 
 import com.dynamiccarsharing.car.criteria.CarSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.CarCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.CarDto;
-import com.dynamiccarsharing.contracts.dto.CarUpdateRequestDto;
-import com.dynamiccarsharing.contracts.enums.CarStatus;
-import com.dynamiccarsharing.contracts.enums.VerificationStatus;
+import com.dynamiccarsharing.car.dto.CarCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.car.exception.InvalidVerificationStatusException;
 import com.dynamiccarsharing.car.mapper.CarMapper;
 import com.dynamiccarsharing.car.model.Car;
 import com.dynamiccarsharing.car.repository.CarRepository;
+import com.dynamiccarsharing.contracts.dto.CarDto;
+import com.dynamiccarsharing.contracts.enums.CarStatus;
+import com.dynamiccarsharing.contracts.enums.VerificationStatus;
 import com.dynamiccarsharing.util.exception.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

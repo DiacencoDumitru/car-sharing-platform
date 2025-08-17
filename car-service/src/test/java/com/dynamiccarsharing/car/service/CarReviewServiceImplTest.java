@@ -1,8 +1,8 @@
 package com.dynamiccarsharing.car.service;
 
-import com.dynamiccarsharing.contracts.dto.CarReviewCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.CarReviewDto;
-import com.dynamiccarsharing.contracts.dto.CarReviewUpdateRequestDto;
+import com.dynamiccarsharing.car.dto.CarReviewCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarReviewDto;
+import com.dynamiccarsharing.car.dto.CarReviewUpdateRequestDto;
 import com.dynamiccarsharing.car.exception.CarReviewNotFoundException;
 import com.dynamiccarsharing.car.mapper.CarReviewMapper;
 import com.dynamiccarsharing.car.model.Car;
@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -39,14 +40,22 @@ class CarReviewServiceImplTest {
     @Mock
     private CarReviewMapper carReviewMapper;
     @Mock
+    private WebClient.Builder webClientBuilder;
+    @Mock
     private WebClient userWebClient;
 
     private CarReviewServiceImpl carReviewService;
 
-
     @BeforeEach
     void setUp() {
-        carReviewService = new CarReviewServiceImpl(carReviewRepository, carRepository, carReviewMapper, userWebClient);
+        carReviewService = new CarReviewServiceImpl(
+                carReviewRepository,
+                carRepository,
+                carReviewMapper,
+                webClientBuilder
+        );
+
+        ReflectionTestUtils.setField(carReviewService, "userWebClient", userWebClient);
     }
 
     @Test

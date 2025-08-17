@@ -1,9 +1,9 @@
 package com.dynamiccarsharing.car.service;
 
 import com.dynamiccarsharing.car.criteria.LocationSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.LocationCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.LocationDto;
-import com.dynamiccarsharing.contracts.dto.LocationUpdateRequestDto;
+import com.dynamiccarsharing.car.dto.LocationCreateRequestDto;
+import com.dynamiccarsharing.car.dto.LocationDto;
+import com.dynamiccarsharing.car.dto.LocationUpdateRequestDto;
 import com.dynamiccarsharing.car.exception.LocationNotFoundException;
 import com.dynamiccarsharing.car.filter.LocationFilter;
 import com.dynamiccarsharing.car.mapper.LocationMapper;

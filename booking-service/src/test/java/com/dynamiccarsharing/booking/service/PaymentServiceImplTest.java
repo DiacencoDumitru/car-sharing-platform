@@ -1,8 +1,7 @@
 package com.dynamiccarsharing.booking.service;
 
-import com.dynamiccarsharing.contracts.dto.PaymentDto;
-import com.dynamiccarsharing.contracts.dto.PaymentRequestDto;
-import com.dynamiccarsharing.contracts.enums.TransactionStatus;
+import com.dynamiccarsharing.booking.dto.PaymentDto;
+import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
 import com.dynamiccarsharing.booking.exception.BookingNotFoundException;
 import com.dynamiccarsharing.booking.exception.PaymentNotFoundException;
 import com.dynamiccarsharing.booking.mapper.PaymentMapper;
@@ -10,6 +9,7 @@ import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.model.Payment;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.repository.PaymentRepository;
+import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,7 +55,6 @@ class PaymentServiceImplTest {
     @Test
     @DisplayName("createPayment() should succeed when booking exists")
     void createPayment_shouldMapAndSaveAndReturnDto() {
-        // Arrange
         Long bookingId = 10L;
         PaymentRequestDto requestDto = new PaymentRequestDto();
 

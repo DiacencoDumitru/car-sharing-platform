@@ -1,9 +1,9 @@
 package com.dynamiccarsharing.booking.service.interfaces;
 
 import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.BookingCreateRequestDto;
+import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
+import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
-import com.dynamiccarsharing.contracts.dto.BookingStatusUpdateRequestDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

@@ -1,8 +1,8 @@
 package com.dynamiccarsharing.booking.validation;
 
+import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import com.dynamiccarsharing.contracts.dto.BookingCreateRequestDto;
 
 import java.time.LocalDateTime;
 

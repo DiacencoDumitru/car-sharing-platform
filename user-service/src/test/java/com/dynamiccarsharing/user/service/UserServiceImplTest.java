@@ -1,10 +1,10 @@
 package com.dynamiccarsharing.user.service;
 
-import com.dynamiccarsharing.contracts.dto.ContactInfoUpdateRequestDto;
-import com.dynamiccarsharing.contracts.dto.UserCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
-import com.dynamiccarsharing.contracts.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.contracts.enums.UserStatus;
+import com.dynamiccarsharing.user.dto.ContactInfoUpdateRequestDto;
+import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
+import com.dynamiccarsharing.user.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.user.mapper.ContactInfoMapper;
 import com.dynamiccarsharing.user.mapper.UserMapper;
 import com.dynamiccarsharing.user.model.ContactInfo;

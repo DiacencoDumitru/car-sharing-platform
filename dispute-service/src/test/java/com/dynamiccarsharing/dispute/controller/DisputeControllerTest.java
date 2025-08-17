@@ -1,8 +1,8 @@
 package com.dynamiccarsharing.dispute.controller;
 
-import com.dynamiccarsharing.contracts.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.DisputeDto;
 import com.dynamiccarsharing.contracts.enums.DisputeStatus;
+import com.dynamiccarsharing.dispute.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.dispute.service.interfaces.DisputeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

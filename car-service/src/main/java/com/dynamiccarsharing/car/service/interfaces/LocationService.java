@@ -1,9 +1,9 @@
 package com.dynamiccarsharing.car.service.interfaces;
 
 import com.dynamiccarsharing.car.criteria.LocationSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.LocationCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.LocationDto;
-import com.dynamiccarsharing.contracts.dto.LocationUpdateRequestDto;
+import com.dynamiccarsharing.car.dto.LocationCreateRequestDto;
+import com.dynamiccarsharing.car.dto.LocationDto;
+import com.dynamiccarsharing.car.dto.LocationUpdateRequestDto;
 import com.dynamiccarsharing.car.model.Location;
 
 import java.util.List;

@@ -1,8 +1,8 @@
 package com.dynamiccarsharing.user.service;
 
-import com.dynamiccarsharing.contracts.dto.UserReviewCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.UserReviewDto;
-import com.dynamiccarsharing.contracts.dto.UserReviewUpdateRequestDto;
+import com.dynamiccarsharing.user.dto.UserReviewCreateRequestDto;
+import com.dynamiccarsharing.user.dto.UserReviewDto;
+import com.dynamiccarsharing.user.dto.UserReviewUpdateRequestDto;
 import com.dynamiccarsharing.user.exception.UserReviewNotFoundException;
 import com.dynamiccarsharing.user.mapper.UserReviewMapper;
 import com.dynamiccarsharing.user.model.UserReview;

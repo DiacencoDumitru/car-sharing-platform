@@ -1,19 +1,18 @@
 package com.dynamiccarsharing.car.controller;
 
-import com.dynamiccarsharing.car.config.SecurityConfig;
 import com.dynamiccarsharing.car.criteria.CarSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.CarCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarUpdateRequestDto;
+import com.dynamiccarsharing.car.service.interfaces.CarService;
 import com.dynamiccarsharing.contracts.dto.CarDto;
-import com.dynamiccarsharing.contracts.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.contracts.enums.CarStatus;
 import com.dynamiccarsharing.contracts.enums.CarType;
-import com.dynamiccarsharing.car.service.interfaces.CarService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CarController.class)
-@Import(SecurityConfig.class)
+@AutoConfigureMockMvc(addFilters = false)
 class CarControllerTest {
 
     @Autowired
@@ -81,8 +80,7 @@ class CarControllerTest {
 
         mockMvc.perform(post("/api/v1/cars")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createDto))
-                        .with(csrf()))
+                        .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isBadRequest());
     }
 

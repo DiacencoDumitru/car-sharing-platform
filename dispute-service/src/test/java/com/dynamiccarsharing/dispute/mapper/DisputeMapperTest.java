@@ -1,6 +1,6 @@
 package com.dynamiccarsharing.dispute.mapper;
 
-import com.dynamiccarsharing.contracts.dto.DisputeCreateRequestDto;
+import com.dynamiccarsharing.dispute.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.dispute.model.Dispute;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;

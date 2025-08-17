@@ -1,4 +1,14 @@
 services:
+  eureka-server:
+    container_name: eureka-server
+    build:
+      context: .
+      dockerfile: ./eureka-server/Dockerfile
+    ports:
+      - "8761:8761"
+    networks:
+      - micro-net
+
   dynamiccarsharing_db:
     container_name: DynamicCarsSharing_db
     image: postgres:latest
@@ -11,72 +21,101 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    networks:
+      - micro-net
 
   user-service:
-    container_name: user-service-app
-    build: ./user-service
+    # REMOVED container_name to allow scaling
+    build:
+      context: .
+      dockerfile: ./user-service/Dockerfile
     restart: always
     ports:
-      - "8080:8080"
+      - "8080-8089:8080"  # Port range for multiple instances
     depends_on:
+      - eureka-server
       - dynamiccarsharing_db
     environment:
       - SERVER_PORT=8080
       - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/${DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_APPLICATION_NAME=user-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    networks:
+      - micro-net
 
   car-service:
     container_name: car-service-app
-    build: ./car-service
+    build:
+      context: .
+      dockerfile: ./car-service/Dockerfile
     restart: always
     ports:
       - "8081:8081"
     depends_on:
+      - eureka-server
       - dynamiccarsharing_db
     environment:
       - SERVER_PORT=8081
       - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/${DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      - SERVICE_USER_URL=http://user-service:8080/api/users
+      - SPRING_APPLICATION_NAME=car-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    networks:
+      - micro-net
 
   booking-service:
     container_name: booking-service-app
-    build: ./booking-service
+    build:
+      context: .
+      dockerfile: ./booking-service/Dockerfile
     restart: always
     ports:
       - "8082:8082"
     depends_on:
+      - eureka-server
       - dynamiccarsharing_db
-      - user-service
-      - car-service
     environment:
       - SERVER_PORT=8082
       - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/${DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      - SERVICE_USER_URL=http://user-service:8080/api/users
-      - SERVICE_CAR_URL=http://car-service:8081/api/cars
+      - SPRING_APPLICATION_NAME=booking-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    networks:
+      - micro-net
 
   dispute-service:
     container_name: dispute-service-app
-    build: ./dispute-service
+    build:
+      context: .
+      dockerfile: ./dispute-service/Dockerfile
     restart: always
     ports:
       - "8083:8083"
     depends_on:
+      - eureka-server
       - dynamiccarsharing_db
-      - user-service
-      - booking-service
     environment:
       - SERVER_PORT=8083
       - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/${DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      - SERVICE_USER_URL=http://user-service:8080/api/users
-      - SERVICE_BOOKING_URL=http://booking-service:8082/api/bookings
+      - SPRING_APPLICATION_NAME=dispute-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+    networks:
+      - micro-net
 
 volumes:
   db_data:
     name: db_data
+
+networks:
+  micro-net:
+    driver: bridge

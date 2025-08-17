@@ -1,10 +1,10 @@
 package com.dynamiccarsharing.booking.controller;
 
+import com.dynamiccarsharing.booking.dto.PaymentDto;
+import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
+import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import com.dynamiccarsharing.contracts.dto.PaymentDto;
-import com.dynamiccarsharing.contracts.dto.PaymentRequestDto;
-import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

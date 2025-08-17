@@ -1,8 +1,8 @@
 package com.dynamiccarsharing.booking.mapper;
 
-import com.dynamiccarsharing.contracts.dto.PaymentRequestDto;
-import com.dynamiccarsharing.contracts.enums.PaymentType;
+import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
 import com.dynamiccarsharing.booking.model.Payment;
+import com.dynamiccarsharing.contracts.enums.PaymentType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

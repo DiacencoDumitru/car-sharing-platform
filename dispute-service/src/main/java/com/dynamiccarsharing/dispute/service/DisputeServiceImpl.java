@@ -1,20 +1,21 @@
 package com.dynamiccarsharing.dispute.service;
 
 import com.dynamiccarsharing.contracts.dto.BookingDto;
-import com.dynamiccarsharing.dispute.criteria.DisputeSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.DisputeDto;
+import com.dynamiccarsharing.contracts.dto.UserDto;
 import com.dynamiccarsharing.contracts.enums.DisputeStatus;
+import com.dynamiccarsharing.dispute.criteria.DisputeSearchCriteria;
+import com.dynamiccarsharing.dispute.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.dispute.exception.DisputeNotFoundException;
 import com.dynamiccarsharing.dispute.filter.DisputeFilter;
 import com.dynamiccarsharing.dispute.mapper.DisputeMapper;
 import com.dynamiccarsharing.dispute.model.Dispute;
 import com.dynamiccarsharing.dispute.repository.DisputeRepository;
 import com.dynamiccarsharing.dispute.service.interfaces.DisputeService;
-import com.dynamiccarsharing.contracts.dto.UserDto;
 import com.dynamiccarsharing.util.exception.ServiceException;
 import com.dynamiccarsharing.util.exception.ValidationException;
 import com.dynamiccarsharing.util.filter.Filter;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,9 +33,17 @@ public class DisputeServiceImpl implements DisputeService {
 
     private final DisputeRepository disputeRepository;
     private final DisputeMapper disputeMapper;
+    private final WebClient.Builder webClientBuilder;
 
-    private final WebClient userWebClient;
-    private final WebClient bookingWebClient;
+    private WebClient userWebClient;
+    private WebClient bookingWebClient;
+
+    @PostConstruct
+    public void init() {
+        this.userWebClient = webClientBuilder.baseUrl("http://user-service").build();
+        this.bookingWebClient = webClientBuilder.baseUrl("http://booking-service").build();
+    }
+
 
     @Override
     public DisputeDto createDispute(Long bookingId, DisputeCreateRequestDto createDto, Long creationUserId) {
@@ -103,6 +112,10 @@ public class DisputeServiceImpl implements DisputeService {
 
     private void validateUserExists(Long userId) {
         try {
+            if (userWebClient == null) {
+                throw new IllegalStateException("User WebClient not initialized");
+            }
+
             userWebClient.get()
                     .uri("/" + userId)
                     .retrieve()

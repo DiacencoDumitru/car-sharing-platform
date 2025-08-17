@@ -1,8 +1,8 @@
 package com.dynamiccarsharing.car.controller;
 
-import com.dynamiccarsharing.contracts.dto.LocationCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.LocationDto;
-import com.dynamiccarsharing.contracts.dto.LocationUpdateRequestDto;
+import com.dynamiccarsharing.car.dto.LocationCreateRequestDto;
+import com.dynamiccarsharing.car.dto.LocationDto;
+import com.dynamiccarsharing.car.dto.LocationUpdateRequestDto;
 import com.dynamiccarsharing.car.service.interfaces.LocationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

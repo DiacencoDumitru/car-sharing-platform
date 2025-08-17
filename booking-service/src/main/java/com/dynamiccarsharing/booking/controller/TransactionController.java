@@ -1,8 +1,8 @@
 package com.dynamiccarsharing.booking.controller;
 
-import lombok.RequiredArgsConstructor;
-import com.dynamiccarsharing.contracts.dto.TransactionDto;
+import com.dynamiccarsharing.booking.dto.TransactionDto;
 import com.dynamiccarsharing.booking.service.interfaces.TransactionService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
