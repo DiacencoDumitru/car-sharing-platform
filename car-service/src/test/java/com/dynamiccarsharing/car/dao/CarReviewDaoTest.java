@@ -27,7 +27,7 @@ class CarReviewDaoTest extends CarBaseDaoTest {
     private Long reviewerId2;
 
     @BeforeEach
-    void setUp() throws SQLException {
+    void setUp() {
         Location location = createLocation("Test City", "TS", "12345");
         this.reviewerId1 = 1L;
         this.reviewerId2 = 2L;

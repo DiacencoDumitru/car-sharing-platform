@@ -1,9 +1,9 @@
 package com.dynamiccarsharing.car.service.interfaces;
 
 import com.dynamiccarsharing.car.criteria.CarReviewSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.CarReviewCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.CarReviewDto;
-import com.dynamiccarsharing.contracts.dto.CarReviewUpdateRequestDto;
+import com.dynamiccarsharing.car.dto.CarReviewCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarReviewDto;
+import com.dynamiccarsharing.car.dto.CarReviewUpdateRequestDto;
 import com.dynamiccarsharing.car.model.CarReview;
 
 import java.util.List;

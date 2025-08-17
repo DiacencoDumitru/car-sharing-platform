@@ -1,11 +1,11 @@
 package com.dynamiccarsharing.booking.controller;
 
 import com.dynamiccarsharing.booking.config.SecurityConfig;
-import com.dynamiccarsharing.contracts.dto.PaymentDto;
-import com.dynamiccarsharing.contracts.dto.PaymentRequestDto;
+import com.dynamiccarsharing.booking.dto.PaymentDto;
+import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
+import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import com.dynamiccarsharing.contracts.enums.PaymentType;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
-import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

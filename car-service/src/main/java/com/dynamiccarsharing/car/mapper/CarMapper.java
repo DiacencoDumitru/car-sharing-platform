@@ -1,10 +1,13 @@
 package com.dynamiccarsharing.car.mapper;
 
-import com.dynamiccarsharing.contracts.dto.CarCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.CarDto;
-import com.dynamiccarsharing.contracts.dto.CarUpdateRequestDto;
+import com.dynamiccarsharing.car.dto.CarCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.car.model.Car;
-import org.mapstruct.*;
+import com.dynamiccarsharing.contracts.dto.CarDto;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(componentModel = "spring", uses = {LocationMapper.class}, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface CarMapper {

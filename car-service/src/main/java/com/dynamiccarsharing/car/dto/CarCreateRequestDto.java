@@ -1,4 +1,4 @@
-package com.dynamiccarsharing.contracts.dto;
+package com.dynamiccarsharing.car.dto;
 
 import com.dynamiccarsharing.contracts.enums.CarType;
 import com.dynamiccarsharing.car.validation.ValidRegistrationNumber;

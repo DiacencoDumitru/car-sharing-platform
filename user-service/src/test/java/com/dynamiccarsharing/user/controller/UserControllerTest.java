@@ -1,12 +1,12 @@
 package com.dynamiccarsharing.user.controller;
 
-import com.dynamiccarsharing.user.config.SecurityConfig;
-import com.dynamiccarsharing.contracts.dto.ContactInfoCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.UserCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
-import com.dynamiccarsharing.contracts.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.contracts.enums.UserRole;
 import com.dynamiccarsharing.contracts.enums.UserStatus;
+import com.dynamiccarsharing.user.config.SecurityConfig;
+import com.dynamiccarsharing.user.dto.ContactInfoCreateRequestDto;
+import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
+import com.dynamiccarsharing.user.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.user.service.interfaces.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

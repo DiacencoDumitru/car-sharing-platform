@@ -1,10 +1,10 @@
 package com.dynamiccarsharing.dispute.service;
 
 import com.dynamiccarsharing.contracts.dto.BookingDto;
-import com.dynamiccarsharing.contracts.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.DisputeDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
 import com.dynamiccarsharing.contracts.enums.DisputeStatus;
+import com.dynamiccarsharing.dispute.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.dispute.exception.DisputeNotFoundException;
 import com.dynamiccarsharing.dispute.mapper.DisputeMapper;
 import com.dynamiccarsharing.dispute.model.Dispute;
@@ -14,8 +14,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -31,22 +33,23 @@ import static org.mockito.Mockito.*;
 class DisputeServiceImplTest {
 
     @Mock
-    private DisputeRepository disputeRepository;
-
-    @Mock
-    private DisputeMapper disputeMapper;
-
-    @Mock
     private WebClient userWebClient;
-
     @Mock
     private WebClient bookingWebClient;
+    @Mock
+    private DisputeRepository disputeRepository;
+    @Mock
+    private DisputeMapper disputeMapper;
+    @Mock
+    private WebClient.Builder webClientBuilder;
 
+    @InjectMocks
     private DisputeServiceImpl disputeService;
 
     @BeforeEach
     void setUp() {
-        disputeService = new DisputeServiceImpl(disputeRepository, disputeMapper, userWebClient, bookingWebClient);
+        ReflectionTestUtils.setField(disputeService, "userWebClient", userWebClient);
+        ReflectionTestUtils.setField(disputeService, "bookingWebClient", bookingWebClient);
     }
 
     private Dispute createTestDispute(Long id, DisputeStatus status) {
@@ -102,7 +105,7 @@ class DisputeServiceImplTest {
         DisputeCreateRequestDto createDto = new DisputeCreateRequestDto();
 
         mockWebClient(userWebClient, creationUserId, UserDto.class, new UserDto());
-        mockWebClient(bookingWebClient, bookingId, BookingDto.class, null); // Simulate booking not found
+        mockWebClient(bookingWebClient, bookingId, BookingDto.class, null);
 
         assertThrows(ValidationException.class, () -> disputeService.createDispute(bookingId, createDto, creationUserId));
     }
@@ -174,15 +177,15 @@ class DisputeServiceImplTest {
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
         Mono<T> mono = mock(Mono.class);
 
-        when(webClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri("/" + id)).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.bodyToMono(any(Class.class))).thenReturn(mono);
+        lenient().when(webClient.get()).thenReturn(requestHeadersUriSpec);
+        lenient().when(requestHeadersUriSpec.uri("/" + id)).thenReturn(requestHeadersUriSpec);
+        lenient().when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
+        lenient().when(responseSpec.bodyToMono(any(Class.class))).thenReturn(mono);
 
         if (responseDto != null) {
-            when(mono.block()).thenReturn(responseDto);
+            lenient().when(mono.block()).thenReturn(responseDto);
         } else {
-            when(mono.block()).thenThrow(new RuntimeException("Simulated 404 Not Found"));
+            lenient().when(mono.block()).thenThrow(new RuntimeException("Simulated 404 Not Found"));
         }
     }
 }

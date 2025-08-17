@@ -1,9 +1,9 @@
 package com.dynamiccarsharing.user.service.interfaces;
 
-import com.dynamiccarsharing.user.criteria.ContactInfoSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.ContactInfoCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.ContactInfoDto;
-import com.dynamiccarsharing.contracts.dto.ContactInfoUpdateRequestDto;
+import com.dynamiccarsharing.user.criteria.ContactInfoSearchCriteria;
+import com.dynamiccarsharing.user.dto.ContactInfoCreateRequestDto;
+import com.dynamiccarsharing.user.dto.ContactInfoUpdateRequestDto;
 import com.dynamiccarsharing.user.model.ContactInfo;
 
 import java.util.List;

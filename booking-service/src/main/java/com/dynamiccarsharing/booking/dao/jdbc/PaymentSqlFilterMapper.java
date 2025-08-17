@@ -1,6 +1,5 @@
 package com.dynamiccarsharing.booking.dao.jdbc;
 
-
 import com.dynamiccarsharing.booking.filter.PaymentFilter;
 import com.dynamiccarsharing.booking.model.Payment;
 import com.dynamiccarsharing.util.dao.jdbc.SqlFilter;

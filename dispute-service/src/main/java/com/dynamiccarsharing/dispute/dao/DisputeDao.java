@@ -80,7 +80,7 @@ public class DisputeDao implements DisputeRepository {
     }
 
     @Override
-    public List<Dispute> findByFilter(Filter<Dispute> filter) throws SQLException {
+    public List<Dispute> findByFilter(Filter<Dispute> filter) {
         String baseQuery = "SELECT * FROM disputes WHERE 1=1";
         SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
         String fullQuery = baseQuery + sqlFilter.filterQuery();

@@ -43,7 +43,6 @@ class CarReviewSpecificationTest {
         car1 = carRepository.save(Car.builder().make("Honda").model("Civic").status(AVAILABLE).verificationStatus(VERIFIED).registrationNumber("CAR1").price(BigDecimal.TEN).type(SEDAN).location(location).build());
         car2 = carRepository.save(Car.builder().make("Toyota").model("Camry").status(AVAILABLE).verificationStatus(VERIFIED).registrationNumber("CAR2").price(BigDecimal.TEN).type(SEDAN).location(location).build());
 
-        // Simplified setup assuming decoupled model
         reviewRepository.save(CarReview.builder().car(car1).reviewerId(reviewer1Id).comment("Great!").build());
         reviewRepository.save(CarReview.builder().car(car2).reviewerId(reviewer1Id).comment("Okay.").build());
         reviewRepository.save(CarReview.builder().car(car1).reviewerId(reviewer2Id).comment("Loved it!").build());
@@ -67,7 +66,7 @@ class CarReviewSpecificationTest {
 
     @Test
     void whenFilteringWithCriteria_shouldReturnMatchingReviews() {
-        Specification<CarReview> spec = CarReviewSpecification.withCriteria(car1.getId(), reviewer1Id);
+        Specification<CarReview> spec = CarReviewSpecification.withCriteria(reviewer1Id, car1.getId());
         List<CarReview> results = reviewRepository.findAll(spec);
         assertEquals(1, results.size());
         assertTrue(results.stream().allMatch(r -> r.getCar().getId().equals(car1.getId()) && r.getReviewerId().equals(reviewer1Id)));

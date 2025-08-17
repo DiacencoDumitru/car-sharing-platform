@@ -1,8 +1,8 @@
 package com.dynamiccarsharing.car.mapper;
 
-import com.dynamiccarsharing.contracts.dto.CarReviewCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.CarReviewDto;
-import com.dynamiccarsharing.contracts.dto.CarReviewUpdateRequestDto;
+import com.dynamiccarsharing.car.dto.CarReviewCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarReviewDto;
+import com.dynamiccarsharing.car.dto.CarReviewUpdateRequestDto;
 import com.dynamiccarsharing.car.model.Car;
 import com.dynamiccarsharing.car.model.CarReview;
 import org.junit.jupiter.api.DisplayName;

@@ -1,8 +1,8 @@
 package com.dynamiccarsharing.user.mapper;
 
-import com.dynamiccarsharing.contracts.dto.UserCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
-import com.dynamiccarsharing.contracts.dto.UserStatusUpdateRequestDto;
+import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
+import com.dynamiccarsharing.user.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.user.model.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

@@ -1,8 +1,8 @@
 package com.dynamiccarsharing.user.controller;
 
-import com.dynamiccarsharing.contracts.dto.UserReviewCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.UserReviewDto;
-import com.dynamiccarsharing.contracts.dto.UserReviewUpdateRequestDto;
+import com.dynamiccarsharing.user.dto.UserReviewCreateRequestDto;
+import com.dynamiccarsharing.user.dto.UserReviewDto;
+import com.dynamiccarsharing.user.dto.UserReviewUpdateRequestDto;
 import com.dynamiccarsharing.user.service.interfaces.UserReviewService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

@@ -1,17 +1,17 @@
 package com.dynamiccarsharing.user.service;
 
-import com.dynamiccarsharing.contracts.dto.UserReviewCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.UserReviewDto;
-import com.dynamiccarsharing.contracts.dto.UserReviewUpdateRequestDto;
 import com.dynamiccarsharing.user.criteria.UserReviewSearchCriteria;
-import com.dynamiccarsharing.util.exception.ServiceException;
+import com.dynamiccarsharing.user.dto.UserReviewCreateRequestDto;
+import com.dynamiccarsharing.user.dto.UserReviewDto;
+import com.dynamiccarsharing.user.dto.UserReviewUpdateRequestDto;
 import com.dynamiccarsharing.user.exception.UserReviewNotFoundException;
-import com.dynamiccarsharing.util.filter.Filter;
 import com.dynamiccarsharing.user.filter.UserReviewFilter;
 import com.dynamiccarsharing.user.mapper.UserReviewMapper;
 import com.dynamiccarsharing.user.model.UserReview;
 import com.dynamiccarsharing.user.repository.UserReviewRepository;
 import com.dynamiccarsharing.user.service.interfaces.UserReviewService;
+import com.dynamiccarsharing.util.exception.ServiceException;
+import com.dynamiccarsharing.util.filter.Filter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,13 +1,13 @@
 package com.dynamiccarsharing.car.mapper;
 
-import com.dynamiccarsharing.contracts.dto.CarCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarUpdateRequestDto;
+import com.dynamiccarsharing.car.model.Car;
+import com.dynamiccarsharing.car.model.Location;
 import com.dynamiccarsharing.contracts.dto.CarDto;
-import com.dynamiccarsharing.contracts.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.contracts.enums.CarStatus;
 import com.dynamiccarsharing.contracts.enums.CarType;
 import com.dynamiccarsharing.contracts.enums.VerificationStatus;
-import com.dynamiccarsharing.car.model.Car;
-import com.dynamiccarsharing.car.model.Location;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -108,7 +108,7 @@ class CarMapperTest {
 
         assertEquals("Tesla", carToUpdate.getMake());
         assertEquals("Model 3", carToUpdate.getModel());
-        assertEquals(newLocation.getId(), carToUpdate.getLocation().getId()); // Was updated
+        assertEquals(newLocation.getId(), carToUpdate.getLocation().getId());
         assertEquals(0, new BigDecimal("100.00").compareTo(carToUpdate.getPrice()));
         assertEquals(CarStatus.RENTED, carToUpdate.getStatus());
         assertEquals(CarType.SEDAN, carToUpdate.getType());

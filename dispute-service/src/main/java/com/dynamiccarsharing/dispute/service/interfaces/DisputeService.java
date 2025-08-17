@@ -1,8 +1,8 @@
 package com.dynamiccarsharing.dispute.service.interfaces;
 
-import com.dynamiccarsharing.dispute.criteria.DisputeSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.DisputeDto;
+import com.dynamiccarsharing.dispute.criteria.DisputeSearchCriteria;
+import com.dynamiccarsharing.dispute.dto.DisputeCreateRequestDto;
 
 import java.util.List;
 import java.util.Optional;

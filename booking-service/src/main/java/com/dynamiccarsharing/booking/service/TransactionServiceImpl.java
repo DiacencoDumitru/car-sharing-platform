@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.booking.service;
 
 import com.dynamiccarsharing.booking.criteria.TransactionSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.TransactionDto;
+import com.dynamiccarsharing.booking.dto.TransactionDto;
 import com.dynamiccarsharing.booking.filter.TransactionFilter;
 import com.dynamiccarsharing.booking.mapper.TransactionMapper;
 import com.dynamiccarsharing.booking.model.Transaction;

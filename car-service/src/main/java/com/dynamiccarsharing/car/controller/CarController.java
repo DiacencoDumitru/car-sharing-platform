@@ -1,21 +1,23 @@
 package com.dynamiccarsharing.car.controller;
 
+import com.dynamiccarsharing.car.criteria.CarSearchCriteria;
+import com.dynamiccarsharing.car.dto.CarCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarUpdateRequestDto;
+import com.dynamiccarsharing.car.service.interfaces.CarService;
+import com.dynamiccarsharing.contracts.dto.CarDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import com.dynamiccarsharing.car.criteria.CarSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.CarCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.CarDto;
-import com.dynamiccarsharing.contracts.dto.CarUpdateRequestDto;
-import com.dynamiccarsharing.car.service.interfaces.CarService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/v1/cars")
 @RequiredArgsConstructor
+@Validated
 public class CarController {
 
     private final CarService carService;

@@ -1,4 +1,4 @@
-package com.dynamiccarsharing.contracts.dto;
+package com.dynamiccarsharing.booking.dto;
 
 import lombok.Data;
 import com.dynamiccarsharing.contracts.enums.PaymentType;

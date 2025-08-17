@@ -1,4 +1,4 @@
-package com.dynamiccarsharing.contracts.dto;
+package com.dynamiccarsharing.dispute.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

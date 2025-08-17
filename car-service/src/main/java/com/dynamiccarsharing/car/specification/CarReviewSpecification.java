@@ -16,9 +16,9 @@ public class CarReviewSpecification {
         return (root, query, cb) -> reviewerId != null ? cb.equal(root.get("reviewerId"), reviewerId) : null;
     }
 
-    public static Specification<CarReview> withCriteria(Long carId, Long reviewerId) {
+    public static Specification<CarReview> withCriteria(Long reviewerId, Long carId) {
         return Specification
-                .where(hasCarId(carId))
-                .and(hasReviewerId(reviewerId));
+                .where(hasReviewerId(reviewerId))
+                .and(hasCarId(carId));
     }
 }

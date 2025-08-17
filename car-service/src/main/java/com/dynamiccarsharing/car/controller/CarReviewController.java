@@ -1,11 +1,11 @@
 package com.dynamiccarsharing.car.controller;
 
+import com.dynamiccarsharing.car.dto.CarReviewCreateRequestDto;
+import com.dynamiccarsharing.car.dto.CarReviewDto;
+import com.dynamiccarsharing.car.dto.CarReviewUpdateRequestDto;
+import com.dynamiccarsharing.car.service.interfaces.CarReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import com.dynamiccarsharing.contracts.dto.CarReviewCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.CarReviewDto;
-import com.dynamiccarsharing.contracts.dto.CarReviewUpdateRequestDto;
-import com.dynamiccarsharing.car.service.interfaces.CarReviewService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

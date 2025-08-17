@@ -1,10 +1,13 @@
 package com.dynamiccarsharing.user.mapper;
 
-import com.dynamiccarsharing.contracts.dto.ContactInfoCreateRequestDto;
 import com.dynamiccarsharing.contracts.dto.ContactInfoDto;
-import com.dynamiccarsharing.contracts.dto.ContactInfoUpdateRequestDto;
+import com.dynamiccarsharing.user.dto.ContactInfoCreateRequestDto;
+import com.dynamiccarsharing.user.dto.ContactInfoUpdateRequestDto;
 import com.dynamiccarsharing.user.model.ContactInfo;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ContactInfoMapper {

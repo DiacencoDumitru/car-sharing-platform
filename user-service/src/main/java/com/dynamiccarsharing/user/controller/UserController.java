@@ -1,12 +1,12 @@
 package com.dynamiccarsharing.user.controller;
 
+import com.dynamiccarsharing.contracts.dto.UserDto;
+import com.dynamiccarsharing.user.dto.ContactInfoUpdateRequestDto;
+import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
+import com.dynamiccarsharing.user.dto.UserStatusUpdateRequestDto;
+import com.dynamiccarsharing.user.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import com.dynamiccarsharing.contracts.dto.ContactInfoUpdateRequestDto;
-import com.dynamiccarsharing.contracts.dto.UserCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.UserDto;
-import com.dynamiccarsharing.contracts.dto.UserStatusUpdateRequestDto;
-import com.dynamiccarsharing.user.service.interfaces.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

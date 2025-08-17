@@ -1,9 +1,9 @@
-package com.dynamiccarsharing.contracts.dto;
+package com.dynamiccarsharing.user.dto;
 
+import com.dynamiccarsharing.contracts.enums.UserRole;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import com.dynamiccarsharing.contracts.enums.UserRole;
 
 @Data
 public class UserCreateRequestDto {

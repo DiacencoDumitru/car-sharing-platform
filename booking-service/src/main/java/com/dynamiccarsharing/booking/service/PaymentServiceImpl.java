@@ -1,9 +1,8 @@
 package com.dynamiccarsharing.booking.service;
 
 import com.dynamiccarsharing.booking.criteria.PaymentSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.PaymentDto;
-import com.dynamiccarsharing.contracts.dto.PaymentRequestDto;
-import com.dynamiccarsharing.contracts.enums.TransactionStatus;
+import com.dynamiccarsharing.booking.dto.PaymentDto;
+import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
 import com.dynamiccarsharing.booking.exception.BookingNotFoundException;
 import com.dynamiccarsharing.booking.exception.PaymentNotFoundException;
 import com.dynamiccarsharing.booking.filter.PaymentFilter;
@@ -12,6 +11,7 @@ import com.dynamiccarsharing.booking.model.Payment;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.repository.PaymentRepository;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
+import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.util.exception.ServiceException;
 import com.dynamiccarsharing.util.filter.Filter;
 import lombok.RequiredArgsConstructor;

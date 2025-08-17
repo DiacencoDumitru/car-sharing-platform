@@ -1,10 +1,8 @@
 package com.dynamiccarsharing.booking.service;
 
 import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
-import com.dynamiccarsharing.contracts.dto.BookingCreateRequestDto;
-import com.dynamiccarsharing.contracts.dto.BookingDto;
-import com.dynamiccarsharing.contracts.dto.BookingStatusUpdateRequestDto;
-import com.dynamiccarsharing.contracts.enums.TransactionStatus;
+import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
+import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.booking.exception.BookingNotFoundException;
 import com.dynamiccarsharing.booking.exception.InvalidBookingStatusException;
 import com.dynamiccarsharing.booking.filter.BookingFilter;
@@ -12,13 +10,14 @@ import com.dynamiccarsharing.booking.mapper.BookingMapper;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
+import com.dynamiccarsharing.contracts.dto.BookingDto;
 import com.dynamiccarsharing.contracts.dto.CarDto;
-import com.dynamiccarsharing.contracts.enums.DisputeStatus;
-import com.dynamiccarsharing.dispute.exception.InvalidDisputeStatusException;
 import com.dynamiccarsharing.contracts.dto.UserDto;
+import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.util.exception.ServiceException;
 import com.dynamiccarsharing.util.exception.ValidationException;
 import com.dynamiccarsharing.util.filter.Filter;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +29,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+import static com.dynamiccarsharing.contracts.enums.TransactionStatus.*;
+
 @Service("bookingService")
 @Transactional
 @RequiredArgsConstructor
@@ -37,9 +38,16 @@ public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
+    private final WebClient.Builder webClientBuilder;
 
-    private final WebClient userWebClient;
-    private final WebClient carWebClient;
+    private WebClient userWebClient;
+    private WebClient carWebClient;
+
+    @PostConstruct
+    public void init() {
+        this.userWebClient = webClientBuilder.baseUrl("http://user-service").build();
+        this.carWebClient = webClientBuilder.baseUrl("http://car-service").build();
+    }
 
     @Override
     public BookingDto save(BookingCreateRequestDto createDto) {
@@ -84,7 +92,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = getBookingOrThrow(bookingId);
         validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.PENDING), "Booking can only be approved from PENDING status");
 
-        booking.setStatus(TransactionStatus.APPROVED);
+        booking.setStatus(APPROVED);
         Booking updatedBooking = bookingRepository.save(booking);
 
         return bookingMapper.toDto(updatedBooking);
@@ -93,9 +101,9 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingDto completeBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
-        validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.APPROVED), "Booking can only be completed from APPROVED status");
+        validateBookingStatus(booking.getStatus(), List.of(APPROVED), "Booking can only be completed from APPROVED status");
 
-        booking.setStatus(TransactionStatus.COMPLETED);
+        booking.setStatus(COMPLETED);
         Booking updatedBooking = bookingRepository.save(booking);
 
         return bookingMapper.toDto(updatedBooking);
@@ -104,8 +112,8 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingDto cancelBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
-        validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.PENDING, TransactionStatus.APPROVED), "Cannot cancel a completed booking");
-        booking.setStatus(TransactionStatus.CANCELED);
+        validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.PENDING, APPROVED), "Cannot cancel a completed booking");
+        booking.setStatus(CANCELED);
         Booking updatedBooking = bookingRepository.save(booking);
         return bookingMapper.toDto(updatedBooking);
     }
@@ -144,12 +152,6 @@ public class BookingServiceImpl implements BookingService {
     private void validateBookingStatus(TransactionStatus currentStatus, List<TransactionStatus> allowedStatuses, String errorMessage) {
         if (!allowedStatuses.contains(currentStatus)) {
             throw new InvalidBookingStatusException(errorMessage);
-        }
-    }
-
-    private void validateDisputeStatus(DisputeStatus currentStatus) {
-        if (currentStatus != DisputeStatus.OPEN) {
-            throw new InvalidDisputeStatusException("Can only resolve an open dispute");
         }
     }
 

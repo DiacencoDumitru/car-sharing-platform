@@ -1,7 +1,7 @@
 package com.dynamiccarsharing.booking.controller;
 
 import com.dynamiccarsharing.booking.config.SecurityConfig;
-import com.dynamiccarsharing.contracts.dto.TransactionDto;
+import com.dynamiccarsharing.booking.dto.TransactionDto;
 import com.dynamiccarsharing.booking.service.interfaces.TransactionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

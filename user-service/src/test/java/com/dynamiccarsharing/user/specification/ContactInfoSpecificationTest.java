@@ -2,7 +2,6 @@ package com.dynamiccarsharing.user.specification;
 
 import com.dynamiccarsharing.user.model.ContactInfo;
 import com.dynamiccarsharing.user.repository.jpa.ContactInfoJpaRepository;
-import com.dynamiccarsharing.user.specification.ContactInfoSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
