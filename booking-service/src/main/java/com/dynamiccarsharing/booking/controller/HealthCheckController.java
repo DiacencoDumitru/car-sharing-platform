@@ -85,10 +85,9 @@ public class HealthCheckController {
 
     private Map<String, Object> checkConnectivity() {
         Map<String, Object> connectivity = new HashMap<>();
-        // Check User Service
         try {
             UserDto user = userWebClient.get()
-                    .uri("/api/v1/users/1") // Use a dummy ID for the check
+                    .uri("/api/v1/users/1")
                     .retrieve()
                     .bodyToMono(UserDto.class)
                     .timeout(Duration.ofSeconds(3))
@@ -98,10 +97,9 @@ public class HealthCheckController {
             connectivity.put("user-service", "DOWN - Error: " + e.getMessage());
         }
 
-        // Check Car Service
         try {
             CarDto car = carWebClient.get()
-                    .uri("/1") // Use a dummy ID for the check
+                    .uri("/1")
                     .retrieve()
                     .bodyToMono(CarDto.class)
                     .timeout(Duration.ofSeconds(3))

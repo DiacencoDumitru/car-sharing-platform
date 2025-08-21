@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
 
   eureka-server:
-    image: dynamiccarsharing-eureka-server
+    image: eureka-server
     container_name: eureka-server
     ports:
       - "8761:8761"
@@ -37,7 +37,7 @@ services:
     restart: unless-stopped
 
   user-service-1:
-    image: dynamiccarsharing-user-service-1
+    image: user-service
     container_name: user-service-1
     ports:
       - "8080:8080"
@@ -49,6 +49,7 @@ services:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - EUREKA_INSTANCE_HOSTNAME=user-service-1
       - SPRING_APPLICATION_NAME=user-service
+      - SPRING_PROFILES_ACTIVE=jpa,lb-random
       - DB_USERNAME=postgres
       - DB_PASSWORD=password123
     depends_on:
@@ -65,7 +66,7 @@ services:
     restart: unless-stopped
 
   user-service-2:
-    image: dynamiccarsharing-user-service-2
+    image: user-service
     container_name: user-service-2
     ports:
       - "8088:8080"
@@ -77,6 +78,7 @@ services:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - EUREKA_INSTANCE_HOSTNAME=user-service-2
       - SPRING_APPLICATION_NAME=user-service
+      - SPRING_PROFILES_ACTIVE=jpa,lb-random
       - DB_USERNAME=postgres
       - DB_PASSWORD=password123
     depends_on:
@@ -93,7 +95,7 @@ services:
     restart: unless-stopped
 
   car-service:
-    image: dynamiccarsharing-car-service
+    image: car-service
     container_name: car-service
     ports:
       - "8081:8081"
@@ -105,6 +107,7 @@ services:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - EUREKA_INSTANCE_HOSTNAME=car-service
       - SPRING_APPLICATION_NAME=car-service
+      - SPRING_PROFILES_ACTIVE=jpa,lb-random
       - DB_USERNAME=postgres
       - DB_PASSWORD=password123
     depends_on:
@@ -121,7 +124,7 @@ services:
     restart: unless-stopped
 
   booking-service:
-    image: dynamiccarsharing-booking-service
+    image: booking-service
     container_name: booking-service
     ports:
       - "8082:8082"
@@ -133,6 +136,7 @@ services:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - EUREKA_INSTANCE_HOSTNAME=booking-service
       - SPRING_APPLICATION_NAME=booking-service
+      - SPRING_PROFILES_ACTIVE=jpa,lb-random
       - DB_USERNAME=postgres
       - DB_PASSWORD=password123
     depends_on:
@@ -152,7 +156,7 @@ services:
     restart: unless-stopped
 
   dispute-service:
-    image: dynamiccarsharing-dispute-service
+    image: dispute-service
     container_name: dispute-service
     ports:
       - "8083:8083"
@@ -164,6 +168,7 @@ services:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - EUREKA_INSTANCE_HOSTNAME=dispute-service
       - SPRING_APPLICATION_NAME=dispute-service
+      - SPRING_PROFILES_ACTIVE=jpa,lb-random
       - DB_USERNAME=postgres
       - DB_PASSWORD=password123
     depends_on:
