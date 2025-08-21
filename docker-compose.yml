@@ -1,121 +1,188 @@
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: dynamiccarsharing_db
+    environment:
+      POSTGRES_DB: dynamic_car_sharing_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d dynamic_car_sharing_db -h localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
   eureka-server:
+    image: dynamiccarsharing-eureka-server
     container_name: eureka-server
-    build:
-      context: .
-      dockerfile: ./eureka-server/Dockerfile
     ports:
       - "8761:8761"
     networks:
-      - micro-net
+      - microservices-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
 
-  dynamiccarsharing_db:
-    container_name: DynamicCarsSharing_db
-    image: postgres:latest
-    restart: always
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+  user-service-1:
+    image: dynamiccarsharing-user-service-1
+    container_name: user-service-1
     ports:
-      - "${DB_PORT}:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
-    networks:
-      - micro-net
-
-  user-service:
-    # REMOVED container_name to allow scaling
-    build:
-      context: .
-      dockerfile: ./user-service/Dockerfile
-    restart: always
-    ports:
-      - "8080-8089:8080"  # Port range for multiple instances
-    depends_on:
-      - eureka-server
-      - dynamiccarsharing_db
+      - "8080:8080"
     environment:
-      - SERVER_PORT=8080
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/${DB_NAME}
-      - SPRING_DATASOURCE_USERNAME=${DB_USER}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password123
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=user-service-1
       - SPRING_APPLICATION_NAME=user-service
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password123
+    depends_on:
+      - db
+      - eureka-server
     networks:
-      - micro-net
+      - microservices-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 90s
+    restart: unless-stopped
+
+  user-service-2:
+    image: dynamiccarsharing-user-service-2
+    container_name: user-service-2
+    ports:
+      - "8088:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password123
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=user-service-2
+      - SPRING_APPLICATION_NAME=user-service
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password123
+    depends_on:
+      - db
+      - eureka-server
+    networks:
+      - microservices-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 90s
+    restart: unless-stopped
 
   car-service:
-    container_name: car-service-app
-    build:
-      context: .
-      dockerfile: ./car-service/Dockerfile
-    restart: always
+    image: dynamiccarsharing-car-service
+    container_name: car-service
     ports:
       - "8081:8081"
-    depends_on:
-      - eureka-server
-      - dynamiccarsharing_db
     environment:
-      - SERVER_PORT=8081
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/${DB_NAME}
-      - SPRING_DATASOURCE_USERNAME=${DB_USER}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password123
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=car-service
       - SPRING_APPLICATION_NAME=car-service
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password123
+    depends_on:
+      - db
+      - eureka-server
     networks:
-      - micro-net
+      - microservices-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 90s
+    restart: unless-stopped
 
   booking-service:
-    container_name: booking-service-app
-    build:
-      context: .
-      dockerfile: ./booking-service/Dockerfile
-    restart: always
+    image: dynamiccarsharing-booking-service
+    container_name: booking-service
     ports:
       - "8082:8082"
-    depends_on:
-      - eureka-server
-      - dynamiccarsharing_db
     environment:
-      - SERVER_PORT=8082
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/${DB_NAME}
-      - SPRING_DATASOURCE_USERNAME=${DB_USER}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password123
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=booking-service
       - SPRING_APPLICATION_NAME=booking-service
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password123
+    depends_on:
+      - db
+      - eureka-server
+      - user-service-1
+      - user-service-2
+      - car-service
     networks:
-      - micro-net
+      - microservices-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
 
   dispute-service:
-    container_name: dispute-service-app
-    build:
-      context: .
-      dockerfile: ./dispute-service/Dockerfile
-    restart: always
+    image: dynamiccarsharing-dispute-service
+    container_name: dispute-service
     ports:
       - "8083:8083"
-    depends_on:
-      - eureka-server
-      - dynamiccarsharing_db
     environment:
-      - SERVER_PORT=8083
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/${DB_NAME}
-      - SPRING_DATASOURCE_USERNAME=${DB_USER}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password123
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_HOSTNAME=dispute-service
       - SPRING_APPLICATION_NAME=dispute-service
-      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - EUREKA_INSTANCE_PREFER_IP_ADDRESS=true
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password123
+    depends_on:
+      - db
+      - eureka-server
     networks:
-      - micro-net
+      - microservices-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 90s
+    restart: unless-stopped
 
 volumes:
-  db_data:
-    name: db_data
+  postgres_data:
 
 networks:
-  micro-net:
+  microservices-network:
     driver: bridge
+    name: microservices-network

@@ -7,12 +7,17 @@ import com.dynamiccarsharing.user.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.user.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 
 @RestController
@@ -21,6 +26,24 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
+
+    @Value("${eureka.instance.instance-id}")
+    private String instanceId;
+
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<UserDto> getUserById(@PathVariable("userId") Long userId) throws UnknownHostException {
+
+        String hostname = InetAddress.getLocalHost().getHostName();
+        log.info("Request for user {} handled by instance: {}", userId, hostname);
+
+        return userService.findUserById(userId)
+                .map(user -> {
+                    user.setInstanceId(instanceId);
+                    return ResponseEntity.ok(user);
+                })
+                .orElse(ResponseEntity.noContent().build());
+    }
 
     @PostMapping("/users/register")
     public ResponseEntity<UserDto> registerUser(@Valid @RequestBody UserCreateRequestDto createDto) {
@@ -49,13 +72,6 @@ public class UserController {
     public ResponseEntity<List<UserDto>> getAllUsers() {
         List<UserDto> userDtos = userService.findAllUsers();
         return ResponseEntity.ok(userDtos);
-    }
-
-    @GetMapping("/users/{userId}")
-    public ResponseEntity<UserDto> getUserById(@PathVariable Long userId) {
-        return userService.findUserById(userId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.noContent().build());
     }
 
     @DeleteMapping("/users/{userId}")

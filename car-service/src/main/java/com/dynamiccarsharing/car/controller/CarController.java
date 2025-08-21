@@ -7,6 +7,7 @@ import com.dynamiccarsharing.car.service.interfaces.CarService;
 import com.dynamiccarsharing.contracts.dto.CarDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,10 +29,16 @@ public class CarController {
         return new ResponseEntity<>(savedCarDto, HttpStatus.CREATED);
     }
 
+    @Value("${eureka.instance.instance-id}")
+    String instanceId;
+
     @GetMapping("/{carId}")
-    public ResponseEntity<CarDto> getCarById(@PathVariable Long carId) {
+    public ResponseEntity<CarDto> getCarById(@PathVariable("carId") Long carId) {
         return carService.findById(carId)
-                .map(ResponseEntity::ok)
+                .map(car -> {
+                    car.setInstanceId(instanceId);
+                    return ResponseEntity.ok(car);
+                })
                 .orElse(ResponseEntity.noContent().build());
     }
 

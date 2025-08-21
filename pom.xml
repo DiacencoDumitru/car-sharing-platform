@@ -16,24 +16,32 @@
     <packaging>pom</packaging>
 
     <name>DynamicCarSharing</name>
+
     <modules>
-        <module>api-contracts</module>
-        <module>common-utils</module>
         <module>eureka-server</module>
-        <module>car-service</module>
         <module>user-service</module>
+        <module>car-service</module>
         <module>dispute-service</module>
         <module>booking-service</module>
+        <module>api-contracts</module>
+        <module>common-utils</module>
     </modules>
 
     <properties>
         <java.version>17</java.version>
-        <spring-cloud.version>2023.0.1</spring-cloud.version>
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>3.2.6</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>

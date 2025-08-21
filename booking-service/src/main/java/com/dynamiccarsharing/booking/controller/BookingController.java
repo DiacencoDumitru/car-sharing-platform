@@ -7,6 +7,7 @@ import com.dynamiccarsharing.booking.service.interfaces.BookingService;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -20,10 +21,16 @@ public class BookingController {
 
     private final BookingService bookingService;
 
+    @Value("${eureka.instance.instance-id}")
+    private String instanceId;
+
     @GetMapping("/{bookingId}")
-    public ResponseEntity<BookingDto> getBookingById(@PathVariable Long bookingId) {
+    public ResponseEntity<BookingDto> getBookingById(@PathVariable("bookingId") Long bookingId) {
         return bookingService.findById(bookingId)
-                .map(ResponseEntity::ok)
+                .map(booking -> {
+                    booking.setInstanceId(instanceId);
+                    return ResponseEntity.ok(booking);
+                })
                 .orElse(ResponseEntity.noContent().build());
     }
 

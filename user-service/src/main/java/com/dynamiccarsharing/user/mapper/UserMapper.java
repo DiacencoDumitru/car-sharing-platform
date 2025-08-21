@@ -12,6 +12,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 @Mapper(componentModel = "spring", uses = {ContactInfoMapper.class}, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface UserMapper {
 
+    @Mapping(target = "instanceId", ignore = true)
     UserDto toDto(User entity);
 
     @Mapping(target = "id", ignore = true)

@@ -104,7 +104,9 @@ class BookingServiceImplTest {
 
         assertNotNull(resultDto);
         assertEquals(1L, resultDto.getId());
-        verify(userWebClient.get()).uri("/" + createDto.getRenterId());
+
+        verify(userWebClient.get()).uri("/api/v1/users/" + createDto.getRenterId());
+
         verify(carWebClient.get()).uri("/" + createDto.getCarId());
     }
 
@@ -189,8 +191,10 @@ class BookingServiceImplTest {
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
         Mono<UserDto> mono = mock(Mono.class);
 
+        String expectedUri = "/api/v1/users/" + userId;
+
         when(userWebClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri("/" + userId)).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri(expectedUri)).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(any(Class.class))).thenReturn(mono);
 

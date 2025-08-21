@@ -26,7 +26,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -60,7 +62,8 @@ class BookingControllerTest {
         bookingDto.setId(1L);
         when(bookingService.findById(1L)).thenReturn(Optional.of(bookingDto));
         mockMvc.perform(get("/api/v1/bookings/{bookingId}", 1L))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L));
     }
 
     @Test
@@ -79,7 +82,7 @@ class BookingControllerTest {
                         .param("size", "2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.totalElements").value(2));
+                .andExpect(jsonPath("$.content[0].id").value(1L));
     }
 
     @Test
@@ -89,9 +92,8 @@ class BookingControllerTest {
         createDto.setRenterId(1L);
         createDto.setCarId(1L);
         createDto.setPickupLocationId(1L);
-        LocalDateTime now = LocalDateTime.now();
-        createDto.setStartTime(now.plusHours(1));
-        createDto.setEndTime(now.plusDays(1));
+        createDto.setStartTime(LocalDateTime.now().plusDays(1));
+        createDto.setEndTime(LocalDateTime.now().plusDays(2));
 
         BookingDto savedDto = new BookingDto();
         savedDto.setId(1L);
@@ -142,7 +144,11 @@ class BookingControllerTest {
         BookingStatusUpdateRequestDto updateDto = new BookingStatusUpdateRequestDto();
         updateDto.setStatus(TransactionStatus.CANCELED);
 
-        when(bookingService.cancelBooking(1L)).thenReturn(new BookingDto());
+        BookingDto updatedDto = new BookingDto();
+        updatedDto.setId(1L);
+        updatedDto.setStatus(TransactionStatus.CANCELED);
+
+        when(bookingService.updateBookingStatus(anyLong(), any(BookingStatusUpdateRequestDto.class))).thenReturn(updatedDto);
 
         mockMvc.perform(patch("/api/v1/bookings/{bookingId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -157,7 +163,11 @@ class BookingControllerTest {
         BookingStatusUpdateRequestDto updateDto = new BookingStatusUpdateRequestDto();
         updateDto.setStatus(TransactionStatus.COMPLETED);
 
-        when(bookingService.completeBooking(1L)).thenReturn(new BookingDto());
+        BookingDto updatedDto = new BookingDto();
+        updatedDto.setId(1L);
+        updatedDto.setStatus(TransactionStatus.COMPLETED);
+
+        when(bookingService.updateBookingStatus(anyLong(), any(BookingStatusUpdateRequestDto.class))).thenReturn(updatedDto);
 
         mockMvc.perform(patch("/api/v1/bookings/{bookingId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -172,7 +182,8 @@ class BookingControllerTest {
         BookingStatusUpdateRequestDto updateDto = new BookingStatusUpdateRequestDto();
         updateDto.setStatus(TransactionStatus.PENDING);
 
-        when(bookingService.updateBookingStatus(anyLong(), any(BookingStatusUpdateRequestDto.class))).thenThrow(new ValidationException("Unsupported status for update"));
+        when(bookingService.updateBookingStatus(anyLong(), any(BookingStatusUpdateRequestDto.class)))
+                .thenThrow(new ValidationException("Unsupported status for update"));
 
         mockMvc.perform(patch("/api/v1/bookings/{bookingId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
