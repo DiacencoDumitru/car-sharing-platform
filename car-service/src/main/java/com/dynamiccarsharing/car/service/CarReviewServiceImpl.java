@@ -17,6 +17,7 @@ import com.dynamiccarsharing.util.exception.ValidationException;
 import com.dynamiccarsharing.util.filter.Filter;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -28,6 +29,7 @@ import java.util.Optional;
 @Service("carReviewService")
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class CarReviewServiceImpl implements CarReviewService {
 
     private final CarReviewRepository carReviewRepository;
@@ -39,7 +41,7 @@ public class CarReviewServiceImpl implements CarReviewService {
 
     @PostConstruct
     public void init() {
-        this.userWebClient = webClientBuilder.baseUrl("http://user-service").build();
+        this.userWebClient = webClientBuilder.baseUrl("lb://user-service").build();
     }
 
     @Override
@@ -106,11 +108,15 @@ public class CarReviewServiceImpl implements CarReviewService {
 
     private void validateUserExists(Long userId) {
         try {
-            userWebClient.get()
+            UserDto user = userWebClient.get()
                     .uri("/" + userId)
                     .retrieve()
                     .bodyToMono(UserDto.class)
                     .block();
+
+            if (user != null) {
+                log.info("User validation handled by instance: {}", user.getInstanceId());
+            }
         } catch (Exception e) {
             throw new ValidationException("Reviewer with User ID " + userId + " does not exist.");
         }
