@@ -22,6 +22,9 @@ services:
     restart: unless-stopped
 
   eureka-server:
+    build:
+      context: .
+      dockerfile: eureka-server/Dockerfile
     image: eureka-server
     container_name: eureka-server
     ports:
@@ -36,7 +39,30 @@ services:
       start_period: 60s
     restart: unless-stopped
 
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    image: api-gateway
+    container_name: api-gateway
+    ports:
+      - "8085:8085"
+    depends_on:
+      - eureka-server
+    networks:
+      - microservices-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8085/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
   user-service-1:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
     image: user-service
     container_name: user-service-1
     ports:
@@ -66,6 +92,9 @@ services:
     restart: unless-stopped
 
   user-service-2:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
     image: user-service
     container_name: user-service-2
     ports:
@@ -95,6 +124,9 @@ services:
     restart: unless-stopped
 
   car-service:
+    build:
+      context: .
+      dockerfile: car-service/Dockerfile
     image: car-service
     container_name: car-service
     ports:
@@ -124,6 +156,9 @@ services:
     restart: unless-stopped
 
   booking-service:
+    build:
+      context: .
+      dockerfile: booking-service/Dockerfile
     image: booking-service
     container_name: booking-service
     ports:
@@ -156,6 +191,9 @@ services:
     restart: unless-stopped
 
   dispute-service:
+    build:
+      context: .
+      dockerfile: dispute-service/Dockerfile
     image: dispute-service
     container_name: dispute-service
     ports:

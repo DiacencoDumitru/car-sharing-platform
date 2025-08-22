@@ -1,3 +1,5 @@
+docker build -t api-gateway -f api-gateway/Dockerfile .
+
 docker build -t eureka-server -f eureka-server/Dockerfile .
 
 docker build -t booking-service -f booking-service/Dockerfile .
