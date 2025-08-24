@@ -79,6 +79,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Optional<UserDto> findByEmail(String email) {
+        return userRepository.findByContactInfoEmail(email)
+                .map(userMapper::toDto);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<User> searchUsers(UserSearchCriteria criteria) {
         Filter<User> filter = UserFilter.of(criteria.getRole(), criteria.getStatus(), criteria.getEmail());

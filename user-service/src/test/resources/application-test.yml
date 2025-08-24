@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  h2:
+    console:
+      enabled: false
+  security:
+    user:
+      name: test
+      password: test
+
+application:
+  security:
+    jwt:
+      secret-key: NDM0YjVmNjM1MTY0NWE3NDc3Mzg3YTMzNjE1MTQxNTg0NTUxNDg0ZjU0N2IzYjRmNmE1YjdhNmE0ZDQxNjM1Mg==
+      expiration: 3600000
+
+eureka:
+  client:
+    enabled: false
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    com.dynamiccarsharing: DEBUG

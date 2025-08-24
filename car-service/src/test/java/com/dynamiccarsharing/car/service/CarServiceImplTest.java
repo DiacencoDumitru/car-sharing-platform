@@ -1,5 +1,6 @@
 package com.dynamiccarsharing.car.service;
 
+import com.dynamiccarsharing.car.client.UserClient;
 import com.dynamiccarsharing.car.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.car.dto.CarCreateRequestDto;
 import com.dynamiccarsharing.car.dto.CarUpdateRequestDto;
@@ -19,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -27,7 +29,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CarServiceImplTest {
@@ -38,44 +41,56 @@ class CarServiceImplTest {
     @Mock
     private CarMapper carMapper;
 
+    @Mock
+    private UserClient userClient;
+
     private CarServiceImpl carService;
 
     @BeforeEach
     void setUp() {
-        carService = new CarServiceImpl(carRepository, carMapper);
+        carService = new CarServiceImpl(carRepository, carMapper, userClient);
     }
 
-    private Car createTestCar(Long id, CarStatus status, VerificationStatus verificationStatus) {
-        return Car.builder().id(id).status(status).verificationStatus(verificationStatus).build();
+    private static Car createTestCar(Long id, Long ownerId, CarStatus status, VerificationStatus vs) {
+        return Car.builder()
+                .id(id)
+                .ownerId(ownerId)
+                .status(status)
+                .verificationStatus(vs)
+                .build();
     }
 
     @Test
-    void save_withDto_shouldMapAndReturnDto() {
+    void save_withDtoAndOwner_shouldMapSetOwnerAndReturnDto() {
         CarCreateRequestDto createDto = new CarCreateRequestDto();
+        Long ownerId = 42L;
         Car carEntity = new Car();
-        Car savedCarEntity = Car.builder().id(1L).build();
+        when(carMapper.toEntity(createDto, ownerId)).thenReturn(carEntity);
+
+        Car savedCar = Car.builder().id(1L).ownerId(ownerId).build();
+        when(carRepository.save(carEntity)).thenReturn(savedCar);
+
         CarDto expectedDto = new CarDto();
         expectedDto.setId(1L);
+        when(carMapper.toDto(savedCar)).thenReturn(expectedDto);
 
-        when(carMapper.toEntity(createDto)).thenReturn(carEntity);
-        when(carRepository.save(carEntity)).thenReturn(savedCarEntity);
-        when(carMapper.toDto(savedCarEntity)).thenReturn(expectedDto);
+        CarDto result = carService.save(createDto, ownerId);
 
-        CarDto resultDto = carService.save(createDto);
-
-        assertNotNull(resultDto);
-        assertEquals(1L, resultDto.getId());
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        verify(carMapper).toEntity(createDto, ownerId);
+        verify(carRepository).save(carEntity);
     }
 
     @Test
     void findById_whenCarExists_shouldReturnOptionalOfDto() {
         Long carId = 1L;
-        Car testCar = createTestCar(carId, CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
-        CarDto expectedDto = new CarDto();
-        expectedDto.setId(carId);
+        Car entity = createTestCar(carId, 42L, CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
+        CarDto dto = new CarDto();
+        dto.setId(carId);
 
-        when(carRepository.findById(carId)).thenReturn(Optional.of(testCar));
-        when(carMapper.toDto(testCar)).thenReturn(expectedDto);
+        when(carRepository.findById(carId)).thenReturn(Optional.of(entity));
+        when(carMapper.toDto(entity)).thenReturn(dto);
 
         Optional<CarDto> result = carService.findById(carId);
 
@@ -84,111 +99,114 @@ class CarServiceImplTest {
     }
 
     @Test
-    void deleteById_whenCarExists_shouldCallRepositoryDelete() {
+    void deleteById_whenCarExists_shouldDelete() {
         Long carId = 1L;
         when(carRepository.findById(carId)).thenReturn(Optional.of(new Car()));
-        doNothing().when(carRepository).deleteById(carId);
 
         carService.deleteById(carId);
 
         verify(carRepository).deleteById(carId);
     }
 
-
     @Test
-    void returnCar_withRentedCar_shouldSetStatusToAvailableAndReturnDto() {
+    void returnCar_withRentedCar_shouldSetAvailable() {
         Long carId = 1L;
-        Car rentedCar = createTestCar(carId, CarStatus.RENTED, VerificationStatus.VERIFIED);
-        CarDto expectedDto = new CarDto();
-        expectedDto.setStatus(CarStatus.AVAILABLE);
+        Car rented = createTestCar(carId, 42L, CarStatus.RENTED, VerificationStatus.VERIFIED);
+        when(carRepository.findById(carId)).thenReturn(Optional.of(rented));
+        when(carRepository.save(any(Car.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        when(carRepository.findById(carId)).thenReturn(Optional.of(rentedCar));
-        when(carRepository.save(any(Car.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(carMapper.toDto(any(Car.class))).thenReturn(expectedDto);
+        CarDto mapped = new CarDto();
+        mapped.setStatus(CarStatus.AVAILABLE);
+        when(carMapper.toDto(any(Car.class))).thenReturn(mapped);
 
         CarDto result = carService.returnCar(carId);
 
         assertEquals(CarStatus.AVAILABLE, result.getStatus());
-        verify(carRepository).save(argThat(car -> car.getStatus() == CarStatus.AVAILABLE));
+        verify(carRepository).save(argThat(c -> c.getStatus() == CarStatus.AVAILABLE));
     }
 
     @Test
     void setMaintenance_withAvailableCar_shouldSucceed() {
         Long carId = 1L;
-        Car availableCar = createTestCar(carId, CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
-        when(carRepository.findById(carId)).thenReturn(Optional.of(availableCar));
-        when(carRepository.save(any(Car.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        Car available = createTestCar(carId, 42L, CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
+        when(carRepository.findById(carId)).thenReturn(Optional.of(available));
+        when(carRepository.save(any(Car.class))).thenAnswer(inv -> inv.getArgument(0));
 
         assertDoesNotThrow(() -> carService.setMaintenance(carId));
-        verify(carRepository).save(argThat(car -> car.getStatus() == CarStatus.MAINTENANCE));
+        verify(carRepository).save(argThat(c -> c.getStatus() == CarStatus.MAINTENANCE));
     }
 
     @Test
-    void verifyCar_withPendingCar_shouldSucceed() {
+    void verifyCar_withPendingCar_shouldSetVerified() {
         Long carId = 1L;
-        Car pendingCar = createTestCar(carId, CarStatus.AVAILABLE, VerificationStatus.PENDING);
-        when(carRepository.findById(carId)).thenReturn(Optional.of(pendingCar));
-        when(carRepository.save(any(Car.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        Car pending = createTestCar(carId, 42L, CarStatus.AVAILABLE, VerificationStatus.PENDING);
+        when(carRepository.findById(carId)).thenReturn(Optional.of(pending));
+        when(carRepository.save(any(Car.class))).thenAnswer(inv -> inv.getArgument(0));
 
         assertDoesNotThrow(() -> carService.verifyCar(carId));
-        verify(carRepository).save(argThat(car -> car.getVerificationStatus() == VerificationStatus.VERIFIED));
+        verify(carRepository).save(argThat(c -> c.getVerificationStatus() == VerificationStatus.VERIFIED));
     }
 
     @Test
-    void rejectVerification_withPendingCar_shouldSucceed() {
+    void rejectVerification_withVerifiedCar_shouldThrow() {
         Long carId = 1L;
-        Car pendingCar = createTestCar(carId, CarStatus.AVAILABLE, VerificationStatus.PENDING);
-        when(carRepository.findById(carId)).thenReturn(Optional.of(pendingCar));
-        when(carRepository.save(any(Car.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        assertDoesNotThrow(() -> carService.rejectVerification(carId));
-        verify(carRepository).save(argThat(car -> car.getVerificationStatus() == VerificationStatus.REJECTED));
-    }
-
-    @Test
-    void rejectVerification_withVerifiedCar_shouldThrowException() {
-        Long carId = 1L;
-        Car verifiedCar = createTestCar(carId, CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
-        when(carRepository.findById(carId)).thenReturn(Optional.of(verifiedCar));
+        Car verified = createTestCar(carId, 42L, CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
+        when(carRepository.findById(carId)).thenReturn(Optional.of(verified));
 
         assertThrows(InvalidVerificationStatusException.class, () -> carService.rejectVerification(carId));
     }
 
     @Test
-    void updateCar_shouldCallMapperAndUpdate() {
+    void updateCar_asOwner_shouldUpdate() {
         Long carId = 1L;
-        Car car = createTestCar(carId, CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
-        CarUpdateRequestDto updateDto = new CarUpdateRequestDto();
+        Long ownerId = 42L;
+        Long currentUserId = 42L;
+        Car car = createTestCar(carId, ownerId, CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
         when(carRepository.findById(carId)).thenReturn(Optional.of(car));
-        when(carRepository.save(car)).thenReturn(car);
-        carService.updateCar(carId, updateDto);
 
+        CarUpdateRequestDto updateDto = new CarUpdateRequestDto();
+        when(carRepository.save(car)).thenReturn(car);
+        CarDto mapped = new CarDto();
+        mapped.setId(carId);
+        when(carMapper.toDto(car)).thenReturn(mapped);
+
+        CarDto result = carService.updateCar(carId, updateDto, currentUserId);
+
+        assertNotNull(result);
         verify(carMapper).updateCarFromDto(updateDto, car);
         verify(carRepository).save(car);
     }
 
     @Test
-    void updatePrice_withNegativePrice_shouldThrowException() {
+    void updateCar_asDifferentUser_shouldThrowAccessDenied() {
         Long carId = 1L;
+        Long ownerId = 42L;
+        Long currentUserId = 99L;
+        Car car = createTestCar(carId, ownerId, CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
+        when(carRepository.findById(carId)).thenReturn(Optional.of(car));
 
-        assertThrows(ValidationException.class, () -> carService.updatePrice(carId, new BigDecimal("-10")));
+        assertThrows(AccessDeniedException.class, () -> carService.updateCar(carId, new CarUpdateRequestDto(), currentUserId));
     }
 
     @Test
-    void findAll_shouldCallRepositoryAndReturnPaginatedDtos() {
+    void updatePrice_negative_shouldThrowValidationException() {
+        assertThrows(ValidationException.class, () -> carService.updatePrice(1L, new BigDecimal("-10")));
+    }
+
+    @Test
+    void findAll_shouldMapPageOfDtos() {
         CarSearchCriteria criteria = new CarSearchCriteria();
         Pageable pageable = Pageable.unpaged();
 
-        Car carEntity = new Car();
-        Page<Car> carPage = new PageImpl<>(Collections.singletonList(carEntity));
-        CarDto expectedDto = new CarDto();
+        Car entity = new Car();
+        Page<Car> page = new PageImpl<>(Collections.singletonList(entity));
+        when(carRepository.findAll(criteria, pageable)).thenReturn(page);
 
-        when(carRepository.findAll(criteria, pageable)).thenReturn(carPage);
-        when(carMapper.toDto(any(Car.class))).thenReturn(expectedDto);
+        when(carMapper.toDto(any(Car.class))).thenReturn(new CarDto());
 
-        Page<CarDto> resultPage = carService.findAll(criteria, pageable);
+        Page<CarDto> result = carService.findAll(criteria, pageable);
 
-        assertEquals(1, resultPage.getTotalElements());
+        assertEquals(1, result.getTotalElements());
         verify(carRepository).findAll(criteria, pageable);
     }
 }

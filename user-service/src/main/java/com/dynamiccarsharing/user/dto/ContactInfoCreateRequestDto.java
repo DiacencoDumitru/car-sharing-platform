@@ -20,6 +20,10 @@ public class ContactInfoCreateRequestDto {
     @Email(message = "Please provide a valid email address.")
     private String email;
 
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, max = 255, message = "Password must be between 6 and 255 characters")
+    private String password;
+
     @NotBlank(message = "Phone number must not be blank.")
     @Pattern(regexp = "^\\+(?:[0-9] ?){6,14}[0-9]$", message = "Phone number must be in a valid international format (e.g., +37312345678).")
     private String phoneNumber;

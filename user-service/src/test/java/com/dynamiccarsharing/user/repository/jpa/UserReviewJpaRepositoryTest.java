@@ -21,8 +21,10 @@ class UserReviewJpaRepositoryTest {
 
     @Autowired
     private UserReviewJpaRepository userReviewRepository;
+
     @Autowired
     private UserJpaRepository userRepository;
+
     @Autowired
     private ContactInfoJpaRepository contactInfoRepository;
 
@@ -31,8 +33,9 @@ class UserReviewJpaRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        ContactInfo ci1 = contactInfoRepository.save(ContactInfo.builder().email("user1@test.com").firstName("a").lastName("b").phoneNumber("1").build());
-        ContactInfo ci2 = contactInfoRepository.save(ContactInfo.builder().email("reviewer@test.com").firstName("e").lastName("f").phoneNumber("3").build());
+        ContactInfo ci1 = contactInfoRepository.save(ContactInfo.builder().email("user1@test.com").firstName("a").lastName("b").password("password123").phoneNumber("1").build());
+        ContactInfo ci2 = contactInfoRepository.save(ContactInfo.builder().email("reviewer@test.com").firstName("e").lastName("f").password("password123").phoneNumber("3").build());
+
         user1 = userRepository.save(User.builder().role(RENTER).status(ACTIVE).contactInfo(ci1).build());
         reviewer = userRepository.save(User.builder().role(RENTER).status(ACTIVE).contactInfo(ci2).build());
         userReviewRepository.save(UserReview.builder().user(user1).reviewer(reviewer).comment("Good").build());
@@ -41,9 +44,7 @@ class UserReviewJpaRepositoryTest {
     @Test
     void findByFilter_withCriteria_returnsMatchingReview() throws SQLException {
         UserReviewFilter filter = UserReviewFilter.of(user1.getId(), reviewer.getId(), "");
-
         List<UserReview> results = userReviewRepository.findByFilter(filter);
-
         assertEquals(1, results.size());
     }
 }

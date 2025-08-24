@@ -35,13 +35,28 @@ class CarReviewJpaRepositoryTest {
     void setUp() {
         reviewerId1 = 1L;
 
-        Location location = locationRepository.save(Location.builder().city("Test").state("TS").zipCode("123").build());
-        car1 = carRepository.save(Car.builder().make("Honda").model("Civic").status(AVAILABLE).verificationStatus(VERIFIED).registrationNumber("CAR1").price(BigDecimal.TEN).type(SEDAN).location(location).build());
+        Location location = locationRepository.save(
+                Location.builder().city("Test").state("TS").zipCode("123").build()
+        );
 
-        carReviewRepository.save(CarReview.builder().car(car1).reviewerId(reviewerId1).comment("Good").build());
+        car1 = carRepository.save(
+                Car.builder()
+                        .ownerId(100L)
+                        .make("Honda").model("Civic")
+                        .status(AVAILABLE).verificationStatus(VERIFIED)
+                        .registrationNumber("CAR1")
+                        .price(BigDecimal.TEN).type(SEDAN)
+                        .location(location)
+                        .build()
+        );
+
+        carReviewRepository.save(
+                CarReview.builder().car(car1).reviewerId(reviewerId1).comment("Good").build()
+        );
 
         carReviewRepository.flush();
     }
+
 
     @Test
     void findByFilter_withCriteria_returnsMatchingReviews() throws SQLException {

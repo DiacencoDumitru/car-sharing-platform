@@ -40,13 +40,15 @@ class CarReviewSpecificationTest {
     @BeforeEach
     void setUp() {
         Location location = locationRepository.save(Location.builder().city("Test").state("TS").zipCode("123").build());
-        car1 = carRepository.save(Car.builder().make("Honda").model("Civic").status(AVAILABLE).verificationStatus(VERIFIED).registrationNumber("CAR1").price(BigDecimal.TEN).type(SEDAN).location(location).build());
-        car2 = carRepository.save(Car.builder().make("Toyota").model("Camry").status(AVAILABLE).verificationStatus(VERIFIED).registrationNumber("CAR2").price(BigDecimal.TEN).type(SEDAN).location(location).build());
+
+        car1 = carRepository.save(Car.builder().ownerId(400L).make("Honda").model("Civic").status(AVAILABLE).verificationStatus(VERIFIED).registrationNumber("CAR1").price(BigDecimal.TEN).type(SEDAN).location(location).build());
+        car2 = carRepository.save(Car.builder().ownerId(401L).make("Toyota").model("Camry").status(AVAILABLE).verificationStatus(VERIFIED).registrationNumber("CAR2").price(BigDecimal.TEN).type(SEDAN).location(location).build());
 
         reviewRepository.save(CarReview.builder().car(car1).reviewerId(reviewer1Id).comment("Great!").build());
         reviewRepository.save(CarReview.builder().car(car2).reviewerId(reviewer1Id).comment("Okay.").build());
         reviewRepository.save(CarReview.builder().car(car1).reviewerId(reviewer2Id).comment("Loved it!").build());
     }
+
 
     @Test
     void whenFilteringByCarId_shouldReturnMatchingReviews() {

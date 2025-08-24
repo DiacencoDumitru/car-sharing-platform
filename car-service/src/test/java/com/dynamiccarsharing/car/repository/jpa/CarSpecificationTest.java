@@ -34,23 +34,32 @@ class CarSpecificationTest {
 
     @BeforeEach
     void setUp() {
-        savedLocation = locationRepository.save(Location.builder().city("Test City").state("TS").zipCode("12345").build());
+        savedLocation = locationRepository.save(
+                Location.builder().city("Test City").state("TS").zipCode("12345").build()
+        );
 
         hondaCivic = carRepository.save(Car.builder()
+                .ownerId(200L)
                 .make("Honda").model("Civic").type(CarType.SEDAN).status(CarStatus.AVAILABLE)
-                .registrationNumber("HONDA1").price(new BigDecimal("50.00")).location(savedLocation)
-                .verificationStatus(VerificationStatus.VERIFIED).build());
+                .registrationNumber("HONDA1").price(new BigDecimal("50.00"))
+                .location(savedLocation).verificationStatus(VerificationStatus.VERIFIED)
+                .build());
 
         hondaAccord = carRepository.save(Car.builder()
+                .ownerId(201L)
                 .make("Honda").model("Accord").type(CarType.SEDAN).status(CarStatus.RENTED)
-                .registrationNumber("HONDA2").price(new BigDecimal("60.00")).location(savedLocation)
-                .verificationStatus(VerificationStatus.VERIFIED).build());
+                .registrationNumber("HONDA2").price(new BigDecimal("60.00"))
+                .location(savedLocation).verificationStatus(VerificationStatus.VERIFIED)
+                .build());
 
         toyotaCamry = carRepository.save(Car.builder()
+                .ownerId(202L)
                 .make("Toyota").model("Camry").type(CarType.SEDAN).status(CarStatus.AVAILABLE)
-                .registrationNumber("TOYOTA1").price(new BigDecimal("55.00")).location(savedLocation)
-                .verificationStatus(VerificationStatus.VERIFIED).build());
+                .registrationNumber("TOYOTA1").price(new BigDecimal("55.00"))
+                .location(savedLocation).verificationStatus(VerificationStatus.VERIFIED)
+                .build());
     }
+
 
     @Test
     void whenFilteringByMake_shouldReturnMatchingCars() {

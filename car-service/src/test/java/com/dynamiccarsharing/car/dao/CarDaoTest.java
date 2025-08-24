@@ -31,9 +31,10 @@ class CarDaoTest extends CarBaseDaoTest {
 
     private Location testLocation;
     private Location secondLocation;
+    private static final Long DEFAULT_OWNER_ID = 1L;
 
     @BeforeEach
-    void setUp() throws SQLException {
+    void setUp() {
         this.testLocation = createLocation("Test City", "TS", "12345");
         this.secondLocation = createLocation("Another City", "AC", "54321");
     }
@@ -45,6 +46,7 @@ class CarDaoTest extends CarBaseDaoTest {
                 .model(model)
                 .status(CarStatus.AVAILABLE)
                 .location(testLocation)
+                .ownerId(DEFAULT_OWNER_ID)
                 .price(BigDecimal.valueOf(50.0))
                 .type(CarType.SEDAN)
                 .verificationStatus(VerificationStatus.VERIFIED)
@@ -62,13 +64,14 @@ class CarDaoTest extends CarBaseDaoTest {
             Car saved = carDao.save(car);
             assertNotNull(saved.getId());
             assertEquals(car.getRegistrationNumber(), saved.getRegistrationNumber());
+            assertEquals(DEFAULT_OWNER_ID, saved.getOwnerId());
         }
 
         @Test
         @DisplayName("Should update existing car")
         @Transactional
-        void save_existingCar_shouldUpdate() throws SQLException {
-            Car original = createCar("UPDATE123", "Toyota", "Corolla", testLocation);
+        void save_existingCar_shouldUpdate() {
+            Car original = createCar("UPDATE123", "Toyota", "Corolla", testLocation, DEFAULT_OWNER_ID);
 
             original.setStatus(CarStatus.RENTED);
             original.setPrice(BigDecimal.valueOf(75.0));
@@ -87,8 +90,8 @@ class CarDaoTest extends CarBaseDaoTest {
         @Test
         @DisplayName("Should find car by valid ID")
         @Transactional
-        void findById_validId_shouldReturnCar() throws SQLException {
-            Car saved = createCar("FINDME", "Honda", "Accord", testLocation);
+        void findById_validId_shouldReturnCar() {
+            Car saved = createCar("FINDME", "Honda", "Accord", testLocation, DEFAULT_OWNER_ID);
             Optional<Car> found = carDao.findById(saved.getId());
             assertTrue(found.isPresent());
             assertEquals(saved.getId(), found.get().getId());
@@ -97,11 +100,11 @@ class CarDaoTest extends CarBaseDaoTest {
         @Test
         @DisplayName("Should find cars by status")
         @Transactional
-        void findByStatus_shouldReturnOnlyMatchingCars() throws SQLException {
-            Car car1 = createCar("AVAIL1", "Toyota", "Camry", testLocation);
+        void findByStatus_shouldReturnOnlyMatchingCars() {
+            Car car1 = createCar("AVAIL1", "Toyota", "Camry", testLocation, DEFAULT_OWNER_ID);
             car1.setStatus(CarStatus.RENTED);
             carDao.save(car1);
-            createCar("AVAIL2", "Honda", "Civic", testLocation);
+            createCar("AVAIL2", "Honda", "Civic", testLocation, DEFAULT_OWNER_ID);
 
             List<Car> rentedCars = carDao.findByStatus(CarStatus.RENTED);
             assertEquals(1, rentedCars.size());
@@ -123,8 +126,8 @@ class CarDaoTest extends CarBaseDaoTest {
         @Test
         @DisplayName("Should delete car by ID")
         @Transactional
-        void deleteById_validId_shouldDelete() throws SQLException {
-            Car carToDelete = createCar("DELETE ME", "Nissan", "Titan", testLocation);
+        void deleteById_validId_shouldDelete() {
+            Car carToDelete = createCar("DELETE ME", "Nissan", "Titan", testLocation, DEFAULT_OWNER_ID);
             carDao.deleteById(carToDelete.getId());
             Optional<Car> found = carDao.findById(carToDelete.getId());
             assertFalse(found.isPresent());
@@ -144,21 +147,10 @@ class CarDaoTest extends CarBaseDaoTest {
 
         @BeforeEach
         void setUpData() {
-            Car toyotaSedan = buildUnsavedCar("TS-01", "Toyota", "Camry");
-            toyotaSedan.setType(CarType.SEDAN);
-            carDao.save(toyotaSedan);
-
-            Car toyotaSuv = buildUnsavedCar("TS-02", "Toyota", "RAV4");
-            toyotaSuv.setType(CarType.SUV);
-            carDao.save(toyotaSuv);
-
-            Car hondaRented = buildUnsavedCar("HN-01", "Honda", "Civic");
-            hondaRented.setStatus(CarStatus.RENTED);
-            carDao.save(hondaRented);
-
-            Car fordOtherLocation = buildUnsavedCar("FD-01", "Ford", "Focus");
-            fordOtherLocation.setLocation(secondLocation);
-            carDao.save(fordOtherLocation);
+            carDao.save(buildUnsavedCar("TS-01", "Toyota", "Camry").toBuilder().type(CarType.SEDAN).build());
+            carDao.save(buildUnsavedCar("TS-02", "Toyota", "RAV4").toBuilder().type(CarType.SUV).build());
+            carDao.save(buildUnsavedCar("HN-01", "Honda", "Civic").toBuilder().status(CarStatus.RENTED).build());
+            carDao.save(buildUnsavedCar("FD-01", "Ford", "Focus").toBuilder().location(secondLocation).build());
         }
 
         @Test
@@ -192,21 +184,17 @@ class CarDaoTest extends CarBaseDaoTest {
     class FilterOperations {
 
         private void setUpTestData() {
+            createCar("TS-01", "Toyota", "Camry", testLocation, DEFAULT_OWNER_ID);
 
-            Car toyotaSedan = createCar("TS-01", "Toyota", "Camry", testLocation);
-            toyotaSedan.setType(CarType.SEDAN);
-            carDao.save(toyotaSedan);
-
-            Car toyotaSuv = createCar("TS-02", "Toyota", "RAV4", testLocation);
+            Car toyotaSuv = createCar("TS-02", "Toyota", "RAV4", testLocation, DEFAULT_OWNER_ID);
             toyotaSuv.setType(CarType.SUV);
             carDao.save(toyotaSuv);
 
-            Car hondaRented = createCar("HN-01", "Honda", "Civic", testLocation);
+            Car hondaRented = createCar("HN-01", "Honda", "Civic", testLocation, DEFAULT_OWNER_ID);
             hondaRented.setStatus(CarStatus.RENTED);
             carDao.save(hondaRented);
 
-            Car fordOtherLocation = createCar("FD-01", "Ford", "Focus", secondLocation);
-            carDao.save(fordOtherLocation);
+            createCar("FD-01", "Ford", "Focus", secondLocation, DEFAULT_OWNER_ID);
         }
 
         @Test

@@ -13,22 +13,25 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface CarMapper {
 
     @Mapping(source = "location.id", target = "locationId")
+    @Mapping(target = "instanceId", ignore = true)
     CarDto toDto(Car car);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(source = "locationId", target = "location")
+    @Mapping(source = "dto.locationId", target = "location")
     @Mapping(target = "status", constant = "AVAILABLE")
     @Mapping(target = "verificationStatus", constant = "PENDING")
     @Mapping(target = "reviews", ignore = true)
-    Car toEntity(CarCreateRequestDto dto);
+    @Mapping(source = "ownerId", target = "ownerId")
+    Car toEntity(CarCreateRequestDto dto, Long ownerId);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "ownerId", ignore = true)
     @Mapping(target = "reviews", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "verificationStatus", ignore = true)
     @Mapping(target = "type", ignore = true)
-    @Mapping(source = "locationId", target = "location")
-    Car updateCarFromDto(CarUpdateRequestDto dto, @MappingTarget Car car);
+    @Mapping(source = "dto.locationId", target = "location")
+    void updateCarFromDto(CarUpdateRequestDto dto, @MappingTarget Car car);
 
     default Car fromId(Long id) {
         if (id == null) {

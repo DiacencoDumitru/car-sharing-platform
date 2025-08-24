@@ -67,7 +67,9 @@ class CarMapperTest {
         dto.setPrice(new BigDecimal("45.50"));
         dto.setType(CarType.HATCHBACK);
 
-        Car car = carMapper.toEntity(dto);
+        Long ownerId = 50L;
+
+        Car car = carMapper.toEntity(dto, ownerId);
 
         assertNotNull(car);
         assertNull(car.getId());
