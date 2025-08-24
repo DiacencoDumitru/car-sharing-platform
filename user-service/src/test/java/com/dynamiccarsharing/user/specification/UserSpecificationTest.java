@@ -29,9 +29,9 @@ class UserSpecificationTest {
 
     @BeforeEach
     void setUp() {
-        ci1 = contactInfoRepository.save(ContactInfo.builder().email("admin@test.com").firstName("Admin").lastName("User").phoneNumber("1").build());
-        ContactInfo ci2 = contactInfoRepository.save(ContactInfo.builder().email("renter@test.com").firstName("Renter").lastName("User").phoneNumber("2").build());
-        ContactInfo ci3 = contactInfoRepository.save(ContactInfo.builder().email("banned@test.com").firstName("Banned").lastName("User").phoneNumber("3").build());
+        ci1 = contactInfoRepository.save(ContactInfo.builder().email("admin@test.com").firstName("Admin").lastName("User").password("password123").phoneNumber("1").build());
+        ContactInfo ci2 = contactInfoRepository.save(ContactInfo.builder().email("renter@test.com").firstName("Renter").lastName("User").password("password123").phoneNumber("2").build());
+        ContactInfo ci3 = contactInfoRepository.save(ContactInfo.builder().email("banned@test.com").firstName("Banned").lastName("User").password("password123").phoneNumber("3").build());
 
         userRepository.save(User.builder().contactInfo(ci1).role(UserRole.ADMIN).status(UserStatus.ACTIVE).build());
         userRepository.save(User.builder().contactInfo(ci2).role(UserRole.RENTER).status(UserStatus.ACTIVE).build());

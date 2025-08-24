@@ -24,5 +24,7 @@ public interface UserService {
 
     UserDto updateUserContactInfo(Long userId, ContactInfoUpdateRequestDto updateDto);
 
+    Optional<UserDto> findByEmail(String email);
+
     List<User> searchUsers(UserSearchCriteria criteria);
 }

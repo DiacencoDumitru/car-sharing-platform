@@ -31,6 +31,8 @@ public class CarDao implements CarRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<Car, Filter<Car>> sqlFilterMapper;
 
+    private static final String CAR_LOCATION_JOIN_SELECT = "SELECT c.*, l.city, l.state, l.zip_code FROM cars c JOIN locations l ON c.location_id = l.id";
+
     public CarDao(DatabaseUtil databaseUtil) {
         this.databaseUtil = databaseUtil;
         this.sqlFilterMapper = new CarSqlFilterMapper();
@@ -39,7 +41,7 @@ public class CarDao implements CarRepository {
     @Override
     public Car save(Car car) {
         if (car.getId() == null) {
-            String insertSql = "INSERT INTO cars (registration_number, make, model, status, location_id, price_per_day, type, verification_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            String insertSql = "INSERT INTO cars (registration_number, make, model, status, location_id, price_per_day, type, verification_status, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             Long newId = databaseUtil.executeUpdateWithGeneratedKeys(insertSql, statement -> {
                 try {
@@ -51,6 +53,7 @@ public class CarDao implements CarRepository {
                     statement.setBigDecimal(6, car.getPrice());
                     statement.setString(7, car.getType().name());
                     statement.setString(8, car.getVerificationStatus().name());
+                    statement.setLong(9, car.getOwnerId());
                 } catch (SQLException e) {
                     throw new RepositoryException("Failed to save car entity", e);
                 }
@@ -58,25 +61,22 @@ public class CarDao implements CarRepository {
             car.setId(newId);
             return car;
         } else {
-            String updateSql = "UPDATE cars SET registration_number = ?, make = ?, model = ?, status = ?, location_id = ?, price_per_day = ?, type = ?, verification_status = ? WHERE id = ?";
-            databaseUtil.execute(updateSql, car.getRegistrationNumber(), car.getMake(), car.getModel(), car.getStatus().name(), car.getLocation().getId(), car.getPrice(), car.getType().name(), car.getVerificationStatus().name(), car.getId());
+            String updateSql = "UPDATE cars SET registration_number = ?, make = ?, model = ?, status = ?, location_id = ?, price_per_day = ?, type = ?, verification_status = ?, owner_id = ? WHERE id = ?";
+            databaseUtil.execute(updateSql, car.getRegistrationNumber(), car.getMake(), car.getModel(), car.getStatus().name(), car.getLocation().getId(), car.getPrice(), car.getType().name(), car.getVerificationStatus().name(), car.getOwnerId(), car.getId());
             return car;
         }
     }
 
     @Override
     public Optional<Car> findById(Long id) {
-        String query = "SELECT c.*, l.city, l.state, l.zip_code FROM cars c " +
-                "JOIN locations l ON c.location_id = l.id WHERE c.id = ?";
+        String query = CAR_LOCATION_JOIN_SELECT + " WHERE c.id = ?";
         Car car = databaseUtil.findOne(query, this::mapToCar, id);
         return Optional.ofNullable(car);
     }
 
     @Override
     public List<Car> findAll() {
-        String query = "SELECT c.*, l.city, l.state, l.zip_code FROM cars c " +
-                "JOIN locations l ON c.location_id = l.id";
-        return databaseUtil.findMany(query, this::mapToCar);
+        return databaseUtil.findMany(CAR_LOCATION_JOIN_SELECT, this::mapToCar);
     }
 
     @Override
@@ -108,7 +108,7 @@ public class CarDao implements CarRepository {
 
     @Override
     public List<Car> findByFilter(Filter<Car> filter) throws SQLException {
-        String baseQuery = "SELECT c.*, l.city, l.state, l.zip_code FROM cars c JOIN locations l ON c.location_id = l.id WHERE 1=1";
+        String baseQuery = CAR_LOCATION_JOIN_SELECT + " WHERE 1=1";
         SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
 
         String fullQuery = baseQuery + sqlFilter.filterQuery();
@@ -131,6 +131,7 @@ public class CarDao implements CarRepository {
                 .model(rs.getString("model"))
                 .status(CarStatus.valueOf(rs.getString("status")))
                 .location(location)
+                .ownerId(rs.getLong("owner_id"))
                 .price(rs.getBigDecimal("price_per_day"))
                 .type(CarType.valueOf(rs.getString("type")))
                 .verificationStatus(VerificationStatus.valueOf(rs.getString("verification_status")))
@@ -138,8 +139,7 @@ public class CarDao implements CarRepository {
     }
 
     public List<Car> findByStatus(CarStatus status) {
-        String query = "SELECT c.*, l.city, l.state, l.zip_code FROM cars c " +
-                "JOIN locations l ON c.location_id = l.id WHERE c.status = ?";
+        String query = CAR_LOCATION_JOIN_SELECT + " WHERE c.status = ?";
         return databaseUtil.findMany(query, this::mapToCar, status.name());
     }
 }

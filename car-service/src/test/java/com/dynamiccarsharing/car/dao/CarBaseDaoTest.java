@@ -65,8 +65,9 @@ public abstract class CarBaseDaoTest {
         return Location.builder().id(newId).city(city).state(state).zipCode(zipCode).build();
     }
 
-    protected Car createCar(String regNumber, String make, String model, Location location) {
-        String sql = "INSERT INTO cars (registration_number, make, model, status, location_id, price_per_day, type, verification_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    protected Car createCar(String regNumber, String make, String model, Location location, Long ownerId) {
+        // FIX: Added owner_id to the SQL INSERT statement
+        String sql = "INSERT INTO cars (registration_number, make, model, status, location_id, price_per_day, type, verification_status, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         CarStatus status = CarStatus.AVAILABLE;
         BigDecimal price = BigDecimal.valueOf(50.00);
         CarType type = CarType.SEDAN;
@@ -83,6 +84,7 @@ public abstract class CarBaseDaoTest {
                 ps.setBigDecimal(6, price);
                 ps.setString(7, type.name());
                 ps.setString(8, verificationStatus.name());
+                ps.setLong(9, ownerId);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -96,6 +98,7 @@ public abstract class CarBaseDaoTest {
                 .model(model)
                 .status(status)
                 .location(location)
+                .ownerId(ownerId)
                 .price(price)
                 .type(type)
                 .verificationStatus(verificationStatus)

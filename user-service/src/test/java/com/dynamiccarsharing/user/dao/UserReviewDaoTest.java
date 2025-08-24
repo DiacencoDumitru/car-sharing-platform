@@ -33,9 +33,9 @@ class UserReviewDaoTest extends UserBaseDaoTest {
     }
 
     private void createTestDependencies() throws SQLException {
-        ContactInfo contactInfo1 = createContactInfo("reviewed@example.com", "+111", "Reviewed", "User");
+        ContactInfo contactInfo1 = createContactInfo("reviewed@example.com", "+111", "Reviewed", "User", "password123");
         this.reviewedUser = createUser(contactInfo1, UserRole.RENTER, UserStatus.ACTIVE);
-        ContactInfo contactInfo2 = createContactInfo("reviewer@example.com", "+222", "Reviewer", "User");
+        ContactInfo contactInfo2 = createContactInfo("reviewer@example.com", "+222", "Reviewer", "User", "password123");
         this.reviewer = createUser(contactInfo2, UserRole.RENTER, UserStatus.ACTIVE);
     }
 

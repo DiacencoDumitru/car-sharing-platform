@@ -32,9 +32,9 @@ class UserReviewSpecificationTest {
 
     @BeforeEach
     void setUp() {
-        ContactInfo ci1 = contactInfoRepository.save(ContactInfo.builder().email("user1@test.com").firstName("a").lastName("b").phoneNumber("1").build());
-        ContactInfo ci2 = contactInfoRepository.save(ContactInfo.builder().email("user2@test.com").firstName("c").lastName("d").phoneNumber("2").build());
-        ContactInfo ci3 = contactInfoRepository.save(ContactInfo.builder().email("reviewer@test.com").firstName("e").lastName("f").phoneNumber("3").build());
+        ContactInfo ci1 = contactInfoRepository.save(ContactInfo.builder().email("user1@test.com").firstName("a").lastName("b").password("pass123").phoneNumber("1").build());
+        ContactInfo ci2 = contactInfoRepository.save(ContactInfo.builder().email("user2@test.com").firstName("c").lastName("d").password("pass123").phoneNumber("2").build());
+        ContactInfo ci3 = contactInfoRepository.save(ContactInfo.builder().email("reviewer@test.com").firstName("e").lastName("f").password("pass123").phoneNumber("3").build());
 
         user1 = userRepository.save(User.builder().role(RENTER).status(ACTIVE).contactInfo(ci1).build());
         user2 = userRepository.save(User.builder().role(RENTER).status(ACTIVE).contactInfo(ci2).build());

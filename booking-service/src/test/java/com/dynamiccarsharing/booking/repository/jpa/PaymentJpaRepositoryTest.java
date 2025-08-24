@@ -1,18 +1,19 @@
 package com.dynamiccarsharing.booking.repository.jpa;
 
 import com.dynamiccarsharing.booking.config.JpaConfig;
-import com.dynamiccarsharing.contracts.enums.PaymentType;
-import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.booking.filter.PaymentFilter;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.model.Payment;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
+import com.dynamiccarsharing.contracts.enums.PaymentType;
+import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @DataJpaTest
 @Import({BookingJpaRepositoryImpl.class, JpaConfig.class})
+@ActiveProfiles("jpa")
 class PaymentJpaRepositoryTest {
 
     @Autowired

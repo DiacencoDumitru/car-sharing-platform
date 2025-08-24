@@ -32,8 +32,8 @@ class UserDaoTest extends UserBaseDaoTest {
     }
 
     private void createTestDependencies() throws SQLException {
-        this.contactInfo1 = createContactInfo("test1@example.com", "111111", "Test", "One");
-        this.contactInfo2 = createContactInfo("test2@example.com", "222222", "Test", "Two");
+        this.contactInfo1 = createContactInfo("test1@example.com", "111111", "Test", "One", "password123");
+        this.contactInfo2 = createContactInfo("test2@example.com", "222222", "Test", "Two", "password123");
     }
 
     private User buildUnsavedUser(ContactInfo contactInfo, UserRole role) {

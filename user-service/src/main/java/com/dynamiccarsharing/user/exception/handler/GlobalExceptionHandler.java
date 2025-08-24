@@ -4,8 +4,11 @@ import com.dynamiccarsharing.user.exception.InvalidUserStatusException;
 import com.dynamiccarsharing.user.exception.UserNotFoundException;
 import com.dynamiccarsharing.util.exception.ConflictException;
 import com.dynamiccarsharing.util.exception.ResourceNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,6 +20,26 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(AccessDeniedException ex, HttpServletRequest req) {
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        pd.setTitle("Forbidden");
+        pd.setDetail("You do not have permission to perform this action.");
+        pd.setType(URI.create("/errors/forbidden"));
+        pd.setInstance(URI.create(req.getRequestURI()));
+        return pd;
+    }
+
+    @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
+    public ProblemDetail handleNoCreds(AuthenticationCredentialsNotFoundException ex, HttpServletRequest req) {
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        pd.setTitle("Forbidden");
+        pd.setDetail("Authentication is required for this action.");
+        pd.setType(URI.create("/errors/forbidden"));
+        pd.setInstance(URI.create(req.getRequestURI()));
+        return pd;
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {

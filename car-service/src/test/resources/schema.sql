@@ -12,6 +12,7 @@ create TABLE IF NOT EXISTS cars (
     model VARCHAR(100) NOT NULL,
     status VARCHAR(50) NOT NULL CHECK (status IN ('AVAILABLE', 'RENTED', 'MAINTENANCE')),
     location_id BIGINT NOT NULL,
+    owner_id BIGINT NOT NULL,
     price_per_day DECIMAL(10, 2) NOT NULL,
     type VARCHAR(50) NOT NULL CHECK (type IN ('SEDAN', 'SUV', 'HATCHBACK', 'COUPE', 'TRUCK')),
     verification_status VARCHAR(50) NOT NULL CHECK (verification_status IN ('PENDING', 'VERIFIED', 'REJECTED')),

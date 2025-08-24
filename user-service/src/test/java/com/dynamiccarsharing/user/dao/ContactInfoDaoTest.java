@@ -25,6 +25,7 @@ class ContactInfoDaoTest extends UserBaseDaoTest {
                 .firstName(firstName)
                 .lastName(lastName)
                 .email(email)
+                .password("password123")
                 .phoneNumber(phone)
                 .build();
     }

@@ -15,6 +15,7 @@ public class CarDto {
     private String model;
     private CarStatus status;
     private Long locationId;
+    private Long ownerId;
     private BigDecimal price;
     private CarType type;
     private VerificationStatus verificationStatus;
