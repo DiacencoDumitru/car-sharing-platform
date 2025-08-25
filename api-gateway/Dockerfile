@@ -11,25 +11,17 @@ COPY ./common-utils/pom.xml ./common-utils/
 COPY ./api-contracts/pom.xml ./api-contracts/
 COPY ./api-gateway/pom.xml ./api-gateway/
 
-RUN mvn clean install -N
-
 RUN mvn dependency:go-offline
 
-COPY ./eureka-server/src ./eureka-server/src
-COPY ./user-service/src ./user-service/src
-COPY ./car-service/src ./car-service/src
-COPY ./booking-service/src ./booking-service/src
-COPY ./dispute-service/src ./dispute-service/src
-COPY ./common-utils/src ./common-utils/src
-COPY ./api-contracts/src ./api-contracts/src
+COPY ./api-gateway/src ./api-gateway/src
 
-RUN mvn clean install -pl api-contracts,common-utils -DskipTests
-RUN mvn clean package -pl car-service -DskipTests
+RUN mvn clean package -pl api-gateway -DskipTests
 
 FROM eclipse-temurin:17-jre-focal
 WORKDIR /app
 
-COPY --from=builder /app/car-service/target/*.jar app.jar
+COPY --from=builder /app/api-gateway/target/*.jar app.jar
 
-EXPOSE 8081
+EXPOSE 8085
+
 ENTRYPOINT ["java","-jar","app.jar"]
