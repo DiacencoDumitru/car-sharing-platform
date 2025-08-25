@@ -18,4 +18,5 @@ public class CarDto {
     private BigDecimal price;
     private CarType type;
     private VerificationStatus verificationStatus;
+    private String instanceId;
 }

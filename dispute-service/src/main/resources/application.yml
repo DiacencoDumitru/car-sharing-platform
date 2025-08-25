@@ -1,0 +1,68 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: dispute-service
+  profiles:
+    active: jpa
+
+  datasource:
+    url: jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:password123}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+    registry-fetch-interval-seconds: 10
+    eureka-connection-idle-timeout-seconds: 40
+
+  instance:
+    instance-id: ${spring.application.name}:${server.port}:${random.uuid}
+    prefer-ip-address: false
+    hostname: dispute-service
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+  cloud:
+    loadbalancer:
+      enabled: true
+      retry:
+        enabled: true
+    discovery:
+      client:
+        retry:
+          enabled: true
+          initial-interval: 2000
+          max-interval: 8000
+          multiplier: 1.5
+          max-attempts: 10
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.dynamiccarsharing: DEBUG
+    com.netflix.eureka: DEBUG
+    com.netflix.discovery: DEBUG
+    org.springframework.cloud.client.discovery: DEBUG

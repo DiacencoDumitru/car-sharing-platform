@@ -10,4 +10,5 @@ public class UserDto {
     private UserRole role;
     private UserStatus status;
     private ContactInfoDto contactInfo;
+    private String instanceId;
 }

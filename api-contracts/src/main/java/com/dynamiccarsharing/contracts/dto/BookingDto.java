@@ -14,4 +14,5 @@ public class BookingDto {
     private LocalDateTime endTime;
     private TransactionStatus status;
     private Long pickupLocationId;
+    private String instanceId;
 }
