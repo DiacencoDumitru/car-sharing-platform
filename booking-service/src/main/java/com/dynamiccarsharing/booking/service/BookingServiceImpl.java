@@ -19,6 +19,7 @@ import com.dynamiccarsharing.util.exception.ValidationException;
 import com.dynamiccarsharing.util.filter.Filter;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ import static com.dynamiccarsharing.contracts.enums.TransactionStatus.*;
 @Service("bookingService")
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
@@ -45,8 +47,8 @@ public class BookingServiceImpl implements BookingService {
 
     @PostConstruct
     public void init() {
-        this.userWebClient = webClientBuilder.baseUrl("http://user-service").build();
-        this.carWebClient = webClientBuilder.baseUrl("http://car-service").build();
+        this.userWebClient = webClientBuilder.baseUrl("lb://user-service").build();
+        this.carWebClient = webClientBuilder.baseUrl("lb://car-service").build();
     }
 
     @Override
@@ -157,11 +159,15 @@ public class BookingServiceImpl implements BookingService {
 
     private void validateUserExists(Long userId) {
         try {
-            userWebClient.get()
-                    .uri("/" + userId)
+            UserDto user = userWebClient.get()
+                    .uri("/api/v1/users/" + userId)
                     .retrieve()
                     .bodyToMono(UserDto.class)
                     .block();
+
+            if (user != null) {
+                log.info("User validation handled by instance: {}", user.getInstanceId());
+            }
         } catch (Exception e) {
             throw new ValidationException("User with ID " + userId + " does not exist.");
         }
@@ -174,6 +180,10 @@ public class BookingServiceImpl implements BookingService {
                     .retrieve()
                     .bodyToMono(CarDto.class)
                     .block();
+
+            if (car != null) {
+                log.info("Car validation handled by instance: {}", car.getInstanceId());
+            }
 
             if (car == null || !"AVAILABLE".equalsIgnoreCase(String.valueOf(car.getStatus()))) {
                 throw new ValidationException("Car with ID " + carId + " is not available for booking.");

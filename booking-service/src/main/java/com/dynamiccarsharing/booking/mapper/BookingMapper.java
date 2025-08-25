@@ -9,6 +9,8 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface BookingMapper {
+
+    @Mapping(target = "instanceId", ignore = true)
     BookingDto toDto(Booking booking);
 
     @Mapping(target = "id", ignore = true)

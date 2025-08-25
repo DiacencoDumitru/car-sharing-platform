@@ -17,6 +17,7 @@ import com.dynamiccarsharing.util.exception.ValidationException;
 import com.dynamiccarsharing.util.filter.Filter;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -29,6 +30,7 @@ import java.util.Optional;
 @Service("disputeService")
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class DisputeServiceImpl implements DisputeService {
 
     private final DisputeRepository disputeRepository;
@@ -40,10 +42,9 @@ public class DisputeServiceImpl implements DisputeService {
 
     @PostConstruct
     public void init() {
-        this.userWebClient = webClientBuilder.baseUrl("http://user-service").build();
-        this.bookingWebClient = webClientBuilder.baseUrl("http://booking-service").build();
+        this.userWebClient = webClientBuilder.baseUrl("lb://user-service").build();
+        this.bookingWebClient = webClientBuilder.baseUrl("lb://booking-service").build();
     }
-
 
     @Override
     public DisputeDto createDispute(Long bookingId, DisputeCreateRequestDto createDto, Long creationUserId) {
@@ -112,15 +113,15 @@ public class DisputeServiceImpl implements DisputeService {
 
     private void validateUserExists(Long userId) {
         try {
-            if (userWebClient == null) {
-                throw new IllegalStateException("User WebClient not initialized");
-            }
-
-            userWebClient.get()
+            UserDto user = userWebClient.get()
                     .uri("/" + userId)
                     .retrieve()
                     .bodyToMono(UserDto.class)
                     .block();
+
+            if (user != null) {
+                log.info("User validation handled by instance: {}", user.getInstanceId());
+            }
         } catch (Exception e) {
             throw new ValidationException("User with ID " + userId + " does not exist.");
         }
@@ -128,11 +129,15 @@ public class DisputeServiceImpl implements DisputeService {
 
     private void validateBookingExists(Long bookingId) {
         try {
-            bookingWebClient.get()
+            BookingDto booking = bookingWebClient.get()
                     .uri("/" + bookingId)
                     .retrieve()
                     .bodyToMono(BookingDto.class)
                     .block();
+
+            if (booking != null) {
+                log.info("Booking validation handled by instance: {}", booking.getInstanceId());
+            }
         } catch (Exception e) {
             throw new ValidationException("Booking with ID " + bookingId + " does not exist.");
         }

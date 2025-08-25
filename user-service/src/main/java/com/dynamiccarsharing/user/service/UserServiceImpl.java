@@ -1,6 +1,7 @@
 package com.dynamiccarsharing.user.service;
 
 import com.dynamiccarsharing.contracts.dto.UserDto;
+import com.dynamiccarsharing.contracts.enums.UserStatus;
 import com.dynamiccarsharing.user.criteria.UserSearchCriteria;
 import com.dynamiccarsharing.user.dto.ContactInfoUpdateRequestDto;
 import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
@@ -35,6 +36,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto registerUser(UserCreateRequestDto createDto) {
         User user = userMapper.toEntity(createDto);
+        user.setStatus(UserStatus.ACTIVE);
         User savedUser = userRepository.save(user);
         return userMapper.toDto(savedUser);
     }
