@@ -1,0 +1,48 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service-route
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/users/**
+        - id: car-service-route
+          uri: lb://car-service
+          predicates:
+            - Path=/api/v1/cars/**
+        - id: booking-service-route
+          uri: lb://booking-service
+          predicates:
+            - Path=/api/v1/bookings/**
+        - id: dispute-service-route
+          uri: lb://dispute-service
+          predicates:
+            - Path=/api/v1/disputes/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    hostname: api-gateway
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
