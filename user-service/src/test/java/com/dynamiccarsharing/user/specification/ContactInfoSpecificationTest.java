@@ -20,11 +20,12 @@ class ContactInfoSpecificationTest {
 
     @BeforeEach
     void setUp() {
-        contactInfoRepository.save(ContactInfo.builder().firstName("Dumitru").lastName("Diacenco").email("dd.prodev@gmail.com").phoneNumber("+37367773888").build());
-        contactInfoRepository.save(ContactInfo.builder().firstName("Dumitru").lastName("Diacenco2").email("dd2.prodev@gmail.com").phoneNumber("+37367773889").build());
-        contactInfoRepository.save(ContactInfo.builder().firstName("Vitalii").lastName("Diacenco").email("dv.prodev@gmail.com").phoneNumber("+37367773777").build());
-        contactInfoRepository.save(ContactInfo.builder().firstName("Rostislav").lastName("Jiutin").email("rs.prodev@gmail.com").phoneNumber("+37363333333").build());
+        contactInfoRepository.save(ContactInfo.builder().firstName("Dumitru").lastName("Diacenco").email("dd.prodev@gmail.com").password("password123").phoneNumber("+37367773888").build());
+        contactInfoRepository.save(ContactInfo.builder().firstName("Dumitru").lastName("Diacenco2").email("dd2.prodev@gmail.com").password("password123").phoneNumber("+37367773889").build());
+        contactInfoRepository.save(ContactInfo.builder().firstName("Vitalii").lastName("Diacenco").email("dv.prodev@gmail.com").password("password123").phoneNumber("+37367773777").build());
+        contactInfoRepository.save(ContactInfo.builder().firstName("Rostislav").lastName("Jiutin").email("rs.prodev@gmail.com").password("password123").phoneNumber("+37363333333").build());
     }
+
 
     @Test
     void whenFilteringByFirstNameContains_shouldReturnMatchingContacts() {
@@ -32,7 +33,7 @@ class ContactInfoSpecificationTest {
         List<ContactInfo> results = contactInfoRepository.findAll(spec);
         assertEquals(2, results.size());
     }
-    
+
     @Test
     void whenFilteringWithCriteria_shouldReturnMatchingContact() {
         Specification<ContactInfo> spec = ContactInfoSpecification.withCriteria("Dumitru", "Diacenco", null);

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -46,6 +47,7 @@ public class UserController {
     }
 
     @PostMapping("/users/register")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<UserDto> registerUser(@Valid @RequestBody UserCreateRequestDto createDto) {
         UserDto savedUser = userService.registerUser(createDto);
         return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
@@ -81,10 +83,15 @@ public class UserController {
     }
 
     @PatchMapping("/users/{userId}/status")
-    public ResponseEntity<UserDto> updateUserStatus(
-            @PathVariable Long userId,
-            @Valid @RequestBody UserStatusUpdateRequestDto updateDto) {
+    public ResponseEntity<UserDto> updateUserStatus(@PathVariable Long userId, @Valid @RequestBody UserStatusUpdateRequestDto updateDto) {
         UserDto updatedUser = userService.updateUserStatus(userId, updateDto);
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @GetMapping("/internal/users/by-email/{email:.+}")
+    public ResponseEntity<UserDto> getUserByEmailForService(@PathVariable String email) {
+        return userService.findByEmail(email)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

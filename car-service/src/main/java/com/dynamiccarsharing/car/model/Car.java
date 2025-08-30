@@ -49,6 +49,10 @@ public class Car {
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;
 
+    @NotNull(message = "Owner ID must not be null.")
+    @Column(name = "owner_id", nullable = false)
+    private Long ownerId;
+
     @NotNull(message = "Price per day must be not null.")
     @Column(name = "price_per_day", nullable = false)
     private BigDecimal price;

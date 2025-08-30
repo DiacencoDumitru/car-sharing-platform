@@ -30,7 +30,7 @@ public class ContactInfoDao implements ContactInfoRepository {
     @Override
     public ContactInfo save(ContactInfo entity) {
         if (entity.getId() == null) {
-            String insertSql = "INSERT INTO contact_infos (email, phone_number, first_name, last_name) VALUES (?, ?, ?, ?)";
+            String insertSql = "INSERT INTO contact_infos (email, phone_number, first_name, last_name, password) VALUES (?, ?, ?, ?, ?)";
 
             Long newId = databaseUtil.executeUpdateWithGeneratedKeys(insertSql, statement -> {
                 try {
@@ -38,6 +38,8 @@ public class ContactInfoDao implements ContactInfoRepository {
                     statement.setString(2, entity.getPhoneNumber());
                     statement.setString(3, entity.getFirstName());
                     statement.setString(4, entity.getLastName());
+                    statement.setString(5, entity.getPassword());
+
                 } catch (SQLException e) {
                     throw new RepositoryException("Failed to save contact information", e);
                 }
@@ -45,8 +47,8 @@ public class ContactInfoDao implements ContactInfoRepository {
 
             return entity.toBuilder().id(newId).build();
         } else {
-            String updateSql = "UPDATE contact_infos SET email = ?, phone_number = ?, first_name = ?, last_name = ? WHERE id = ?";
-            databaseUtil.execute(updateSql, entity.getEmail(), entity.getPhoneNumber(), entity.getFirstName(), entity.getLastName(), entity.getId());
+            String updateSql = "UPDATE contact_infos SET email = ?, phone_number = ?, first_name = ?, last_name = ?, password = ? WHERE id = ?";
+            databaseUtil.execute(updateSql, entity.getEmail(), entity.getPhoneNumber(), entity.getFirstName(), entity.getLastName(), entity.getPassword(),entity.getId());
             return entity;
         }
     }
@@ -86,6 +88,7 @@ public class ContactInfoDao implements ContactInfoRepository {
                 .firstName(rs.getString("first_name"))
                 .lastName(rs.getString("last_name"))
                 .email(rs.getString("email"))
+                .password(rs.getString("password"))
                 .phoneNumber(rs.getString("phone_number"))
                 .build();
     }

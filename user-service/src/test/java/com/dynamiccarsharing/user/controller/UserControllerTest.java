@@ -8,18 +8,25 @@ import com.dynamiccarsharing.user.dto.ContactInfoCreateRequestDto;
 import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
 import com.dynamiccarsharing.user.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.user.service.interfaces.UserService;
+import com.dynamiccarsharing.util.security.JwtAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -28,33 +35,55 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(UserController.class)
+@WebMvcTest(value = UserController.class, properties = "eureka.instance.instance-id=test-instance-1")
 @Import(SecurityConfig.class)
 class UserControllerTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    ObjectMapper objectMapper;
 
     @MockBean
-    private UserService userService;
+    UserService userService;
+
+    @MockBean
+    JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    AuthenticationProvider authenticationProvider;
+
+    @BeforeEach
+    void passThroughFilter() throws Exception {
+        doAnswer(inv -> {
+            var request = inv.getArgument(0, ServletRequest.class);
+            var response = inv.getArgument(1, ServletResponse.class);
+            var filterChain = inv.getArgument(2, FilterChain.class);
+            filterChain.doFilter(request, response);
+            return null;
+        }).when(jwtAuthenticationFilter).doFilter(
+                any(ServletRequest.class),
+                any(ServletResponse.class),
+                any(FilterChain.class)
+        );
+    }
 
     @Test
+    @WithMockUser(authorities = "ROLE_ADMIN")
     void registerUser_withValidData_shouldReturnCreated() throws Exception {
-        ContactInfoCreateRequestDto contactInfoDto = new ContactInfoCreateRequestDto();
+        var contactInfoDto = new ContactInfoCreateRequestDto();
         contactInfoDto.setFirstName("Dumitru");
         contactInfoDto.setLastName("Diacenco");
         contactInfoDto.setEmail("dd.prodev@gmail.com");
-        contactInfoDto.setPhoneNumber("+3736777388");
+        contactInfoDto.setPhoneNumber("+37367773888");
+        contactInfoDto.setPassword("password123");
 
-        UserCreateRequestDto createDto = new UserCreateRequestDto();
+        var createDto = new UserCreateRequestDto();
         createDto.setRole(UserRole.RENTER);
         createDto.setContactInfo(contactInfoDto);
 
-
-        UserDto savedDto = new UserDto();
+        var savedDto = new UserDto();
         savedDto.setId(1L);
 
         when(userService.registerUser(any(UserCreateRequestDto.class))).thenReturn(savedDto);
@@ -68,22 +97,22 @@ class UserControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(authorities = "ROLE_ADMIN")
     void getAllUsers_asAdmin_shouldReturnUserList() throws Exception {
         when(userService.findAllUsers()).thenReturn(List.of(new UserDto(), new UserDto()));
 
         mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$", hasSize(2)));
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(authorities = "ROLE_ADMIN")
     void updateUserStatus_asAdmin_shouldReturnOk() throws Exception {
-        UserStatusUpdateRequestDto updateDto = new UserStatusUpdateRequestDto();
+        var updateDto = new UserStatusUpdateRequestDto();
         updateDto.setStatus(UserStatus.SUSPENDED);
 
-        UserDto updatedDto = new UserDto();
+        var updatedDto = new UserDto();
         updatedDto.setId(1L);
         updatedDto.setStatus(UserStatus.SUSPENDED);
 
@@ -98,7 +127,7 @@ class UserControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(authorities = "ROLE_ADMIN")
     void deleteUser_asAdmin_shouldReturnNoContent() throws Exception {
         doNothing().when(userService).deleteById(1L);
 

@@ -24,7 +24,7 @@ COPY ./common-utils/src ./common-utils/src
 COPY ./api-contracts/src ./api-contracts/src
 
 RUN mvn clean install -pl api-contracts,common-utils -DskipTests
-RUN mvn clean package -pl car-service -DskipTests
+RUN mvn clean package -pl car-service -am -DskipTests
 
 FROM eclipse-temurin:17-jre-focal
 WORKDIR /app

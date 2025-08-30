@@ -56,6 +56,7 @@ class JpaLifecycleTest {
                 .firstName("Test")
                 .lastName("User")
                 .email(System.nanoTime() + "@example.com")
+                .password("password123")
                 .phoneNumber("123456789")
                 .build();
     }

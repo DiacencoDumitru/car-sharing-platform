@@ -15,8 +15,11 @@ public interface ContactInfoMapper {
     ContactInfoDto toDto(ContactInfo entity);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "password", ignore = true)
     ContactInfo toEntity(ContactInfoCreateRequestDto dto);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "password", ignore = true)
     void updateFromDto(ContactInfoUpdateRequestDto dto, @MappingTarget ContactInfo entity);
 }

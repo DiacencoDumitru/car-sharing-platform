@@ -25,13 +25,14 @@ class CarReviewDaoTest extends CarBaseDaoTest {
     private Car car1;
     private Long reviewerId1;
     private Long reviewerId2;
+    private static final Long DEFAULT_OWNER_ID = 1L;
 
     @BeforeEach
     void setUp() {
         Location location = createLocation("Test City", "TS", "12345");
         this.reviewerId1 = 1L;
         this.reviewerId2 = 2L;
-        this.car1 = createCar("CAR1", "Toyota", "Camry", location);
+        this.car1 = createCar("CAR1", "Toyota", "Camry", location, DEFAULT_OWNER_ID);
     }
 
     private CarReview createUnsavedReview(Long reviewerId, Car car, String comment) {
