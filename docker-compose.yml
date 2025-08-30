@@ -3,10 +3,9 @@ services:
     image: postgres:15-alpine
     container_name: dynamiccarsharing_db
     environment:
-      POSTGRES_DB: dynamic_car_sharing_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password123
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      - POSTGRES_DB=dynamic_car_sharing_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password123
     ports:
       - "5432:5432"
     volumes:
@@ -14,11 +13,10 @@ services:
     networks:
       - microservices-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d dynamic_car_sharing_db -h localhost" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d dynamic_car_sharing_db" ]
       interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 5
     restart: unless-stopped
 
   eureka-server:
@@ -48,7 +46,10 @@ services:
     ports:
       - "8085:8085"
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_healthy
+      logstash:
+        condition: service_started
     networks:
       - microservices-network
     healthcheck:
@@ -68,19 +69,14 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=password123
-      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - EUREKA_INSTANCE_HOSTNAME=user-service-1
-      - SPRING_APPLICATION_NAME=user-service
-      - SPRING_PROFILES_ACTIVE=jpa,lb-random
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=password123
     depends_on:
-      - db
-      - eureka-server
+      db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      logstash:
+        condition: service_started
     networks:
       - microservices-network
     healthcheck:
@@ -100,19 +96,14 @@ services:
     ports:
       - "8088:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=password123
-      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - EUREKA_INSTANCE_HOSTNAME=user-service-2
-      - SPRING_APPLICATION_NAME=user-service
-      - SPRING_PROFILES_ACTIVE=jpa,lb-random
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=password123
     depends_on:
-      - db
-      - eureka-server
+      db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      logstash:
+        condition: service_started
     networks:
       - microservices-network
     healthcheck:
@@ -131,20 +122,13 @@ services:
     container_name: car-service
     ports:
       - "8081:8081"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=password123
-      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - EUREKA_INSTANCE_HOSTNAME=car-service
-      - SPRING_APPLICATION_NAME=car-service
-      - SPRING_PROFILES_ACTIVE=jpa,lb-random
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=password123
     depends_on:
-      - db
-      - eureka-server
+      db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      logstash:
+        condition: service_started
     networks:
       - microservices-network
     healthcheck:
@@ -163,23 +147,13 @@ services:
     container_name: booking-service
     ports:
       - "8082:8082"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=password123
-      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - EUREKA_INSTANCE_HOSTNAME=booking-service
-      - SPRING_APPLICATION_NAME=booking-service
-      - SPRING_PROFILES_ACTIVE=jpa,lb-random
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=password123
     depends_on:
-      - db
-      - eureka-server
-      - user-service-1
-      - user-service-2
-      - car-service
+      db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      logstash:
+        condition: service_started
     networks:
       - microservices-network
     healthcheck:
@@ -198,20 +172,13 @@ services:
     container_name: dispute-service
     ports:
       - "8083:8083"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=password123
-      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
-      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - EUREKA_INSTANCE_HOSTNAME=dispute-service
-      - SPRING_APPLICATION_NAME=dispute-service
-      - SPRING_PROFILES_ACTIVE=jpa,lb-random
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=password123
     depends_on:
-      - db
-      - eureka-server
+      db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      logstash:
+        condition: service_started
     networks:
       - microservices-network
     healthcheck:
@@ -231,7 +198,6 @@ services:
       - xpack.security.enabled=false
     ports:
       - "9200:9200"
-      - "9300:9300"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     networks:
@@ -243,7 +209,6 @@ services:
     container_name: logstash
     ports:
       - "5044:5044"
-      - "9600:9600"
     volumes:
       - ./logstash/pipeline:/usr/share/logstash/pipeline/
     depends_on:
@@ -265,11 +230,42 @@ services:
       - microservices-network
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus/
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - prometheus
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   elasticsearch_data:
+  grafana_data:
 
 networks:
   microservices-network:
     driver: bridge
-    name: microservices-network

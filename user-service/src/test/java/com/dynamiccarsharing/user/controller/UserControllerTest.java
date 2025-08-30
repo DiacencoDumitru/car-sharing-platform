@@ -3,12 +3,12 @@ package com.dynamiccarsharing.user.controller;
 import com.dynamiccarsharing.contracts.dto.UserDto;
 import com.dynamiccarsharing.contracts.enums.UserRole;
 import com.dynamiccarsharing.contracts.enums.UserStatus;
-import com.dynamiccarsharing.user.config.SecurityConfig;
 import com.dynamiccarsharing.user.dto.ContactInfoCreateRequestDto;
 import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
 import com.dynamiccarsharing.user.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.user.service.interfaces.UserService;
 import com.dynamiccarsharing.util.security.JwtAuthenticationFilter;
+import com.dynamiccarsharing.util.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -36,7 +35,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(value = UserController.class, properties = "eureka.instance.instance-id=test-instance-1")
-@Import(SecurityConfig.class)
 class UserControllerTest {
 
     @Autowired
@@ -47,6 +45,9 @@ class UserControllerTest {
 
     @MockBean
     UserService userService;
+
+    @MockBean
+    private JwtUtil jwtUtil;
 
     @MockBean
     JwtAuthenticationFilter jwtAuthenticationFilter;

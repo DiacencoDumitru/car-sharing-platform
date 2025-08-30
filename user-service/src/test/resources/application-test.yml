@@ -28,7 +28,9 @@ eureka:
     enabled: false
 
 logging:
+  config: classpath:logback-test.xml
   level:
+    root: WARN
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
     com.dynamiccarsharing: DEBUG

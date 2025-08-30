@@ -15,8 +15,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
-@Profile("jpa")
 @Repository
+@Profile("jpa")
 public interface ContactInfoJpaRepository extends JpaRepository<ContactInfo, Long>, JpaSpecificationExecutor<ContactInfo>, ContactInfoRepository {
 
     @Override
