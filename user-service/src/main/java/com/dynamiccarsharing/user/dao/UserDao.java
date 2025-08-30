@@ -25,7 +25,7 @@ public class UserDao implements UserRepository {
     private final DatabaseUtil databaseUtil;
     private final SqlFilterMapper<User, Filter<User>> sqlFilterMapper;
     private final ContactInfoDao contactInfoDao;
-    private static final String USER_CONTACT_JOIN_QUERY = "SELECT u.*, c.id as contact_id, c.email, c.phone_number, c.first_name, c.last_name FROM users u JOIN contact_infos c ON u.contact_info_id = c.id";
+    private static final String USER_CONTACT_JOIN_QUERY = "SELECT u.*, c.id as contact_id, c.email, c.phone_number, c.first_name, c.last_name, c.password FROM users u JOIN contact_infos c ON u.contact_info_id = c.id";
 
     public UserDao(DatabaseUtil databaseUtil, ContactInfoDao contactInfoDao) {
         this.databaseUtil = databaseUtil;
@@ -104,6 +104,7 @@ public class UserDao implements UserRepository {
                 .firstName(rs.getString("first_name"))
                 .lastName(rs.getString("last_name"))
                 .email(rs.getString("email"))
+                .password(rs.getString("password"))
                 .phoneNumber(rs.getString("phone_number"))
                 .build();
 

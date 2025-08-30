@@ -38,11 +38,14 @@ class CarJpaRepositoryImplTest {
 
     @BeforeEach
     void setUp() {
-        savedLocation = locationRepository.save(Location.builder().city("Test").state("TS").zipCode("123").build());
-        carRepository.save(Car.builder().make("Honda").model("Civic").status(CarStatus.AVAILABLE).verificationStatus(VERIFIED).registrationNumber("CAR1").price(new BigDecimal("20.00")).type(SEDAN).location(savedLocation).build());
-        carRepository.save(Car.builder().make("Toyota").model("Camry").status(CarStatus.RENTED).verificationStatus(VERIFIED).registrationNumber("CAR2").price(new BigDecimal("25.00")).type(SEDAN).location(savedLocation).build());
-        carRepository.save(Car.builder().make("Honda").model("Accord").status(CarStatus.MAINTENANCE).verificationStatus(VERIFIED).registrationNumber("CAR3").price(new BigDecimal("30.00")).type(SEDAN).location(savedLocation).build());
+        savedLocation = locationRepository.save(
+                Location.builder().city("Test").state("TS").zipCode("123").build()
+        );
+        carRepository.save(Car.builder().ownerId(300L).make("Honda").model("Civic").status(CarStatus.AVAILABLE).verificationStatus(VERIFIED).registrationNumber("CAR1").price(new BigDecimal("20.00")).type(SEDAN).location(savedLocation).build());
+        carRepository.save(Car.builder().ownerId(301L).make("Toyota").model("Camry").status(CarStatus.RENTED).verificationStatus(VERIFIED).registrationNumber("CAR2").price(new BigDecimal("25.00")).type(SEDAN).location(savedLocation).build());
+        carRepository.save(Car.builder().ownerId(302L).make("Honda").model("Accord").status(CarStatus.MAINTENANCE).verificationStatus(VERIFIED).registrationNumber("CAR3").price(new BigDecimal("30.00")).type(SEDAN).location(savedLocation).build());
     }
+
 
     @Test
     void findByFilter_withCriteria_returnsMatchingCars() throws SQLException {

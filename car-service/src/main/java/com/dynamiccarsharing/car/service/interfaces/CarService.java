@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 public interface CarService {
-    CarDto save(CarCreateRequestDto carDto);
+    CarDto save(CarCreateRequestDto carDto, Long ownerId);
 
     Optional<CarDto> findById(Long id);
 
@@ -29,7 +29,7 @@ public interface CarService {
 
     CarDto rejectVerification(Long carId);
 
-    CarDto updateCar(Long carId, CarUpdateRequestDto updateDto);
+    CarDto updateCar(Long carId, CarUpdateRequestDto updateDto, Long currentUserId);
 
     CarDto updatePrice(Long carId, BigDecimal newPrice);
 }

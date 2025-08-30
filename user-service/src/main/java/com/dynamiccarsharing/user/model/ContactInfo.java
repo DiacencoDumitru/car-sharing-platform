@@ -36,6 +36,10 @@ public class ContactInfo {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @NotBlank(message = "Password must not be null.")
+    @Column(nullable = false)
+    private String password;
+
     @NotBlank(message = "Phone number must be not null.")
     @Column(name = "phone_number", nullable = false)
     private String phoneNumber;

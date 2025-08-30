@@ -39,17 +39,18 @@ public abstract class UserBaseDaoTest {
         }
     }
 
-    protected ContactInfo createContactInfo(String email, String phone, String firstName, String lastName) throws SQLException {
-        String sql = "INSERT INTO contact_infos (email, phone_number, first_name, last_name) VALUES (?, ?, ?, ?)";
+    protected ContactInfo createContactInfo(String email, String phone, String firstName, String lastName, String password) throws SQLException {
+        String sql = "INSERT INTO contact_infos (email, phone_number, first_name, last_name, password) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = databaseUtil.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, email);
             stmt.setString(2, phone);
             stmt.setString(3, firstName);
             stmt.setString(4, lastName);
+            stmt.setString(5, password);
             stmt.executeUpdate();
             try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next())
-                    return ContactInfo.builder().id(rs.getLong(1)).email(email).phoneNumber(phone).firstName(firstName).lastName(lastName).build();
+                    return ContactInfo.builder().id(rs.getLong(1)).email(email).phoneNumber(phone).firstName(firstName).lastName(lastName).password(password).build();
                 throw new SQLException("Failed to create ContactInfo, no ID obtained.");
             }
         }

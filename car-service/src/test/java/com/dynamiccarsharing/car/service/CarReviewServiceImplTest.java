@@ -35,12 +35,16 @@ class CarReviewServiceImplTest {
 
     @Mock
     private CarReviewRepository carReviewRepository;
+
     @Mock
     private CarRepository carRepository;
+
     @Mock
     private CarReviewMapper carReviewMapper;
+
     @Mock
     private WebClient.Builder webClientBuilder;
+
     @Mock
     private WebClient userWebClient;
 

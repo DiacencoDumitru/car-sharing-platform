@@ -9,8 +9,8 @@ import com.dynamiccarsharing.contracts.enums.CarStatus;
 import com.dynamiccarsharing.contracts.enums.CarType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
@@ -24,17 +24,16 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CarController.class)
-@AutoConfigureMockMvc(addFilters = false)
 class CarControllerTest {
 
     @Autowired
@@ -47,7 +46,7 @@ class CarControllerTest {
     private CarService carService;
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "42")
     void createCar_withValidData_shouldReturnCreated() throws Exception {
         CarCreateRequestDto createDto = new CarCreateRequestDto();
         createDto.setMake("Toyota");
@@ -62,7 +61,8 @@ class CarControllerTest {
         savedCarDto.setMake("Toyota");
         savedCarDto.setStatus(CarStatus.AVAILABLE);
 
-        when(carService.save(any(CarCreateRequestDto.class))).thenReturn(savedCarDto);
+        when(carService.save(any(CarCreateRequestDto.class), eq(42L)))
+                .thenReturn(savedCarDto);
 
         mockMvc.perform(post("/api/v1/cars")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -71,6 +71,19 @@ class CarControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.make").value("Toyota"));
+
+        ArgumentCaptor<CarCreateRequestDto> dtoCaptor = ArgumentCaptor.forClass(CarCreateRequestDto.class);
+        ArgumentCaptor<Long> ownerIdCaptor = ArgumentCaptor.forClass(Long.class);
+        verify(carService).save(dtoCaptor.capture(), ownerIdCaptor.capture());
+
+        assertEquals(42L, ownerIdCaptor.getValue());
+        CarCreateRequestDto passedDto = dtoCaptor.getValue();
+        assertEquals("Toyota", passedDto.getMake());
+        assertEquals("Camry", passedDto.getModel());
+        assertEquals("ABC-123", passedDto.getRegistrationNumber());
+        assertEquals(new BigDecimal("50.00"), passedDto.getPrice());
+        assertEquals(CarType.SEDAN, passedDto.getType());
+        assertEquals(1L, passedDto.getLocationId());
     }
 
     @Test
@@ -80,7 +93,8 @@ class CarControllerTest {
 
         mockMvc.perform(post("/api/v1/cars")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createDto)))
+                        .content(objectMapper.writeValueAsString(createDto))
+                        .with(csrf()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -124,8 +138,8 @@ class CarControllerTest {
     }
 
     @Test
-    @WithMockUser
-    void updatedCarDetails_shouldReturnOk() throws Exception {
+    @WithMockUser(username = "123")
+    void updatedCarDetails_withAuthenticatedUser_shouldReturnOk() throws Exception {
         CarUpdateRequestDto updateDto = new CarUpdateRequestDto();
         updateDto.setModel("Accord");
 
@@ -133,7 +147,8 @@ class CarControllerTest {
         updatedCarDto.setId(1L);
         updatedCarDto.setModel("Accord");
 
-        when(carService.updateCar(eq(1L), any(CarUpdateRequestDto.class))).thenReturn(updatedCarDto);
+        when(carService.updateCar(eq(1L), any(CarUpdateRequestDto.class), eq(123L)))
+                .thenReturn(updatedCarDto);
 
         mockMvc.perform(patch("/api/v1/cars/{carId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -145,7 +160,7 @@ class CarControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(authorities = "ROLE_ADMIN")
     void deleteCar_shouldReturnNoContent() throws Exception {
         doNothing().when(carService).deleteById(1L);
 
