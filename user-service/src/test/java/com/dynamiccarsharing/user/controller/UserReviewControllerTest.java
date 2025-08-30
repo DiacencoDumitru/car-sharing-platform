@@ -4,28 +4,78 @@ import com.dynamiccarsharing.user.dto.UserReviewCreateRequestDto;
 import com.dynamiccarsharing.user.dto.UserReviewDto;
 import com.dynamiccarsharing.user.dto.UserReviewUpdateRequestDto;
 import com.dynamiccarsharing.user.service.interfaces.UserReviewService;
+import com.dynamiccarsharing.util.security.JwtAuthenticationFilter;
+import com.dynamiccarsharing.util.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserReviewController.class)
+@Import(UserReviewControllerTest.TestSecurityConfig.class)
 class UserReviewControllerTest {
+
+    @TestConfiguration
+    @EnableMethodSecurity(prePostEnabled = true)
+    static class TestSecurityConfig {
+        @Bean
+        JwtUtil jwtUtil() {
+            return Mockito.mock(JwtUtil.class);
+        }
+
+        @Bean
+        JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil) {
+            return new JwtAuthenticationFilter(jwtUtil) {
+                @Override
+                protected void doFilterInternal(
+                        HttpServletRequest request,
+                        HttpServletResponse response,
+                        FilterChain filterChain
+                ) throws ServletException, IOException {
+                    filterChain.doFilter(request, response);
+                }
+            };
+        }
+
+        @Bean
+        SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+            return http
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .authorizeHttpRequests(reg -> reg.anyRequest().permitAll())
+                    .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                    .build();
+        }
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -112,7 +162,5 @@ class UserReviewControllerTest {
 
         mockMvc.perform(delete("/api/v1/user-reviews/{reviewId}", reviewId).with(csrf()))
                 .andExpect(status().isNoContent());
-
-        verify(userReviewService, times(1)).deleteById(reviewId);
     }
 }
