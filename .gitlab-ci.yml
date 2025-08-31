@@ -1,73 +1,56 @@
-stages: [ build, deploy ]
+stages: [ verify, package, docker ]
+
+image: maven:3.9-eclipse-temurin-21
 
 variables:
-  AWS_REGION: eu-central-1
-  AWS_DEFAULT_REGION: $AWS_REGION
-
-  DOCKER_TLS_CERTDIR: ""
-  DOCKER_HOST: "tcp://docker:2375"
-  DOCKER_DRIVER: overlay2
-
-  IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
-  TF_DIR: "infra/terraform"
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
 
 cache:
   key: maven
   paths:
     - .m2/repository/
 
-build_and_push:
-  image: docker:24
-  stage: build
-  services:
-    - name: docker:24-dind
-      alias: docker
-  before_script:
-    - apk add --no-cache aws-cli jq
-    - export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query 'Account' --output text)"
-    - export ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-
-    - aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
-
-    - |
-      for repo in eureka-server api-gateway user-service car-service booking-service dispute-service zipkin; do
-        aws ecr describe-repositories --repository-names dynamiccarsharing/$repo --region $AWS_REGION >/dev/null 2>&1 \
-        || aws ecr create-repository --repository-name dynamiccarsharing/$repo --region $AWS_REGION >/dev/null
-      done
+verify:
+  stage: verify
   script:
-    - docker build -t "$ECR_REGISTRY/dynamiccarsharing/eureka-server:$IMAGE_TAG" -f eureka-server/Dockerfile .
-    - docker build -t "$ECR_REGISTRY/dynamiccarsharing/api-gateway:$IMAGE_TAG" -f api-gateway/Dockerfile .
-    - docker build -t "$ECR_REGISTRY/dynamiccarsharing/user-service:$IMAGE_TAG" -f user-service/Dockerfile .
-    - docker build -t "$ECR_REGISTRY/dynamiccarsharing/car-service:$IMAGE_TAG" -f car-service/Dockerfile .
-    - docker build -t "$ECR_REGISTRY/dynamiccarsharing/booking-service:$IMAGE_TAG" -f booking-service/Dockerfile .
-    - docker build -t "$ECR_REGISTRY/dynamiccarsharing/dispute-service:$IMAGE_TAG" -f dispute-service/Dockerfile .
-    - docker pull openzipkin/zipkin:2.24
-    - docker tag openzipkin/zipkin:2.24 "$ECR_REGISTRY/dynamiccarsharing/zipkin:$IMAGE_TAG"
-    - |
-      for repo in eureka-server api-gateway user-service car-service booking-service dispute-service zipkin; do
-        docker push "$ECR_REGISTRY/dynamiccarsharing/$repo:$IMAGE_TAG"
-      done
+    - mvn -B -ntp -DskipTests=false verify
+  artifacts:
+    when: always
+    reports:
+      junit: "**/target/surefire-reports/TEST-*.xml"
   rules:
     - if: $CI_PIPELINE_SOURCE == "push"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
-deploy_prod:
-  image: hashicorp/terraform:1.6
-  stage: deploy
-  needs: [ build_and_push ]
-  before_script:
-    - apk add --no-cache aws-cli
-    - cd "$TF_DIR"
-    - terraform init
-    - export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query 'Account' --output text)"
-    - export ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+package:
+  stage: package
+  needs: [ "verify" ]
   script:
-    - |
-      terraform apply -auto-approve \
-        -var="aws_region=$AWS_REGION" \
-        -var="ecr_registry=$ECR_REGISTRY" \
-        -var="image_tag=$IMAGE_TAG"
+    - mvn -B -ntp -DskipTests package
+  artifacts:
+    when: on_success
+    paths:
+      - "**/target/*.jar"
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-  environment:
-    name: production
+    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+docker-build-demo:
+  stage: docker
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: "tcp://docker:2376"
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: "1"
+    DOCKER_CERT_PATH: "/certs/client"
+  script:
+    - docker version
+    - docker build -t demo/api-gateway:ci -f api-gateway/Dockerfile .
+    - docker build -t demo/user-service:ci -f user-service/Dockerfile .
+    - docker images | grep demo || true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
