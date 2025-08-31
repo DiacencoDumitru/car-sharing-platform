@@ -3,12 +3,13 @@ stages: [ build, deploy ]
 variables:
   AWS_REGION: eu-central-1
   AWS_DEFAULT_REGION: $AWS_REGION
+
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_DRIVER: overlay2
+
   IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
   TF_DIR: "infra/terraform"
-  DOCKER_HOST: "tcp://docker:2376"
-  DOCKER_TLS_CERTDIR: "/certs"
-  DOCKER_TLS_VERIFY: "1"
-  DOCKER_CERT_PATH: "/certs/client"
 
 cache:
   key: maven
@@ -23,10 +24,11 @@ build_and_push:
       alias: docker
   before_script:
     - apk add --no-cache aws-cli jq
-    - set -euo pipefail
     - export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query 'Account' --output text)"
     - export ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
     - aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+
     - |
       for repo in eureka-server api-gateway user-service car-service booking-service dispute-service zipkin; do
         aws ecr describe-repositories --repository-names dynamiccarsharing/$repo --region $AWS_REGION >/dev/null 2>&1 \
