@@ -1,52 +1,76 @@
-stages: [verify, package, docker]
-
-image: maven:3.9-eclipse-temurin-21
+stages:
+  - build_and_push
+  - deploy
 
 variables:
-  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Xmx1024m -XX:MaxRAMPercentage=70 -Djava.awt.headless=true"
-  MAVEN_CLI_OPTS: "--batch-mode --no-transfer-progress"
+  ECR_BASE_URL: "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
 
-cache:
-  key:
-    files: [pom.xml]
-    prefix: "maven-${CI_COMMIT_REF_SLUG}"
-  paths:
-    - .m2/repository/
-
-verify:
-  stage: verify
-  script:
-    - mvn $MAVEN_CLI_OPTS -DskipTests=false -T 1 verify
-  artifacts:
-    when: always
-    reports:
-      junit: "**/target/surefire-reports/TEST-*.xml"
-
-package:
-  stage: package
-  needs: ["verify"]
-  script:
-    - mvn $MAVEN_CLI_OPTS -DskipTests package
-  artifacts:
-    when: on_success
-    paths:
-      - "**/target/*.jar"
-
-docker-build-demo:
-  stage: docker
-  image: docker:24
+.build_template: &build_definition
+  stage: build_and_push
+  image: docker:20.10.16
   services:
-    - name: docker:24-dind
-      alias: docker
-  variables:
-    DOCKER_HOST: "tcp://docker:2376"
-    DOCKER_TLS_CERTDIR: "/certs"
-    DOCKER_TLS_VERIFY: "1"
-    DOCKER_CERT_PATH: "/certs/client"
-  rules:
-    - if: '$ENABLE_DOCKER == "true"'
+    - docker:20.10.16-dind
+  before_script:
+    - apk add --no-cache aws-cli
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_BASE_URL
   script:
-    - docker version
-    - docker build -t demo/api-gateway:ci -f api-gateway/Dockerfile .
-    - docker build -t demo/user-service:ci -f user-service/Dockerfile .
-    - docker images | grep demo || true
+    - IMAGE_TAG="$ECR_BASE_URL/$SERVICE_NAME:$CI_COMMIT_SHORT_SHA"
+    - echo "Building image: $IMAGE_TAG"
+    - docker build -f $DOCKERFILE_PATH -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - $DOCKERFILE_PATH
+        - pom.xml
+        - "${SERVICE_NAME}/pom.xml"
+        - "${SERVICE_NAME}/src/**/*"
+
+build_eureka-server:
+  <<: *build_definition
+  variables:
+    SERVICE_NAME: "eureka-server"
+    DOCKERFILE_PATH: "eureka-server/Dockerfile"
+
+build_api-gateway:
+  <<: *build_definition
+  variables:
+    SERVICE_NAME: "api-gateway"
+    DOCKERFILE_PATH: "api-gateway/Dockerfile"
+
+build_user-service:
+  <<: *build_definition
+  variables:
+    SERVICE_NAME: "user-service"
+    DOCKERFILE_PATH: "user-service/Dockerfile"
+
+build_car-service:
+  <<: *build_definition
+  variables:
+    SERVICE_NAME: "car-service"
+    DOCKERFILE_PATH: "car-service/Dockerfile"
+
+build_booking-service:
+  <<: *build_definition
+  variables:
+    SERVICE_NAME: "booking-service"
+    DOCKERFILE_PATH: "booking-service/Dockerfile"
+
+build_dispute-service:
+  <<: *build_definition
+  variables:
+    SERVICE_NAME: "dispute-service"
+    DOCKERFILE_PATH: "dispute-service/Dockerfile"
+
+deploy_to_aws:
+  stage: deploy
+  image:
+    name: hashicorp/terraform:latest
+    entrypoint: [""]
+  script:
+    - cd terraform
+    - terraform init
+    - terraform validate
+    - terraform apply -auto-approve -var="image_tag=${CI_COMMIT_SHORT_SHA}"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
