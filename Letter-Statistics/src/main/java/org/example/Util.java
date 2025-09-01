@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 final class Util {
+
+    private Util() {}
+
     static void countFileIntoTally(Path file, LetterTally tally) throws IOException {
         try (BufferedReader br = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             int ch;
@@ -34,5 +37,18 @@ final class Util {
         return sorted.stream()
                 .map(e -> e.getKey() + "=" + e.getValue())
                 .collect(Collectors.joining(", ")) + " | total=" + total;
+    }
+
+    public static int[] countFileWithCache(Path file, LruResultsCache cache) throws IOException {
+        int[] cachedCounts = cache.get(file);
+        if (cachedCounts != null) {
+            return cachedCounts;
+        }
+
+        int[] computedCounts = countFileIntoArray(file);
+
+        cache.put(file, computedCounts);
+
+        return computedCounts;
     }
 }

@@ -22,20 +22,45 @@ public class LetterStatisticsApplication {
         System.out.printf("Found %,d files under %s (exts=%s)%n", files.size(), parsed.root, exts);
 
         List<String> modes = parsed.modes.isEmpty() ?
-                List.of("unsafe","sync","chm","striped","mapreduce","mapreduce-parallel","pool") :
+                List.of("unsafe", "sync", "chm", "striped", "mapreduce", "mapreduce-parallel", "pool") :
                 parsed.modes;
 
-        Map<String, Bench.Result> results = new LinkedHashMap<>();
+        LruResultsCache cache = new LruResultsCache(Math.min(1000, files.size()));
 
+        System.out.println("\n--- First Run (Populating Cache) ---");
+        Map<String, Bench.Result> firstRunResults = runBenchmark(modes, files, cache);
+
+        System.out.println("\n--- Second Run (Hitting Cache) ---");
+        runBenchmark(modes, files, cache);
+
+        System.out.println("\n" + cache.stats());
+
+        var baseline = Stream.of("sync", "chm", "striped", "mapreduce", "mapreduce-parallel", "pool")
+                .filter(firstRunResults::containsKey)
+                .map(firstRunResults::get)
+                .findFirst().orElse(null);
+
+        if (baseline != null) {
+            for (var e : firstRunResults.entrySet()) {
+                if (e.getValue().suspectedIncorrect()) continue;
+                if (!e.getValue().counts().equals(baseline.counts())) {
+                    System.out.printf("❌ Mismatch vs baseline in mode %s%n", e.getKey());
+                }
+            }
+        }
+    }
+
+    private static Map<String, Bench.Result> runBenchmark(List<String> modes, List<Path> files, LruResultsCache cache) {
+        Map<String, Bench.Result> results = new LinkedHashMap<>();
         for (String mode : modes) {
             Bench.Result r = switch (mode) {
                 case "unsafe" -> Bench.time("unsafe (shared HashMap, no sync)", () -> Strategies.unsafeSharedHashMap(files));
                 case "sync" -> Bench.time("sync (synchronized block)", () -> Strategies.synchronizedBlock(files));
                 case "chm" -> Bench.time("chm (ConcurrentHashMap<LongAdder>)", () -> Strategies.concurrentHashMap(files));
                 case "striped" -> Bench.time("striped (26 locks + int[26])", () -> Strategies.stripedLocks(files));
-                case "mapreduce" -> Bench.time("map/reduce (no sharing, sequential merge)", () -> Strategies.mapReduce(files));
-                case "mapreduce-parallel" -> Bench.time("map/reduce (parallel merge)", () -> Strategies.mapReduceParallelMerge(files));
-                case "pool" -> Bench.time("pool (fixed size = cores, map/reduce)", () -> Strategies.fixedPool(files));
+                case "mapreduce" -> Bench.time("map/reduce (no sharing, sequential merge)", () -> Strategies.mapReduce(files, cache));
+                case "mapreduce-parallel" -> Bench.time("map/reduce (parallel merge)", () -> Strategies.mapReduceParallelMerge(files, cache));
+                case "pool" -> Bench.time("pool (fixed size = cores, map/reduce)", () -> Strategies.fixedPool(files, cache));
                 default -> throw new IllegalArgumentException("Unknown mode: " + mode);
             };
             results.put(mode, r);
@@ -47,19 +72,7 @@ public class LetterStatisticsApplication {
                     r.suspectedIncorrect() ? "  (⚠ might be incorrect)" : ""
             );
         }
-
-        var baseline = Stream.of("sync","chm","striped","mapreduce","mapreduce-parallel","pool")
-                .filter(results::containsKey)
-                .map(results::get)
-                .findFirst().orElse(null);
-        if (baseline != null) {
-            for (var e : results.entrySet()) {
-                if (e.getValue().suspectedIncorrect()) continue;
-                if (!e.getValue().counts().equals(baseline.counts())) {
-                    System.out.printf("❌ Mismatch vs baseline in mode %s%n", e.getKey());
-                }
-            }
-        }
+        return results;
     }
 
     private static String now() {
