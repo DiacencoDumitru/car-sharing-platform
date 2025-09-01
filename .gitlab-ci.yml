@@ -1,39 +1,36 @@
-stages: [ verify, package, docker ]
+stages: [verify, package, docker]
 
 image: maven:3.9-eclipse-temurin-21
 
 variables:
-  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Xmx1024m -XX:MaxRAMPercentage=70 -Djava.awt.headless=true"
+  MAVEN_CLI_OPTS: "--batch-mode --no-transfer-progress"
 
 cache:
-  key: maven
+  key:
+    files: [pom.xml]
+    prefix: "maven-${CI_COMMIT_REF_SLUG}"
   paths:
     - .m2/repository/
 
 verify:
   stage: verify
   script:
-    - mvn -B -ntp -DskipTests=false verify
+    - mvn $MAVEN_CLI_OPTS -DskipTests=false -T 1 verify
   artifacts:
     when: always
     reports:
       junit: "**/target/surefire-reports/TEST-*.xml"
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 package:
   stage: package
-  needs: [ "verify" ]
+  needs: ["verify"]
   script:
-    - mvn -B -ntp -DskipTests package
+    - mvn $MAVEN_CLI_OPTS -DskipTests package
   artifacts:
     when: on_success
     paths:
       - "**/target/*.jar"
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 docker-build-demo:
   stage: docker
@@ -46,11 +43,10 @@ docker-build-demo:
     DOCKER_TLS_CERTDIR: "/certs"
     DOCKER_TLS_VERIFY: "1"
     DOCKER_CERT_PATH: "/certs/client"
+  rules:
+    - if: '$ENABLE_DOCKER == "true"'
   script:
     - docker version
     - docker build -t demo/api-gateway:ci -f api-gateway/Dockerfile .
     - docker build -t demo/user-service:ci -f user-service/Dockerfile .
     - docker images | grep demo || true
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
