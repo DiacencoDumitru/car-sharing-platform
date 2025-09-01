@@ -1,5 +1,5 @@
 server:
-  port: ${PORT:8085}
+  port: 8085
 
 spring:
   main:
@@ -8,35 +8,40 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      discovery.locator:
-        enabled: true
-        lower-case-service-id: true
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
       observation:
         enabled: true
       routes:
         - id: user-service-route
           uri: lb://user-service
-          predicates: [ Path=/api/v1/users/** ]
+          predicates:
+            - Path=/api/v1/users/**
         - id: car-service-route
           uri: lb://car-service
-          predicates: [ Path=/api/v1/cars/** ]
+          predicates:
+            - Path=/api/v1/cars/**
         - id: booking-service-route
           uri: lb://booking-service
-          predicates: [ Path=/api/v1/bookings/** ]
+          predicates:
+            - Path=/api/v1/bookings/**
         - id: dispute-service-route
           uri: lb://dispute-service
-          predicates: [ Path=/api/v1/disputes/** ]
+          predicates:
+            - Path=/api/v1/disputes/**
 
 application:
   security:
     jwt:
-      secret-key: ${JWT_SECRET}
+      secret-key: NDM0YjVmNjM1MTY0NWE3NDc3Mzg3YTMzNjE1MTQxNTg0NTUxNDg0ZjU0N2IzYjRmNmE1YjdhNmE0ZDQxNjM1Mg==
       expiration: 3600000
 
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_URL}
+      defaultZone: http://eureka-server:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
   instance:
@@ -45,8 +50,20 @@ eureka:
 
 management:
   endpoints:
-    web.exposure.include: "health,info,prometheus"
-  endpoint.health.show-details: always
-  tracing.sampling.probability: 1.0
-  tracing.propagation.type: B3
-  zipkin.tracing.endpoint: ${ZIPKIN_URL}
+    web:
+      exposure:
+        include: "health,info,prometheus"
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+    propagation:
+      type: B3
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
