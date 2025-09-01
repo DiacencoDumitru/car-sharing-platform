@@ -128,15 +128,15 @@ final class Strategies {
         return new Bench.Output(out, counter.total(), false);
     }
 
-    // 5) Map/Reduce: each task is independent; then merge
-    static Bench.Output mapReduce(List<Path> files) {
+    // 5) Map/Reduce: (use cache)
+    static Bench.Output mapReduce(List<Path> files, LruResultsCache cache) {
         List<Thread> threads = new ArrayList<>();
         List<int[]> partials = new CopyOnWriteArrayList<>();
 
         for (Path f : files) {
             Thread t = new Thread(() -> {
                 try {
-                    partials.add(Util.countFileIntoArray(f));
+                    partials.add(Util.countFileWithCache(f, cache));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -155,14 +155,16 @@ final class Strategies {
         return new Bench.Output(m, total, false);
     }
 
-    // 6) Map/Reduce with PARALLEL merge
-    static Bench.Output mapReduceParallelMerge(List<Path> files) {
+    // 6) Map/Reduce with PARALLEL merge: (use cache)
+    static Bench.Output mapReduceParallelMerge(List<Path> files, LruResultsCache cache) {
         List<int[]> partials = new CopyOnWriteArrayList<>();
         List<Thread> threads = new ArrayList<>();
 
         for (Path f : files) {
             Thread t = new Thread(() -> {
-                try { partials.add(Util.countFileIntoArray(f)); }
+                try {
+                    partials.add(Util.countFileWithCache(f, cache));
+                }
                 catch (IOException e) { throw new RuntimeException(e); }
             }, "mrp-" + f.getFileName());
             t.start();
@@ -170,7 +172,6 @@ final class Strategies {
         }
         joinAll(threads);
 
-        // parallel reduce of arrays:
         int[] merged = partials.parallelStream().reduce(new int[26], (a, b) -> {
             for (int i = 0; i < 26; i++) a[i] += b[i];
             return a;
@@ -184,14 +185,14 @@ final class Strategies {
         return new Bench.Output(m, total, false);
     }
 
-    // 7) Thread pool: fixed size = number of CPU cores
-    static Bench.Output fixedPool(List<Path> files) {
+    // 7) Thread pool (use cache)
+    static Bench.Output fixedPool(List<Path> files, LruResultsCache cache) {
         int n = Runtime.getRuntime().availableProcessors();
         ExecutorService pool = Executors.newFixedThreadPool(n);
         try {
             List<Future<int[]>> futures = new ArrayList<>();
             for (Path f : files) {
-                futures.add(pool.submit(() -> Util.countFileIntoArray(f)));
+                futures.add(pool.submit(() -> Util.countFileWithCache(f, cache)));
             }
             int[] merged = new int[26];
             for (Future<int[]> fut : futures) {
@@ -208,9 +209,15 @@ final class Strategies {
         }
     }
 
-/*
+    private static void joinAll(List<Thread> threads) {
+        for (Thread t : threads) {
+            try { t.join(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        }
+    }
+}
+
+/*  // Required Java 21+
     static Bench.Output virtualThreads(List<Path> files) {
-        // Requires Java 21+ or enabling preview features on earlier versions
         try (ExecutorService pool = Executors.newVirtualThreadPerTaskExecutor()) {
             List<Future<int[]>> futures = new ArrayList<>();
             for (Path f : files) {
@@ -229,9 +236,3 @@ final class Strategies {
         }
     }
 */
-    private static void joinAll(List<Thread> threads) {
-        for (Thread t : threads) {
-            try { t.join(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-        }
-    }
-}
