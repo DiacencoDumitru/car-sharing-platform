@@ -1,76 +1,129 @@
+variables:
+  IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
+  LOCATION: "europe-central2"
+  PROJECT:  "$GCP_PROJECT_ID"
+  REPOSITORY: "microservices"
+  AR_BASE: "$LOCATION-docker.pkg.dev/$PROJECT/$REPOSITORY"
+  TF_DIR: "infra/terraform"
+
 stages:
-  - build_and_push
+  - build
+  - push-ar
   - deploy
 
-variables:
-  ECR_BASE_URL: "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
-
-.build_template: &build_definition
-  stage: build_and_push
-  image: docker:20.10.16
-  services:
-    - docker:20.10.16-dind
+.build-template:
+  stage: build
+  image: docker:24-git
+  services: [ "docker:24-dind" ]
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: ""
   before_script:
-    - apk add --no-cache aws-cli
-    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_BASE_URL
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
   script:
-    - IMAGE_TAG="$ECR_BASE_URL/$SERVICE_NAME:$CI_COMMIT_SHORT_SHA"
-    - echo "Building image: $IMAGE_TAG"
-    - docker build -f $DOCKERFILE_PATH -t $IMAGE_TAG .
-    - docker push $IMAGE_TAG
+    - docker build -f ${DOCKERFILE_PATH} -t $CI_REGISTRY_IMAGE/${SERVICE_NAME}:$IMAGE_TAG .
+    - docker push $CI_REGISTRY_IMAGE/${SERVICE_NAME}:$IMAGE_TAG
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - $DOCKERFILE_PATH
-        - pom.xml
-        - "${SERVICE_NAME}/pom.xml"
-        - "${SERVICE_NAME}/src/**/*"
 
-build_eureka-server:
-  <<: *build_definition
+build:eureka:
+  extends: .build-template
   variables:
     SERVICE_NAME: "eureka-server"
     DOCKERFILE_PATH: "eureka-server/Dockerfile"
 
-build_api-gateway:
-  <<: *build_definition
+build:api-gateway:
+  extends: .build-template
   variables:
     SERVICE_NAME: "api-gateway"
     DOCKERFILE_PATH: "api-gateway/Dockerfile"
 
-build_user-service:
-  <<: *build_definition
+build:user-service:
+  extends: .build-template
   variables:
     SERVICE_NAME: "user-service"
     DOCKERFILE_PATH: "user-service/Dockerfile"
 
-build_car-service:
-  <<: *build_definition
+build:car-service:
+  extends: .build-template
   variables:
     SERVICE_NAME: "car-service"
     DOCKERFILE_PATH: "car-service/Dockerfile"
 
-build_booking-service:
-  <<: *build_definition
+build:booking-service:
+  extends: .build-template
   variables:
     SERVICE_NAME: "booking-service"
     DOCKERFILE_PATH: "booking-service/Dockerfile"
 
-build_dispute-service:
-  <<: *build_definition
+build:dispute-service:
+  extends: .build-template
   variables:
     SERVICE_NAME: "dispute-service"
     DOCKERFILE_PATH: "dispute-service/Dockerfile"
 
-deploy_to_aws:
+include:
+  - component: gitlab.com/google-gitlab-components/artifact-registry/upload-artifact-registry@0.1.0
+    inputs:
+      stage: push-ar
+      source: $CI_REGISTRY_IMAGE/eureka-server:$IMAGE_TAG
+      target: $AR_BASE/eureka-server:$IMAGE_TAG
+    rules:
+      - if: '$CI_COMMIT_BRANCH == "main"'
+  - component: gitlab.com/google-gitlab-components/artifact-registry/upload-artifact-registry@0.1.0
+    inputs:
+      stage: push-ar
+      source: $CI_REGISTRY_IMAGE/api-gateway:$IMAGE_TAG
+      target: $AR_BASE/api-gateway:$IMAGE_TAG
+    rules:
+      - if: '$CI_COMMIT_BRANCH == "main"'
+  - component: gitlab.com/google-gitlab-components/artifact-registry/upload-artifact-registry@0.1.0
+    inputs:
+      stage: push-ar
+      source: $CI_REGISTRY_IMAGE/user-service:$IMAGE_TAG
+      target: $AR_BASE/user-service:$IMAGE_TAG
+    rules:
+      - if: '$CI_COMMIT_BRANCH == "main"'
+  - component: gitlab.com/google-gitlab-components/artifact-registry/upload-artifact-registry@0.1.0
+    inputs:
+      stage: push-ar
+      source: $CI_REGISTRY_IMAGE/car-service:$IMAGE_TAG
+      target: $AR_BASE/car-service:$IMAGE_TAG
+    rules:
+      - if: '$CI_COMMIT_BRANCH == "main"'
+  - component: gitlab.com/google-gitlab-components/artifact-registry/upload-artifact-registry@0.1.0
+    inputs:
+      stage: push-ar
+      source: $CI_REGISTRY_IMAGE/booking-service:$IMAGE_TAG
+      target: $AR_BASE/booking-service:$IMAGE_TAG
+    rules:
+      - if: '$CI_COMMIT_BRANCH == "main"'
+  - component: gitlab.com/google-gitlab-components/artifact-registry/upload-artifact-registry@0.1.0
+    inputs:
+      stage: push-ar
+      source: $CI_REGISTRY_IMAGE/dispute-service:$IMAGE_TAG
+      target: $AR_BASE/dispute-service:$IMAGE_TAG
+    rules:
+      - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy:cloud-run:
   stage: deploy
   image:
-    name: hashicorp/terraform:latest
+    name: hashicorp/terraform:1.6.6
     entrypoint: [""]
-  script:
-    - cd terraform
+  before_script:
+    - cd $TF_DIR
     - terraform init
-    - terraform validate
-    - terraform apply -auto-approve -var="image_tag=${CI_COMMIT_SHORT_SHA}"
+  script:
+    - >
+      terraform apply -auto-approve
+      -var="project_id=$PROJECT"
+      -var="region=$LOCATION"
+      -var="repo=$REPOSITORY"
+      -var="image_tag=$IMAGE_TAG"
+      -var="db_url=$DB_URL"
+      -var="db_user=$DB_USERNAME"
+      -var="db_password=$DB_PASSWORD"
+      -var="jwt_secret=$JWT_SECRET"
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'

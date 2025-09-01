@@ -1,84 +1,41 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 spring:
   application:
     name: user-service
   profiles:
     active: jpa
-  
   datasource:
-    url: jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:password123}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-timeout: 60000
-      idle-timeout: 300000
-  
   jpa:
-    hibernate:
-      ddl-auto: update
+    hibernate.ddl-auto: update
     show-sql: false
     properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-
-  cloud:
-    loadbalancer:
-      enabled: true
-      retry:
-        enabled: true
-
-application:
-  security:
-    jwt:
-      secret-key: NDM0YjVmNjM1MTY0NWE3NDc3Mzg3YTMzNjE1MTQxNTg0NTUxNDg0ZjU0N2IzYjRmNmE1YjdhNmE0ZDQxNjM1Mg==
-      expiration: 3600000
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
 
 eureka:
   client:
-    service-url:
-      defaultZone: http://eureka-server:8761/eureka/
+    service-url.defaultZone: ${EUREKA_URL}
     register-with-eureka: true
     fetch-registry: true
-    registry-fetch-interval-seconds: 10
-    initial-instance-info-replication-interval-seconds: 40
-  
   instance:
     instance-id: ${spring.application.name}:${server.port}:${random.uuid}
     prefer-ip-address: false
-    hostname: ${EUREKA_INSTANCE_HOSTNAME:user-service}
+    hostname: ${HOSTNAME:${spring.application.name}}
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: "health,info,prometheus"
-  endpoint:
-    health:
-      show-details: always
-  metrics:
-    tags:
-      application: ${spring.application.name}
-  tracing:
-    sampling:
-      probability: 1.0
-    propagation:
-      type: B3
-  zipkin:
-    tracing:
-      endpoint: http://zipkin:9411/api/v2/spans
+  endpoints.web.exposure.include: "health,info,prometheus"
+  endpoint.health.show-details: always
+  tracing.sampling.probability: 1.0
+  tracing.propagation.type: B3
+  zipkin.tracing.endpoint: ${ZIPKIN_URL}
 
 logging:
   level:
     com.dynamiccarsharing: DEBUG
-    org.springframework.cloud.client.discovery: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
