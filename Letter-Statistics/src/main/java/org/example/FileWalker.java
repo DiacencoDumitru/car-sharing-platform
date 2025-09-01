@@ -8,6 +8,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class FileWalker {
+
+    private FileWalker() {}
+
     static List<Path> listFiles(Path root, Set<String> exts) throws IOException {
         try (Stream<Path> s = Files.walk(root)) {
             return s.filter(Files::isRegularFile)
@@ -16,7 +19,7 @@ final class FileWalker {
         }
     }
 
-    private static String ext(Path p) {
+    public static String ext(Path p) {
         String n = String.valueOf(p.getFileName());
         int i = n.lastIndexOf('.');
         return i < 0 ? "" : n.substring(i + 1).toLowerCase(Locale.ROOT);
