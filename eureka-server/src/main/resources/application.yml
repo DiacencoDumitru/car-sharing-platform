@@ -1,5 +1,5 @@
 server:
-  port: 8761
+  port: ${PORT:8761}
 
 spring:
   application:
@@ -30,9 +30,6 @@ management:
   endpoint:
     health:
       show-details: always
-  metrics:
-    tags:
-      application: ${spring.application.name}
   tracing:
     sampling:
       probability: 1.0
@@ -40,6 +37,4 @@ management:
       type: B3
   zipkin:
     tracing:
-      endpoint: http://zipkin:9411/api/v2/spans
-  server:
-    port: ${server.port}
+      endpoint: ${ZIPKIN_URL:http://zipkin:9411/api/v2/spans}
