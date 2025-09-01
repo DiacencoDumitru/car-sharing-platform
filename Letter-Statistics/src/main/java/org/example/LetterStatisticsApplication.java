@@ -1,6 +1,7 @@
 package org.example;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Stream;
@@ -9,7 +10,7 @@ public class LetterStatisticsApplication {
     public static void main(String[] args) throws Exception {
         var parsed = parseArgs(args);
         if (parsed.root == null) {
-            System.err.println("Usage: --root <folder> [--modes unsafe,sync,chm,striped,mapreduce,mapreduce-parallel,pool] [--ext txt,md,java]");
+            System.err.println("Usage: --root <folder> [--modes unsafe,sync,chm,striped,mapreduce,mapreduce-parallel,pool,ratelimited] [--ext txt,md,java]");
             System.exit(2);
         }
 
@@ -22,20 +23,23 @@ public class LetterStatisticsApplication {
         System.out.printf("Found %,d files under %s (exts=%s)%n", files.size(), parsed.root, exts);
 
         List<String> modes = parsed.modes.isEmpty() ?
-                List.of("unsafe", "sync", "chm", "striped", "mapreduce", "mapreduce-parallel", "pool") :
+                List.of("unsafe", "sync", "chm", "striped", "mapreduce", "mapreduce-parallel", "pool", "ratelimited") :
                 parsed.modes;
 
         LruResultsCache cache = new LruResultsCache(Math.min(1000, files.size()));
 
+        TokenBucketRateLimiter rateLimiter = new TokenBucketRateLimiter(200, Duration.ofSeconds(1));
+        System.out.println("Rate limiter configured to 200 permits per second.");
+
         System.out.println("\n--- First Run (Populating Cache) ---");
-        Map<String, Bench.Result> firstRunResults = runBenchmark(modes, files, cache);
+        Map<String, Bench.Result> firstRunResults = runBenchmark(modes, files, cache, rateLimiter);
 
         System.out.println("\n--- Second Run (Hitting Cache) ---");
-        runBenchmark(modes, files, cache);
+        runBenchmark(modes, files, cache, rateLimiter);
 
         System.out.println("\n" + cache.stats());
 
-        var baseline = Stream.of("sync", "chm", "striped", "mapreduce", "mapreduce-parallel", "pool")
+        var baseline = Stream.of("sync", "chm", "striped", "mapreduce", "mapreduce-parallel", "pool", "ratelimited")
                 .filter(firstRunResults::containsKey)
                 .map(firstRunResults::get)
                 .findFirst().orElse(null);
@@ -50,26 +54,37 @@ public class LetterStatisticsApplication {
         }
     }
 
-    private static Map<String, Bench.Result> runBenchmark(List<String> modes, List<Path> files, LruResultsCache cache) {
+    private static Map<String, Bench.Result> runBenchmark(List<String> modes, List<Path> files, LruResultsCache cache, TokenBucketRateLimiter rateLimiter) {
         Map<String, Bench.Result> results = new LinkedHashMap<>();
         for (String mode : modes) {
             Bench.Result r = switch (mode) {
+
+                // Strategies for  rate-limiter
                 case "unsafe" -> Bench.time("unsafe (shared HashMap, no sync)", () -> Strategies.unsafeSharedHashMap(files));
                 case "sync" -> Bench.time("sync (synchronized block)", () -> Strategies.synchronizedBlock(files));
                 case "chm" -> Bench.time("chm (ConcurrentHashMap<LongAdder>)", () -> Strategies.concurrentHashMap(files));
                 case "striped" -> Bench.time("striped (26 locks + int[26])", () -> Strategies.stripedLocks(files));
+
+                // Strategies for cache
                 case "mapreduce" -> Bench.time("map/reduce (no sharing, sequential merge)", () -> Strategies.mapReduce(files, cache));
                 case "mapreduce-parallel" -> Bench.time("map/reduce (parallel merge)", () -> Strategies.mapReduceParallelMerge(files, cache));
                 case "pool" -> Bench.time("pool (fixed size = cores, map/reduce)", () -> Strategies.fixedPool(files, cache));
+
+                // Strategy for both cache and rate-limiter
+                case "ratelimited" -> Bench.time("ratelimited pool", () -> Strategies.rateLimitedPool(files, cache, rateLimiter));
+
                 default -> throw new IllegalArgumentException("Unknown mode: " + mode);
             };
             results.put(mode, r);
-            System.out.printf("[%s] %s | %s | top: %s%s%n",
+
+            String retriesStr = r.retries().isPresent() ? String.format(" (%,d retries)", r.retries().getAsLong()) : "";
+            System.out.printf("[%s] %s | %s | top: %s%s%s%n",
                     now(),
                     r.name(),
                     r.elapsed(),
                     Util.formatTop(r.counts(), 8),
-                    r.suspectedIncorrect() ? "  (⚠ might be incorrect)" : ""
+                    r.suspectedIncorrect() ? "  (⚠ might be incorrect)" : "",
+                    retriesStr
             );
         }
         return results;
