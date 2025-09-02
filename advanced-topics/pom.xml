@@ -10,7 +10,7 @@
     <artifactId>advanced-topics</artifactId>
     <packaging>jar</packaging>
 
-    <name>Letter-Statistics</name>
+    <name>advanced-topics</name>
     <url>http://maven.apache.org</url>
 
     <properties>
