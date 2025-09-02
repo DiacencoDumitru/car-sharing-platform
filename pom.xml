@@ -26,7 +26,8 @@
         <module>api-contracts</module>
         <module>common-utils</module>
         <module>api-gateway</module>
-        <module>Letter-Statistics</module>
+        <module>advanced-topics</module>
+        <module>load-generator</module>
     </modules>
 
     <properties>
