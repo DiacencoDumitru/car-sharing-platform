@@ -7,7 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class LetterStatisticsApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(LetterStatisticsApplication.class, args);
+        var ctx = SpringApplication.run(LetterStatisticsApplication.class, args);
+        long pid = ProcessHandle.current().pid();
+        System.out.println("Running JAR: advanced-topics | PID=" + pid + " | Spring Boot started");
     }
-
 }
