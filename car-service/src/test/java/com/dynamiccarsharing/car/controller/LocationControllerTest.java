@@ -4,6 +4,7 @@ import com.dynamiccarsharing.car.dto.LocationCreateRequestDto;
 import com.dynamiccarsharing.car.dto.LocationDto;
 import com.dynamiccarsharing.car.dto.LocationUpdateRequestDto;
 import com.dynamiccarsharing.car.service.interfaces.LocationService;
+import com.dynamiccarsharing.util.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,9 @@ class LocationControllerTest {
 
     @MockBean
     private LocationService locationService;
+
+    @MockBean
+    private JwtUtil jwtUtil;
 
     @Test
     @WithMockUser
@@ -85,7 +89,6 @@ class LocationControllerTest {
     @WithMockUser
     void updateLocation_whenExists_shouldReturnOk() throws Exception {
         LocationUpdateRequestDto updateDto = new LocationUpdateRequestDto();
-
         updateDto.setCity("Boston");
         updateDto.setState("Massachusetts");
         updateDto.setZipCode("02108");

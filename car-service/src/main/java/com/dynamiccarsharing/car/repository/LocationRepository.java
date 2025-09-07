@@ -9,6 +9,8 @@ import java.util.List;
 
 public interface LocationRepository extends Repository<Location, Long> {
 
+    boolean existsById(Long id);
+
     List<Location> findByCityIgnoreCase(String city);
 
     List<Location> findByStateIgnoreCase(String state);

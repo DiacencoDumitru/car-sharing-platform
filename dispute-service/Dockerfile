@@ -10,6 +10,8 @@ COPY ./dispute-service/pom.xml ./dispute-service/
 COPY ./common-utils/pom.xml ./common-utils/
 COPY ./api-contracts/pom.xml ./api-contracts/
 COPY ./api-gateway/pom.xml ./api-gateway/
+COPY advanced-topics/pom.xml advanced-topics/
+COPY load-generator/pom.xml load-generator/
 
 RUN mvn clean install -N
 

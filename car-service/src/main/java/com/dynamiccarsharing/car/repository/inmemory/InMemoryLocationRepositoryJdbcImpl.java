@@ -55,4 +55,9 @@ public class InMemoryLocationRepositoryJdbcImpl implements LocationRepository {
                 .filter(location -> location.getZipCode().equals(zipCode))
                 .toList();
     }
+
+    @Override
+    public boolean existsById(Long id) {
+        return locationMap.containsKey(id);
+    }
 }

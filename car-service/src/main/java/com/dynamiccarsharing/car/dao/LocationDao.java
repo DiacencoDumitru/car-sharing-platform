@@ -102,4 +102,11 @@ public class LocationDao implements LocationRepository {
         String query = "SELECT * FROM locations WHERE zip_code = ?";
         return databaseUtil.findMany(query, this::mapToLocation, zipCode);
     }
+
+    @Override
+    public boolean existsById(Long id) {
+        String sql = "SELECT COUNT(1) AS cnt FROM locations WHERE id = ?";
+        Integer count = databaseUtil.findOne(sql, rs -> rs.getInt("cnt"), id);
+        return count != null && count > 0;
+    }
 }

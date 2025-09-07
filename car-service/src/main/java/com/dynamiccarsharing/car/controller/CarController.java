@@ -12,7 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,13 +26,26 @@ public class CarController {
     private final CarService carService;
 
     @PostMapping
-    public ResponseEntity<CarDto> createCar(@Valid @RequestBody CarCreateRequestDto createDto, Authentication authentication) {
-
-        Long ownerId = Long.parseLong(authentication.getName());
-
+    public ResponseEntity<CarDto> createCar(
+            @Valid @RequestBody CarCreateRequestDto createDto,
+            @RequestHeader(value = "X-Owner-Id", required = false) Long ownerIdHeader,
+            Authentication authentication)
+    {
+        Long ownerId = resolveOwnerId(authentication, ownerIdHeader);
         CarDto savedCarDto = carService.save(createDto, ownerId);
-
         return new ResponseEntity<>(savedCarDto, HttpStatus.CREATED);
+    }
+
+    private Long resolveOwnerId(Authentication authentication, Long ownerIdHeader) {
+        if (ownerIdHeader != null) {
+            return ownerIdHeader;
+        }
+        if (authentication != null && authentication.getName() != null) {
+            try {
+                return Long.parseLong(authentication.getName());
+            } catch (NumberFormatException ignored) {}
+        }
+        throw new AccessDeniedException("Owner id missing. Send 'X-Owner-Id' header while security is open.");
     }
 
     @Value("${eureka.instance.instance-id}")
@@ -40,12 +53,10 @@ public class CarController {
 
     @GetMapping("/{carId}")
     public ResponseEntity<CarDto> getCarById(@PathVariable("carId") Long carId) {
-        return carService.findById(carId)
-                .map(car -> {
-                    car.setInstanceId(instanceId);
-                    return ResponseEntity.ok(car);
-                })
-                .orElse(ResponseEntity.noContent().build());
+        CarDto dto = carService.getByIdOrNull(carId);
+        if (dto == null) return ResponseEntity.noContent().build();
+        dto.setInstanceId(instanceId);
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping
@@ -56,13 +67,12 @@ public class CarController {
 
     @PatchMapping("/{carId}")
     public ResponseEntity<CarDto> updatedCarDetails(@PathVariable Long carId, @Valid @RequestBody CarUpdateRequestDto updateDto, Authentication authentication) {
-        Long currentUserId = Long.parseLong(authentication.getName());
+        Long currentUserId = resolveOwnerId(authentication, null);
         CarDto updatedCar = carService.updateCar(carId, updateDto, currentUserId);
         return ResponseEntity.ok(updatedCar);
     }
 
     @DeleteMapping("/{carId}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> deleteCar(@PathVariable Long carId) {
         carService.deleteById(carId);
         return ResponseEntity.noContent().build();
