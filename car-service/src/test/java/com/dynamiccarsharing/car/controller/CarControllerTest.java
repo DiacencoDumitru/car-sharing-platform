@@ -7,6 +7,7 @@ import com.dynamiccarsharing.car.service.interfaces.CarService;
 import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.enums.CarStatus;
 import com.dynamiccarsharing.contracts.enums.CarType;
+import com.dynamiccarsharing.util.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,7 +23,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.Collections;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -30,20 +30,18 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CarController.class)
 class CarControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Autowired private ObjectMapper objectMapper;
 
-    @MockBean
-    private CarService carService;
+    @MockBean private CarService carService;
+
+    @MockBean private JwtUtil jwtUtil;
 
     @Test
     @WithMockUser(username = "42")
@@ -61,8 +59,7 @@ class CarControllerTest {
         savedCarDto.setMake("Toyota");
         savedCarDto.setStatus(CarStatus.AVAILABLE);
 
-        when(carService.save(any(CarCreateRequestDto.class), eq(42L)))
-                .thenReturn(savedCarDto);
+        when(carService.save(any(CarCreateRequestDto.class), eq(42L))).thenReturn(savedCarDto);
 
         mockMvc.perform(post("/api/v1/cars")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -81,7 +78,7 @@ class CarControllerTest {
         assertEquals("Toyota", passedDto.getMake());
         assertEquals("Camry", passedDto.getModel());
         assertEquals("ABC-123", passedDto.getRegistrationNumber());
-        assertEquals(new BigDecimal("50.00"), passedDto.getPrice());
+        assertEquals(0, new BigDecimal("50.00").compareTo(passedDto.getPrice()));
         assertEquals(CarType.SEDAN, passedDto.getType());
         assertEquals(1L, passedDto.getLocationId());
     }
@@ -104,7 +101,7 @@ class CarControllerTest {
         CarDto carDto = new CarDto();
         carDto.setId(1L);
         carDto.setMake("Honda");
-        when(carService.findById(1L)).thenReturn(Optional.of(carDto));
+        when(carService.getByIdOrNull(1L)).thenReturn(carDto);
 
         mockMvc.perform(get("/api/v1/cars/{carId}", 1L))
                 .andExpect(status().isOk())
@@ -115,7 +112,7 @@ class CarControllerTest {
     @Test
     @WithMockUser
     void getCarById_whenNotExists_shouldReturnNoContent() throws Exception {
-        when(carService.findById(99L)).thenReturn(Optional.empty());
+        when(carService.getByIdOrNull(99L)).thenReturn(null);
 
         mockMvc.perform(get("/api/v1/cars/{carId}", 99L))
                 .andExpect(status().isNoContent());
@@ -147,8 +144,7 @@ class CarControllerTest {
         updatedCarDto.setId(1L);
         updatedCarDto.setModel("Accord");
 
-        when(carService.updateCar(eq(1L), any(CarUpdateRequestDto.class), eq(123L)))
-                .thenReturn(updatedCarDto);
+        when(carService.updateCar(eq(1L), any(CarUpdateRequestDto.class), eq(123L))).thenReturn(updatedCarDto);
 
         mockMvc.perform(patch("/api/v1/cars/{carId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -164,8 +160,7 @@ class CarControllerTest {
     void deleteCar_shouldReturnNoContent() throws Exception {
         doNothing().when(carService).deleteById(1L);
 
-        mockMvc.perform(delete("/api/v1/cars/{carId}", 1L)
-                        .with(csrf()))
+        mockMvc.perform(delete("/api/v1/cars/{carId}", 1L).with(csrf()))
                 .andExpect(status().isNoContent());
     }
 }

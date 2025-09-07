@@ -4,6 +4,7 @@ import com.dynamiccarsharing.car.dto.CarReviewCreateRequestDto;
 import com.dynamiccarsharing.car.dto.CarReviewDto;
 import com.dynamiccarsharing.car.dto.CarReviewUpdateRequestDto;
 import com.dynamiccarsharing.car.service.interfaces.CarReviewService;
+import com.dynamiccarsharing.util.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -34,6 +36,9 @@ class CarReviewControllerTest {
 
     @MockBean
     private CarReviewService carReviewService;
+
+    @MockBean
+    private JwtUtil jwtUtil;
 
     @Test
     @WithMockUser

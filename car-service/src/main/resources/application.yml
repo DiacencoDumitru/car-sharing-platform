@@ -1,11 +1,33 @@
 server:
   port: 8081
+  error:
+    include-message: ALWAYS
+    include-binding-errors: ALWAYS
+    include-exception: true
+    include-stacktrace: ALWAYS
 
 spring:
   application:
     name: car-service
   profiles:
     active: jpa
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+  cache:
+    type: redis
+    cache-names:
+      - carById
+      - carReviewsByCarId
+      - locationById
+      - allLocations
+    redis:
+      time-to-live: 5m
+      use-key-prefix: true
+      key-prefix: "car-service::"
+      cache-null-values: false
 
   datasource:
     url: jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
@@ -16,7 +38,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -42,6 +64,8 @@ eureka:
       enabled: true
       retry:
         enabled: true
+      eager-load:
+        clients: user-service
     discovery:
       client:
         retry:
@@ -55,7 +79,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: "health,info,prometheus"
+        include: "health,info,prometheus,caches"
   endpoint:
     health:
       show-details: always
@@ -77,3 +101,9 @@ logging:
     com.netflix.eureka: DEBUG
     com.netflix.discovery: DEBUG
     org.springframework.cloud.client.discovery: DEBUG
+
+application:
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET:E0nD6k7s3yq0s5jD8L3Qw3N8jH2rVg7w1vYJ3p6xKf0U=}
+      expiration: 3600000

@@ -1,13 +1,15 @@
 package com.dynamiccarsharing.car.service;
 
-import com.dynamiccarsharing.car.client.UserClient;
 import com.dynamiccarsharing.car.criteria.CarSearchCriteria;
 import com.dynamiccarsharing.car.dto.CarCreateRequestDto;
 import com.dynamiccarsharing.car.dto.CarUpdateRequestDto;
+import com.dynamiccarsharing.car.exception.CarNotFoundException;
 import com.dynamiccarsharing.car.exception.InvalidVerificationStatusException;
 import com.dynamiccarsharing.car.mapper.CarMapper;
 import com.dynamiccarsharing.car.model.Car;
+import com.dynamiccarsharing.car.model.Location;
 import com.dynamiccarsharing.car.repository.CarRepository;
+import com.dynamiccarsharing.car.repository.LocationRepository;
 import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.enums.CarStatus;
 import com.dynamiccarsharing.contracts.enums.VerificationStatus;
@@ -29,26 +31,20 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CarServiceImplTest {
 
-    @Mock
-    private CarRepository carRepository;
-
-    @Mock
-    private CarMapper carMapper;
-
-    @Mock
-    private UserClient userClient;
+    @Mock private CarRepository carRepository;
+    @Mock private LocationRepository locationRepository;
+    @Mock private CarMapper carMapper;
 
     private CarServiceImpl carService;
 
     @BeforeEach
     void setUp() {
-        carService = new CarServiceImpl(carRepository, carMapper, userClient);
+        carService = new CarServiceImpl(carRepository, locationRepository, carMapper);
     }
 
     private static Car createTestCar(Long id, Long ownerId, CarStatus status, VerificationStatus vs) {
@@ -63,12 +59,17 @@ class CarServiceImplTest {
     @Test
     void save_withDtoAndOwner_shouldMapSetOwnerAndReturnDto() {
         CarCreateRequestDto createDto = new CarCreateRequestDto();
+        createDto.setLocationId(100L);
         Long ownerId = 42L;
+
+        Location location = Location.builder().id(100L).build();
+        when(locationRepository.findById(100L)).thenReturn(Optional.of(location));
+
         Car carEntity = new Car();
         when(carMapper.toEntity(createDto, ownerId)).thenReturn(carEntity);
 
         Car savedCar = Car.builder().id(1L).ownerId(ownerId).build();
-        when(carRepository.save(carEntity)).thenReturn(savedCar);
+        when(carRepository.save(any(Car.class))).thenReturn(savedCar);
 
         CarDto expectedDto = new CarDto();
         expectedDto.setId(1L);
@@ -78,12 +79,13 @@ class CarServiceImplTest {
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
+        assertEquals(location, carEntity.getLocation());
         verify(carMapper).toEntity(createDto, ownerId);
         verify(carRepository).save(carEntity);
     }
 
     @Test
-    void findById_whenCarExists_shouldReturnOptionalOfDto() {
+    void getByIdOrNull_whenCarExists_shouldReturnDto() {
         Long carId = 1L;
         Car entity = createTestCar(carId, 42L, CarStatus.AVAILABLE, VerificationStatus.VERIFIED);
         CarDto dto = new CarDto();
@@ -92,20 +94,26 @@ class CarServiceImplTest {
         when(carRepository.findById(carId)).thenReturn(Optional.of(entity));
         when(carMapper.toDto(entity)).thenReturn(dto);
 
-        Optional<CarDto> result = carService.findById(carId);
+        CarDto result = carService.getByIdOrNull(carId);
 
-        assertTrue(result.isPresent());
-        assertEquals(carId, result.get().getId());
+        assertNotNull(result);
+        assertEquals(carId, result.getId());
     }
 
     @Test
     void deleteById_whenCarExists_shouldDelete() {
         Long carId = 1L;
         when(carRepository.findById(carId)).thenReturn(Optional.of(new Car()));
-
-        carService.deleteById(carId);
-
+        doNothing().when(carRepository).deleteById(carId);
+        assertDoesNotThrow(() -> carService.deleteById(carId));
         verify(carRepository).deleteById(carId);
+    }
+
+    @Test
+    void deleteById_whenCarDoesNotExist_shouldThrowException() {
+        Long carId = 1L;
+        when(carRepository.findById(carId)).thenReturn(Optional.empty());
+        assertThrows(CarNotFoundException.class, () -> carService.deleteById(carId));
     }
 
     @Test
