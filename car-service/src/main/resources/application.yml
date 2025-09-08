@@ -10,7 +10,7 @@ spring:
   application:
     name: car-service
   profiles:
-    active: jpa
+    active: jpa,es
   data:
     redis:
       host: ${REDIS_HOST:redis}
@@ -42,6 +42,11 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+elasticsearch:
+  uris: ${SPRING_ELASTICSEARCH_URIS:http://elasticsearch:9200}
+  connection-timeout: 2s
+  socket-timeout: 5s
 
 eureka:
   client:
@@ -107,3 +112,6 @@ application:
     jwt:
       secret-key: ${JWT_SECRET:E0nD6k7s3yq0s5jD8L3Qw3N8jH2rVg7w1vYJ3p6xKf0U=}
       expiration: 3600000
+  search:
+    index-name: cars
+    indexing-enabled: true
