@@ -11,6 +11,7 @@ import com.dynamiccarsharing.car.model.Car;
 import com.dynamiccarsharing.car.model.Location;
 import com.dynamiccarsharing.car.repository.CarRepository;
 import com.dynamiccarsharing.car.repository.LocationRepository;
+import com.dynamiccarsharing.car.search.es.CarSearchService;
 import com.dynamiccarsharing.car.service.interfaces.CarService;
 import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.enums.CarStatus;
@@ -37,8 +38,12 @@ import java.math.BigDecimal;
 public class CarServiceImpl implements CarService {
 
     private final CarRepository carRepository;
+
     private final LocationRepository locationRepository;
+
     private final CarMapper carMapper;
+
+    private final CarSearchService carSearchService;
 
     @Override
     @CachePut(cacheNames = "carById", key = "#result.id", unless = "#result == null")
@@ -51,7 +56,11 @@ public class CarServiceImpl implements CarService {
         car.setLocation(location);
 
         Car savedCar = carRepository.save(car);
-        return carMapper.toDto(savedCar);
+        CarDto dto = carMapper.toDto(savedCar);
+
+        carSearchService.indexCar(savedCar.getId());
+
+        return dto;
     }
 
     @Override
@@ -66,6 +75,7 @@ public class CarServiceImpl implements CarService {
     public void deleteById(Long id) {
         if (carRepository.findById(id).isPresent()) {
             carRepository.deleteById(id);
+            carSearchService.deleteFromIndex(id);
         } else {
             throw new CarNotFoundException("Car with ID " + id + " not found.");
         }
@@ -85,7 +95,9 @@ public class CarServiceImpl implements CarService {
             throw new InvalidCarStatusException("Car can only be rented if AVAILABLE");
         }
         car.setStatus(CarStatus.RENTED);
-        return carMapper.toDto(carRepository.save(car));
+        CarDto dto = carMapper.toDto(carRepository.save(car));
+        carSearchService.indexCar(carId);
+        return dto;
     }
 
     @Override
@@ -94,7 +106,9 @@ public class CarServiceImpl implements CarService {
         Car car = getCarOrThrow(carId);
         validateCarStatus(car.getStatus(), CarStatus.RENTED, "Car can only be returned if RENTED");
         car.setStatus(CarStatus.AVAILABLE);
-        return carMapper.toDto(carRepository.save(car));
+        CarDto dto = carMapper.toDto(carRepository.save(car));
+        carSearchService.indexCar(carId);
+        return dto;
     }
 
     @Override
@@ -103,7 +117,9 @@ public class CarServiceImpl implements CarService {
         Car car = getCarOrThrow(carId);
         validateCarStatus(car.getStatus(), CarStatus.AVAILABLE, "Cannot set MAINTENANCE for a RENTED car");
         car.setStatus(CarStatus.MAINTENANCE);
-        return carMapper.toDto(carRepository.save(car));
+        CarDto dto = carMapper.toDto(carRepository.save(car));
+        carSearchService.indexCar(carId);
+        return dto;
     }
 
     @Override
@@ -112,7 +128,9 @@ public class CarServiceImpl implements CarService {
         Car car = getCarOrThrow(carId);
         validateVerificationStatus(car.getVerificationStatus(), "Car can only be verified from PENDING status");
         car.setVerificationStatus(VerificationStatus.VERIFIED);
-        return carMapper.toDto(carRepository.save(car));
+        CarDto dto = carMapper.toDto(carRepository.save(car));
+        carSearchService.indexCar(carId);
+        return dto;
     }
 
     @Override
@@ -121,7 +139,9 @@ public class CarServiceImpl implements CarService {
         Car car = getCarOrThrow(carId);
         validateVerificationStatus(car.getVerificationStatus(), "Car can only be rejected from PENDING status");
         car.setVerificationStatus(VerificationStatus.REJECTED);
-        return carMapper.toDto(carRepository.save(car));
+        CarDto dto = carMapper.toDto(carRepository.save(car));
+        carSearchService.indexCar(carId);
+        return dto;
     }
 
     @Override
@@ -140,7 +160,9 @@ public class CarServiceImpl implements CarService {
             carToUpdate.setLocation(newLocation);
         }
 
-        return carMapper.toDto(carRepository.save(carToUpdate));
+        CarDto dto = carMapper.toDto(carRepository.save(carToUpdate));
+        carSearchService.indexCar(carId);
+        return dto;
     }
 
     @Override
@@ -151,7 +173,9 @@ public class CarServiceImpl implements CarService {
         }
         Car car = getCarOrThrow(carId);
         car.setPrice(newPrice);
-        return carMapper.toDto(carRepository.save(car));
+        CarDto dto = carMapper.toDto(carRepository.save(car));
+        carSearchService.indexCar(carId);
+        return dto;
     }
 
     private Car getCarOrThrow(Long carId) {
