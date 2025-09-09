@@ -66,7 +66,6 @@ public abstract class CarBaseDaoTest {
     }
 
     protected Car createCar(String regNumber, String make, String model, Location location, Long ownerId) {
-        // FIX: Added owner_id to the SQL INSERT statement
         String sql = "INSERT INTO cars (registration_number, make, model, status, location_id, price_per_day, type, verification_status, owner_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         CarStatus status = CarStatus.AVAILABLE;
         BigDecimal price = BigDecimal.valueOf(50.00);
