@@ -4,7 +4,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
-@SpringBootApplication
+@SpringBootApplication(
+        scanBasePackages = {
+                "com.dynamiccarsharing.gateway",
+                "com.dynamiccarsharing.util"
+        }
+)
 @EnableDiscoveryClient
 public class ApiGatewayApplication {
 

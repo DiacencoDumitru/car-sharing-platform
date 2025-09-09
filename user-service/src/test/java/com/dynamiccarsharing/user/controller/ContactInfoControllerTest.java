@@ -3,7 +3,9 @@ package com.dynamiccarsharing.user.controller;
 import com.dynamiccarsharing.contracts.dto.ContactInfoDto;
 import com.dynamiccarsharing.user.dto.ContactInfoCreateRequestDto;
 import com.dynamiccarsharing.user.dto.ContactInfoUpdateRequestDto;
+import com.dynamiccarsharing.user.service.UserServiceImpl;
 import com.dynamiccarsharing.user.service.interfaces.ContactInfoService;
+import com.dynamiccarsharing.util.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,12 @@ class ContactInfoControllerTest {
 
     @MockBean
     private ContactInfoService contactInfoService;
+
+    @MockBean
+    private JwtUtil jwtUtil;
+
+    @MockBean
+    private UserServiceImpl userService;
 
     @Test
     @WithMockUser

@@ -4,7 +4,8 @@ server:
 spring:
   application:
     name: booking-service
-
+  profiles:
+    active: jpa
   datasource:
     url: jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
     username: ${DB_USERNAME:postgres}
@@ -50,9 +51,12 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: "health,info,prometheus"
   endpoint:
     health:
       show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
   server:
     port: ${server.port}

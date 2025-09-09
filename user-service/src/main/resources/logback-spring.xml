@@ -9,24 +9,26 @@
         </encoder>
     </appender>
 
-    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-        <destination>logstash:5044</destination>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <fieldNames>
-                <message>message</message>
-                <version>[ignore]</version> </fieldNames>
-            <customFields>{"app_name":"${springAppName}"}</customFields>
-        </encoder>
-    </appender>
-
-    <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="LOGSTASH"/>
-    </root>
+    <springProfile name="!test">
+        <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+            <destination>logstash:5044</destination>
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"app_name":"${springAppName}"}</customFields>
+            </encoder>
+        </appender>
+    </springProfile>
 
     <logger name="com.dynamiccarsharing" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="LOGSTASH"/>
+        <springProfile name="!test">
+            <appender-ref ref="LOGSTASH"/>
+        </springProfile>
     </logger>
 
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <springProfile name="!test">
+            <appender-ref ref="LOGSTASH"/>
+        </springProfile>
+    </root>
 </configuration>

@@ -17,6 +17,9 @@ import com.dynamiccarsharing.user.service.interfaces.UserService;
 import com.dynamiccarsharing.util.exception.ServiceException;
 import com.dynamiccarsharing.util.filter.Filter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +30,7 @@ import java.util.Optional;
 @Service("userService")
 @Transactional
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -97,5 +100,25 @@ public class UserServiceImpl implements UserService {
 
     private User getUserOrThrow(Long userId) {
         return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " not found."));
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByContactInfoEmail(username)
+                .orElse(null);
+
+        if (user == null) {
+            try {
+                Long userId = Long.parseLong(username);
+                user = userRepository.findById(userId).orElse(null);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found: " + username);
+        }
+
+        return user;
     }
 }
