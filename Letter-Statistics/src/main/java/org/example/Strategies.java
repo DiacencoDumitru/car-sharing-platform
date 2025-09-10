@@ -2,10 +2,7 @@ package org.example;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -208,6 +205,43 @@ final class Strategies {
             pool.shutdownNow();
         }
     }
+
+    static Bench.Output rateLimitedPool(List<Path> files, LruResultsCache cache, TokenBucketRateLimiter rateLimiter) {
+        int n = Runtime.getRuntime().availableProcessors();
+        ExecutorService pool = Executors.newFixedThreadPool(n);
+        LongAdder retries = new LongAdder();
+        try {
+            List<Future<int[]>> futures = new ArrayList<>();
+            for (Path f : files) {
+                futures.add(pool.submit(() -> {
+                    String key = FileWalker.ext(f);
+                    while (!rateLimiter.tryAcquire(key)) {
+                        retries.increment();
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    return Util.countFileWithCache(f, cache);
+                }));
+            }
+            int[] merged = new int[26];
+            for (Future<int[]> fut : futures) {
+                int[] p = fut.get();
+                for (int i = 0; i < 26; i++) merged[i] += p[i];
+            }
+            var m = LetterTally.toMap(merged);
+            long total = m.values().stream().mapToLong(Long::longValue).sum();
+            return new Bench.Output(m, total, false, OptionalLong.of(retries.sum()));
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
 
     private static void joinAll(List<Thread> threads) {
         for (Thread t : threads) {
