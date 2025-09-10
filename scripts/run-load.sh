@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-RPS=${RPS:-1000}
+RPS=${RPS:-800}
 DUR=${DUR:-30s}
 URL=${URL:-http://localhost:8080/count}
-SRC=${SRC:-.}
+SRC=${SRC:-./advanced-topics/src/main/java}
+EXT=${EXT:-txt,md,java}
 WORKERS=${WORKERS:-64}
 MODE=${MODE:-pool}
 
 JAR=$(find load-generator/target -name "load-generator-*-SNAPSHOT.jar" | head -n 1)
-
-if [ -z "${JAR}" ]; then
-    echo "Error: Could not find the JAR file in load-generator/target." >&2
-    echo "Please run 'mvn clean package' first." >&2
+if [[ -z "${JAR}" ]]; then
+    echo "Error: build first (mvn -q -DskipTests -pl load-generator -am package)" >&2
     exit 1
 fi
 
@@ -22,6 +21,7 @@ exec java \
   -Dduration="${DUR}" \
   -Durl="${URL}" \
   -Dsource="${SRC}" \
+  -Dext="${EXT}" \
   -Dworkers="${WORKERS}" \
   -Dmode="${MODE}" \
   -jar "${JAR}"
