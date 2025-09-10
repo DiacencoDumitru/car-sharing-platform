@@ -2,6 +2,7 @@ package org.example;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,6 +20,8 @@ final class Util {
             while ((ch = br.read()) != -1) {
                 tally.addChar((char) ch);
             }
+        } catch (MalformedInputException e) {
+            System.err.println("WARN: Skipping binary or non-UTF8 file: " + file);
         }
     }
 
