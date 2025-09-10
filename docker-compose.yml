@@ -50,6 +50,8 @@ services:
         condition: service_healthy
       logstash:
         condition: service_started
+      zipkin:
+        condition: service_started
     networks:
       - microservices-network
     healthcheck:
@@ -76,6 +78,8 @@ services:
       eureka-server:
         condition: service_healthy
       logstash:
+        condition: service_started
+      zipkin:
         condition: service_started
     networks:
       - microservices-network
@@ -104,6 +108,8 @@ services:
         condition: service_healthy
       logstash:
         condition: service_started
+      zipkin:
+        condition: service_started
     networks:
       - microservices-network
     healthcheck:
@@ -128,6 +134,8 @@ services:
       eureka-server:
         condition: service_healthy
       logstash:
+        condition: service_started
+      zipkin:
         condition: service_started
     networks:
       - microservices-network
@@ -154,6 +162,8 @@ services:
         condition: service_healthy
       logstash:
         condition: service_started
+      zipkin:
+        condition: service_started
     networks:
       - microservices-network
     healthcheck:
@@ -178,6 +188,8 @@ services:
       eureka-server:
         condition: service_healthy
       logstash:
+        condition: service_started
+      zipkin:
         condition: service_started
     networks:
       - microservices-network
@@ -257,6 +269,15 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     depends_on:
       - prometheus
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  zipkin:
+    image: openzipkin/zipkin:2.24
+    container_name: zipkin
+    ports:
+      - "9411:9411"
     networks:
       - microservices-network
     restart: unless-stopped
