@@ -7,5 +7,5 @@ import java.math.BigDecimal;
 public class PriceUpdateCommand {
     private Long carId;
     private BigDecimal newPrice;
-    private String requestId; // optional tracing/correlation
+    private String requestId;
 }

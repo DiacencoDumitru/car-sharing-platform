@@ -101,7 +101,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: "health,info,prometheus,caches"
+        include: "health,info,metrics,prometheus,caches,circuitbreakers,circuitbreakerevents,retries,retryevents"
   endpoint:
     health:
       show-details: always
@@ -137,3 +137,30 @@ application:
       car-events: car.events
       car-commands: car.commands
       car-commands-dlt: car.commands.dlt
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 2s
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 10s
+        registerHealthIndicator: true
+    instances:
+      carSearch:
+        baseConfig: default
+      carEvents:
+        baseConfig: default
+
+  retry:
+    instances:
+      carSearch:
+        maxAttempts: 3
+        waitDuration: 200ms
+      carEvents:
+        maxAttempts: 5
+        waitDuration: 100ms
