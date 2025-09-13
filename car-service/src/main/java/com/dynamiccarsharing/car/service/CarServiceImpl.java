@@ -30,7 +30,11 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
+
 import java.math.BigDecimal;
+import java.util.function.Supplier;
 
 @Service("carService")
 @Transactional
@@ -43,6 +47,47 @@ public class CarServiceImpl implements CarService {
     private final CarMapper carMapper;
     private final CarSearchService carSearchService;
     private final CarEventPublisher carEventPublisher;
+    private final CircuitBreakerFactory<?, ?> circuitBreakerFactory;
+
+    private void indexCarSafely(Long carId) {
+        CircuitBreaker cb = circuitBreakerFactory.create("carSearch");
+        cb.run(() -> {
+                    carSearchService.indexCar(carId);
+                    return null;
+                },
+                ex -> {
+                    log.warn("carSearch CB fallback: indexing car {} failed: {}", carId, ex.toString());
+                    return null;
+                }
+        );
+    }
+
+    private void deleteIndexSafely(Long carId) {
+        CircuitBreaker cb = circuitBreakerFactory.create("carSearch");
+        cb.run(() -> {
+                    carSearchService.deleteFromIndex(carId);
+                    return null;
+                },
+                ex -> {
+                    log.warn("carSearch CB fallback: delete index for car {} failed: {}", carId, ex.toString());
+                    return null;
+                }
+        );
+    }
+
+    private void publishEventSafely(Supplier<Void> publisher, String action, Long carId) {
+        CircuitBreaker cb = circuitBreakerFactory.create("carEvents");
+        cb.run(
+                () -> {
+                    publisher.get();
+                    return null;
+                },
+                ex -> {
+                    log.warn("carEvents CB fallback: publishing {} for car {} failed: {}", action, carId, ex.toString());
+                    return null;
+                }
+        );
+    }
 
     @Override
     @CachePut(cacheNames = "carById", key = "#result.id", unless = "#result == null")
@@ -57,8 +102,9 @@ public class CarServiceImpl implements CarService {
         Car savedCar = carRepository.save(car);
         CarDto dto = carMapper.toDto(savedCar);
 
-        carSearchService.indexCar(savedCar.getId());
-        carEventPublisher.publishCarCreated(savedCar);
+        indexCarSafely(savedCar.getId());
+        publishEventSafely(() -> { carEventPublisher.publishCarCreated(savedCar); return null; },
+                "CarCreated", savedCar.getId());
 
         return dto;
     }
@@ -75,8 +121,10 @@ public class CarServiceImpl implements CarService {
     public void deleteById(Long id) {
         if (carRepository.findById(id).isPresent()) {
             carRepository.deleteById(id);
-            carSearchService.deleteFromIndex(id);
-            carEventPublisher.publishCarDeleted(id);
+
+            deleteIndexSafely(id);
+            publishEventSafely(() -> { carEventPublisher.publishCarDeleted(id); return null; },
+                    "CarDeleted", id);
         } else {
             throw new CarNotFoundException("Car with ID " + id + " not found.");
         }
@@ -98,8 +146,10 @@ public class CarServiceImpl implements CarService {
         car.setStatus(CarStatus.RENTED);
         Car saved = carRepository.save(car);
         CarDto dto = carMapper.toDto(saved);
-        carSearchService.indexCar(carId);
-        carEventPublisher.publishCarUpdated(saved);
+
+        indexCarSafely(carId);
+        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
+                "CarUpdated", carId);
         return dto;
     }
 
@@ -111,8 +161,10 @@ public class CarServiceImpl implements CarService {
         car.setStatus(CarStatus.AVAILABLE);
         Car saved = carRepository.save(car);
         CarDto dto = carMapper.toDto(saved);
-        carSearchService.indexCar(carId);
-        carEventPublisher.publishCarUpdated(saved);
+
+        indexCarSafely(carId);
+        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
+                "CarUpdated", carId);
         return dto;
     }
 
@@ -124,8 +176,10 @@ public class CarServiceImpl implements CarService {
         car.setStatus(CarStatus.MAINTENANCE);
         Car saved = carRepository.save(car);
         CarDto dto = carMapper.toDto(saved);
-        carSearchService.indexCar(carId);
-        carEventPublisher.publishCarUpdated(saved);
+
+        indexCarSafely(carId);
+        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
+                "CarUpdated", carId);
         return dto;
     }
 
@@ -137,8 +191,10 @@ public class CarServiceImpl implements CarService {
         car.setVerificationStatus(VerificationStatus.VERIFIED);
         Car saved = carRepository.save(car);
         CarDto dto = carMapper.toDto(saved);
-        carSearchService.indexCar(carId);
-        carEventPublisher.publishCarUpdated(saved);
+
+        indexCarSafely(carId);
+        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
+                "CarUpdated", carId);
         return dto;
     }
 
@@ -150,8 +206,10 @@ public class CarServiceImpl implements CarService {
         car.setVerificationStatus(VerificationStatus.REJECTED);
         Car saved = carRepository.save(car);
         CarDto dto = carMapper.toDto(saved);
-        carSearchService.indexCar(carId);
-        carEventPublisher.publishCarUpdated(saved);
+
+        indexCarSafely(carId);
+        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
+                "CarUpdated", carId);
         return dto;
     }
 
@@ -173,8 +231,10 @@ public class CarServiceImpl implements CarService {
 
         Car saved = carRepository.save(carToUpdate);
         CarDto dto = carMapper.toDto(saved);
-        carSearchService.indexCar(carId);
-        carEventPublisher.publishCarUpdated(saved);
+
+        indexCarSafely(carId);
+        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
+                "CarUpdated", carId);
         return dto;
     }
 
@@ -188,8 +248,10 @@ public class CarServiceImpl implements CarService {
         car.setPrice(newPrice);
         Car saved = carRepository.save(car);
         CarDto dto = carMapper.toDto(saved);
-        carSearchService.indexCar(carId);
-        carEventPublisher.publishCarUpdated(saved);
+
+        indexCarSafely(carId);
+        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
+                "CarUpdated", carId);
         return dto;
     }
 
