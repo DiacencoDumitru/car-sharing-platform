@@ -12,12 +12,14 @@ validate:
 
 build:
   stage: build
-  image: docker:latest
-  services:
-    - docker:dind
+  image: maven:3.9-eclipse-temurin-17-focal
   script:
     - cd car-service
-    - docker build -t car-service:local .
+    - mvn clean package -DskipTests
+  artifacts:
+    paths:
+      - car-service/target/*.jar
+    expire_in: 1 week
   rules:
     - if: $CI_COMMIT_BRANCH
 
