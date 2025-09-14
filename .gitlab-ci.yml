@@ -7,20 +7,22 @@ variables:
 
 validate:
   stage: validate
-  image: hashicorp/terraform:1.8
+  image:
+    name: hashicorp/terraform:1.8
+    entrypoint: [""]
   script:
     - terraform -chdir=infra init -backend=false
     - terraform -chdir=infra validate
-  artifacts:
-    when: always
-    reports:
-      dotenv: infra/.env.tf
 
 build:
   stage: build
   image: docker:24
-  services: [docker:24-dind]
+  services:
+    - name: docker:24-dind
+      command: ["--tls=false"]
   variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
     DOCKER_DRIVER: overlay2
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
@@ -32,14 +34,14 @@ build:
   artifacts:
     when: always
     expire_in: 1 week
-    reports:
-      dotenv: build.env
   rules:
     - if: $CI_COMMIT_BRANCH
 
 plan:
   stage: plan
-  image: hashicorp/terraform:1.8
+  image:
+    name: hashicorp/terraform:1.8
+    entrypoint: [""]
   script:
     - cd infra
     - export AWS_ACCESS_KEY_ID=demo AWS_SECRET_ACCESS_KEY=demo AWS_EC2_METADATA_DISABLED=true
@@ -47,42 +49,7 @@ plan:
     - terraform plan -refresh=false -out=tfplan.out
     - terraform show -no-color tfplan.out > tfplan.txt
   artifacts:
-    paths: [infra/tfplan.out, infra/tfplan.txt]
+    paths:
+      - infra/tfplan.out
+      - infra/tfplan.txt
     expire_in: 1 week
-
-deploy:
-  stage: deploy
-  image: amazon/aws-cli:2.17.39
-  needs: [build]
-  rules:
-    - if: '$AWS_ROLE_ARN'
-  script: |
-    set -euo pipefail
-    echo "$CI_JOB_JWT_V2" > /tmp/web_identity_token
-    export AWS_ROLE_ARN="${AWS_ROLE_ARN}"
-    export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
-    export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}"
-
-    IMAGE="$CI_REGISTRY_IMAGE/car-service:${CI_COMMIT_SHA}"
-
-    aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
-      --query 'services[0].taskDefinition' --output text > /tmp/td_arn.txt
-    TD_ARN=$(cat /tmp/td_arn.txt)
-    aws ecs describe-task-definition --task-definition "$TD_ARN" --query 'taskDefinition' > /tmp/taskdef.json
-
-    yum -y install jq >/dev/null
-    cat /tmp/taskdef.json \
-      | jq --arg IMG "$IMAGE" '
-        .containerDefinitions = ( .containerDefinitions
-          | map(if .name=="car-service" then .image=$IMG else . end) )
-        | del(.compatibilities, .revision, .status, .taskDefinitionArn, .requiresAttributes)
-      ' > /tmp/rendered.json
-
-    NEW_TD_ARN=$(aws ecs register-task-definition --cli-input-json file:///tmp/rendered.json \
-      --query 'taskDefinition.taskDefinitionArn' --output text)
-
-    aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" \
-      --task-definition "$NEW_TD_ARN" --desired-count 2 --force-new-deployment >/dev/null
-    aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"
-
-    echo "Deployed image: $IMAGE"
