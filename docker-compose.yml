@@ -50,12 +50,18 @@ services:
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_CFG_MIN_INSYNC_REPLICAS=1
       - ALLOW_PLAINTEXT_LISTENER=yes
     healthcheck:
-      test: ["CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 20
+      retries: 30
+      start_period: 60s
     restart: unless-stopped
 
   eureka-server:
@@ -69,7 +75,7 @@ services:
     networks:
       - microservices-network
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8761/actuator/health || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -91,13 +97,15 @@ services:
         condition: service_started
       zipkin:
         condition: service_started
+    environment:
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
     networks:
       - microservices-network
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8085/actuator/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8085/actuator/health/liveness || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
       start_period: 120s
     restart: unless-stopped
 
@@ -111,6 +119,7 @@ services:
       - "8080:8080"
     environment:
       - EUREKA_INSTANCE_HOSTNAME=user-service-1
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
     depends_on:
       db:
         condition: service_healthy
@@ -123,11 +132,11 @@ services:
     networks:
       - microservices-network
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health/liveness || exit 1" ]
       interval: 30s
       timeout: 15s
-      retries: 5
-      start_period: 90s
+      retries: 10
+      start_period: 120s
     restart: unless-stopped
 
   user-service-2:
@@ -140,6 +149,7 @@ services:
       - "8088:8080"
     environment:
       - EUREKA_INSTANCE_HOSTNAME=user-service-2
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
     depends_on:
       db:
         condition: service_healthy
@@ -152,11 +162,11 @@ services:
     networks:
       - microservices-network
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health/liveness || exit 1" ]
       interval: 30s
       timeout: 15s
-      retries: 5
-      start_period: 90s
+      retries: 10
+      start_period: 120s
     restart: unless-stopped
 
   car-service:
@@ -183,20 +193,24 @@ services:
       kafka:
         condition: service_healthy
     environment:
+      - SPRING_PROFILES_ACTIVE=local-docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/dynamic_car_sharing_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password123
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=E0nD6k7s3yq0s5jD8L3Qw3N8jH2rVg7w1vYJ3p6xKf0U=
-      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_PROFILES_ACTIVE=jpa,es
     networks:
       - microservices-network
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health/liveness || exit 1" ]
       interval: 30s
       timeout: 15s
-      retries: 5
-      start_period: 90s
+      retries: 10
+      start_period: 120s
     restart: unless-stopped
 
   booking-service:
@@ -207,6 +221,8 @@ services:
     container_name: booking-service
     ports:
       - "8082:8082"
+    environment:
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
     depends_on:
       db:
         condition: service_healthy
@@ -219,10 +235,10 @@ services:
     networks:
       - microservices-network
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8082/actuator/health/liveness || exit 1" ]
       interval: 30s
       timeout: 15s
-      retries: 5
+      retries: 10
       start_period: 120s
     restart: unless-stopped
 
@@ -234,6 +250,8 @@ services:
     container_name: dispute-service
     ports:
       - "8083:8083"
+    environment:
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
     depends_on:
       db:
         condition: service_healthy
@@ -246,11 +264,11 @@ services:
     networks:
       - microservices-network
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8083/actuator/health/liveness || exit 1" ]
       interval: 30s
       timeout: 15s
-      retries: 5
-      start_period: 90s
+      retries: 10
+      start_period: 120s
     restart: unless-stopped
 
   elasticsearch:
