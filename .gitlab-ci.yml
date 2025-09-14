@@ -14,8 +14,8 @@ build:
   stage: build
   image: maven:3.9-eclipse-temurin-17-focal
   script:
-    - cd car-service
-    - mvn clean package -DskipTests
+    - mvn clean install -pl api-contracts,common-utils -DskipTests
+    - mvn clean package -pl car-service -am -DskipTests
   artifacts:
     paths:
       - car-service/target/*.jar
