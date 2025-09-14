@@ -18,26 +18,19 @@ validate:
 
 build:
   stage: build
-  image: docker:24
-  services:
-    - name: docker:24-dind
-      command: ["--tls=false"]
+  image:
+    name: gcr.io/kaniko-project/executor:latest
+    entrypoint: [""]
   variables:
-    DOCKER_HOST: "tcp://docker:2375"
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_DRIVER: overlay2
+    DOCKER_CONFIG: /kaniko/.docker/
   script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
-    - IMAGE="$CI_REGISTRY_IMAGE/car-service"
-    - docker build -t "$IMAGE:latest" -f car-service/Dockerfile .
-    - docker tag "$IMAGE:latest" "$IMAGE:${CI_COMMIT_SHA}"
-    - docker push "$IMAGE:latest"
-    - docker push "$IMAGE:${CI_COMMIT_SHA}"
-  artifacts:
-    when: always
-    expire_in: 1 week
-  rules:
-    - if: $CI_COMMIT_BRANCH
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor
+      --context "$CI_PROJECT_DIR"
+      --dockerfile "$CI_PROJECT_DIR/car-service/Dockerfile"
+      --destination "$CI_REGISTRY_IMAGE/car-service:latest"
+      --destination "$CI_REGISTRY_IMAGE/car-service:${CI_COMMIT_SHA}"
 
 plan:
   stage: plan
