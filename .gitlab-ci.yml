@@ -11,8 +11,10 @@ validate:
     name: hashicorp/terraform:1.8
     entrypoint: [""]
   script:
-    - terraform -chdir=infra init -backend=false
-    - terraform -chdir=infra validate
+    - cd infra
+    - rm -rf .terraform/modules
+    - terraform init -backend=false -upgrade -reconfigure
+    - terraform validate
 
 build:
   stage: build
@@ -44,8 +46,9 @@ plan:
     entrypoint: [""]
   script:
     - cd infra
+    - rm -rf .terraform/modules
     - export AWS_ACCESS_KEY_ID=demo AWS_SECRET_ACCESS_KEY=demo AWS_EC2_METADATA_DISABLED=true
-    - terraform init -backend=false -upgrade
+    - terraform init -backend=false -upgrade -reconfigure
     - terraform plan -refresh=false -out=tfplan.out
     - terraform show -no-color tfplan.out > tfplan.txt
   artifacts:
