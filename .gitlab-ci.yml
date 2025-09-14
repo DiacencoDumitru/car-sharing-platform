@@ -7,16 +7,14 @@ variables:
 
 validate:
   stage: validate
-  image:
-    name: hashicorp/terraform:1.8
-    entrypoint: [""]
+  image: hashicorp/terraform:1.8
   script:
     - cd infra
     - rm -rf .terraform/modules
     - terraform init -backend=false -upgrade -reconfigure
     - terraform validate
 
-build:
+build:push:
   stage: build
   image:
     name: gcr.io/kaniko-project/executor:debug
@@ -24,30 +22,24 @@ build:
   variables:
     DOCKER_CONFIG: /kaniko/.docker/
     IMAGE_NAME: car-service
+  rules:
+    - if: '$CI_REGISTRY_IMAGE'
+    - if: '$DOCKERHUB_USERNAME && $DOCKERHUB_TOKEN'
+    - when: never
   script: |
     set -eu
-
     mkdir -p /kaniko/.docker
-
     if [ -n "${CI_REGISTRY_IMAGE:-}" ]; then
       REG="$CI_REGISTRY"
       IMAGE="$CI_REGISTRY_IMAGE/$IMAGE_NAME"
       printf '{"auths":{"%s":{"username":"%s","password":"%s"}}}\n' \
-        "$REG" "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" \
-        > /kaniko/.docker/config.json
+        "$REG" "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" > /kaniko/.docker/config.json
     else
-      if [ -z "${DOCKERHUB_USERNAME:-}" ] || [ -z "${DOCKERHUB_TOKEN:-}" ]; then
-        echo "CI_REGISTRY_IMAGE is empty and DOCKERHUB_* not set."
-        echo "Enable GitLab Container Registry or set DOCKERHUB_USERNAME/DOCKERHUB_TOKEN." >&2
-        exit 1
-      fi
       REG="https://index.docker.io/v1/"
       IMAGE="index.docker.io/${DOCKERHUB_USERNAME}/${IMAGE_NAME}"
       printf '{"auths":{"%s":{"username":"%s","password":"%s"}}}\n' \
-        "$REG" "$DOCKERHUB_USERNAME" "$DOCKERHUB_TOKEN" \
-        > /kaniko/.docker/config.json
+        "$REG" "$DOCKERHUB_USERNAME" "$DOCKERHUB_TOKEN" > /kaniko/.docker/config.json
     fi
-
     /kaniko/executor \
       --context "$CI_PROJECT_DIR" \
       --dockerfile "$CI_PROJECT_DIR/car-service/Dockerfile" \
@@ -56,14 +48,36 @@ build:
   artifacts:
     when: always
     expire_in: 1 week
+
+build:archive:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: ["/busybox/sh","-c"]
   rules:
-    - if: $CI_COMMIT_BRANCH
+    - if: '$CI_REGISTRY_IMAGE'
+      when: never
+    - if: '$DOCKERHUB_USERNAME && $DOCKERHUB_TOKEN'
+      when: never
+    - when: on_success
+  script: |
+    set -eu
+    mkdir -p out
+    /kaniko/executor \
+      --context "$CI_PROJECT_DIR" \
+      --dockerfile "$CI_PROJECT_DIR/car-service/Dockerfile" \
+      --destination "example.invalid/dryrun/${CI_PROJECT_PATH}/car-service:${CI_COMMIT_SHORT_SHA}" \
+      --no-push --no-push-cache \
+      --tarPath out/car-service-image.tar
+    echo "Built image tar at out/car-service-image.tar"
+  artifacts:
+    paths:
+      - out/car-service-image.tar
+    expire_in: 1 week
 
 plan:
   stage: plan
-  image:
-    name: hashicorp/terraform:1.8
-    entrypoint: [""]
+  image: hashicorp/terraform:1.8
   script:
     - cd infra
     - rm -rf .terraform/modules
@@ -72,7 +86,5 @@ plan:
     - terraform plan -refresh=false -out=tfplan.out
     - terraform show -no-color tfplan.out > tfplan.txt
   artifacts:
-    paths:
-      - infra/tfplan.out
-      - infra/tfplan.txt
+    paths: [infra/tfplan.out, infra/tfplan.txt]
     expire_in: 1 week
