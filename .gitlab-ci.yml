@@ -19,18 +19,27 @@ validate:
 build:
   stage: build
   image:
-    name: gcr.io/kaniko-project/executor:latest
-    entrypoint: [""]
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: ["/busybox/sh","-c"]
   variables:
     DOCKER_CONFIG: /kaniko/.docker/
   script:
-    - mkdir -p /kaniko/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor
-      --context "$CI_PROJECT_DIR"
-      --dockerfile "$CI_PROJECT_DIR/car-service/Dockerfile"
-      --destination "$CI_REGISTRY_IMAGE/car-service:latest"
-      --destination "$CI_REGISTRY_IMAGE/car-service:${CI_COMMIT_SHA}"
+    - |
+      mkdir -p /kaniko/.docker
+      printf '{"auths":{"%s":{"username":"%s","password":"%s"}}}\n' \
+        "$CI_REGISTRY" "$CI_REGISTRY_USER" "$CI_REGISTRY_PASSWORD" \
+        > /kaniko/.docker/config.json
+
+      /kaniko/executor \
+        --context "$CI_PROJECT_DIR" \
+        --dockerfile "$CI_PROJECT_DIR/car-service/Dockerfile" \
+        --destination "$CI_REGISTRY_IMAGE/car-service:latest" \
+        --destination "$CI_REGISTRY_IMAGE/car-service:${CI_COMMIT_SHA}"
+  artifacts:
+    when: always
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_BRANCH
 
 plan:
   stage: plan
