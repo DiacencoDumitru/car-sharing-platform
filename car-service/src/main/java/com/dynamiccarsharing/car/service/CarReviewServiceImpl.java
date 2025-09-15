@@ -18,6 +18,10 @@ import com.dynamiccarsharing.util.filter.Filter;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -36,6 +40,7 @@ public class CarReviewServiceImpl implements CarReviewService {
     private final CarRepository carRepository;
     private final CarReviewMapper carReviewMapper;
     private final WebClient.Builder webClientBuilder;
+    private final CacheManager cacheManager;
 
     private WebClient userWebClient;
 
@@ -45,13 +50,16 @@ public class CarReviewServiceImpl implements CarReviewService {
     }
 
     @Override
+    @CacheEvict(cacheNames = "carReviewsByCarId", key = "#carId")
     public CarReviewDto createReview(Long carId, CarReviewCreateRequestDto createDto) {
+        log.info("Creating review for carId: {}", carId);
         validateCarExists(carId);
         validateUserExists(createDto.getReviewerId());
 
         createDto.setCarId(carId);
         CarReview review = carReviewMapper.toEntity(createDto);
         CarReview savedReview = carReviewRepository.save(review);
+        log.info("Successfully created review {} for carId: {}", savedReview.getId(), carId);
         return carReviewMapper.toDto(savedReview);
     }
 
@@ -62,18 +70,28 @@ public class CarReviewServiceImpl implements CarReviewService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "carReviewsByCarId", key = "#carId")
     public List<CarReviewDto> findByCarId(Long carId) {
+        log.debug("Cache MISS for carReviewsByCarId -> loading from DB for carId={}", carId);
         return carReviewRepository.findByCarId(carId).stream().map(carReviewMapper::toDto).toList();
     }
 
     @Override
     public void deleteById(Long id) {
-        if (carReviewRepository.findById(id).isPresent()) {
-            carReviewRepository.deleteById(id);
-        } else {
-            throw new CarReviewNotFoundException("Car review with ID " + id + " not found.");
+        CarReview review = carReviewRepository.findById(id)
+                .orElseThrow(() -> new CarReviewNotFoundException("Car review with ID " + id + " not found."));
+
+        Long carId = review.getCar().getId();
+
+        carReviewRepository.deleteById(id);
+
+        Cache carReviewsCache = cacheManager.getCache("carReviewsByCarId");
+        if (carReviewsCache != null) {
+            carReviewsCache.evict(carId);
+            log.info("Programmatically evicted cache 'carReviewsByCarId' for carId: {}", carId);
         }
+
+        log.info("Deleted review with id {} for carId {}", id, carId);
     }
 
     @Override
@@ -97,28 +115,33 @@ public class CarReviewServiceImpl implements CarReviewService {
     }
 
     @Override
+    @CacheEvict(cacheNames = "carReviewsByCarId", key = "#result.carId")
     public CarReviewDto updateReview(Long reviewId, CarReviewUpdateRequestDto updateDto) {
-        CarReview reviewToUpdate = carReviewRepository.findById(reviewId).orElseThrow(() -> new CarReviewNotFoundException("CarReview with ID " + reviewId + " not found."));
+        CarReview reviewToUpdate = carReviewRepository.findById(reviewId)
+                .orElseThrow(() -> new CarReviewNotFoundException("CarReview with ID " + reviewId + " not found."));
 
         carReviewMapper.updateFromDto(updateDto, reviewToUpdate);
-
         CarReview updatedReview = carReviewRepository.save(reviewToUpdate);
+        log.info("Updated review {} for carId {}. Evicting cache via annotation.", reviewId, updatedReview.getCar().getId());
+
         return carReviewMapper.toDto(updatedReview);
     }
 
     private void validateUserExists(Long userId) {
         try {
             UserDto user = userWebClient.get()
-                    .uri("/" + userId)
+                    .uri("/api/v1/users/{id}", userId)
                     .retrieve()
                     .bodyToMono(UserDto.class)
                     .block();
 
-            if (user != null) {
-                log.info("User validation handled by instance: {}", user.getInstanceId());
+            if (user == null) {
+                throw new ValidationException("Reviewer with User ID " + userId + " does not exist.");
             }
+            log.info("User {} validation successful. Handled by instance: {}", userId, user.getInstanceId());
         } catch (Exception e) {
-            throw new ValidationException("Reviewer with User ID " + userId + " does not exist.");
+            log.error("Error validating user with ID {}: {}", userId, e.getMessage());
+            throw new ValidationException("Reviewer with User ID " + userId + " could not be validated or does not exist.");
         }
     }
 

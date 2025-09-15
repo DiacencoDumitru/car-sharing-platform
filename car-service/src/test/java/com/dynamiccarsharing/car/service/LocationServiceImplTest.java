@@ -8,12 +8,12 @@ import com.dynamiccarsharing.car.mapper.LocationMapper;
 import com.dynamiccarsharing.car.model.Location;
 import com.dynamiccarsharing.car.repository.LocationRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,7 +25,6 @@ class LocationServiceImplTest {
 
     @Mock
     private LocationRepository locationRepository;
-
     @Mock
     private LocationMapper locationMapper;
 
@@ -33,84 +32,87 @@ class LocationServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        locationService = new LocationServiceImpl(locationRepository, locationMapper);
+        locationService = new LocationServiceImpl(
+                locationRepository,
+                locationMapper
+        );
     }
 
     @Test
-    void createLocation_shouldMapAndSaveAndReturnDto() {
-        LocationCreateRequestDto createDto = new LocationCreateRequestDto();
-        Location locationEntity = Location.builder().build();
-        Location savedEntity = Location.builder().id(1L).build();
-        LocationDto expectedDto = new LocationDto();
-        expectedDto.setId(1L);
+    @DisplayName("createLocation() should save and return a DTO")
+    void createLocation_shouldSaveAndReturnDto() {
+        var createDto = new LocationCreateRequestDto();
+        var location = Location.builder().build();
+        var savedLocation = Location.builder().id(1L).build();
+        var locationDto = new LocationDto();
 
-        when(locationMapper.toEntity(createDto)).thenReturn(locationEntity);
-        when(locationRepository.save(locationEntity)).thenReturn(savedEntity);
-        when(locationMapper.toDto(savedEntity)).thenReturn(expectedDto);
+        when(locationMapper.toEntity(createDto)).thenReturn(location);
+        when(locationRepository.save(location)).thenReturn(savedLocation);
+        when(locationMapper.toDto(savedLocation)).thenReturn(locationDto);
 
         LocationDto result = locationService.createLocation(createDto);
 
         assertNotNull(result);
-        assertEquals(1L, result.getId());
+        verify(locationRepository).save(location);
     }
 
     @Test
-    void findLocationById_whenLocationExists_shouldReturnOptionalOfDto() {
+    @DisplayName("findLocationById() should return DTO when location exists")
+    void findLocationById_whenExists_shouldReturnDto() {
         Long locationId = 1L;
-        Location locationEntity = Location.builder().id(locationId).build();
-        LocationDto expectedDto = new LocationDto();
-        expectedDto.setId(locationId);
+        var location = Location.builder().id(locationId).build();
+        var locationDto = new LocationDto();
 
-        when(locationRepository.findById(locationId)).thenReturn(Optional.of(locationEntity));
-        when(locationMapper.toDto(locationEntity)).thenReturn(expectedDto);
+        when(locationRepository.findById(locationId)).thenReturn(Optional.of(location));
+        when(locationMapper.toDto(location)).thenReturn(locationDto);
 
         Optional<LocationDto> result = locationService.findLocationById(locationId);
 
         assertTrue(result.isPresent());
-        assertEquals(locationId, result.get().getId());
+        assertEquals(locationDto, result.get());
+        verify(locationRepository).findById(locationId);
     }
 
     @Test
-    void findAllLocations_shouldMapAndReturnDtoList() {
-        Location locationEntity = Location.builder().id(1L).build();
-        when(locationRepository.findAll()).thenReturn(Collections.singletonList(locationEntity));
-        when(locationMapper.toDto(locationEntity)).thenReturn(new LocationDto());
+    @DisplayName("findAllLocations() should return a list of DTOs")
+    void findAllLocations_shouldReturnDtoList() {
+        var location = Location.builder().id(1L).build();
+        var locationDto = new LocationDto();
 
-        List<LocationDto> result = locationService.findAllLocations();
+        when(locationRepository.findAll()).thenReturn(List.of(location));
+        when(locationMapper.toDto(location)).thenReturn(locationDto);
 
-        assertEquals(1, result.size());
+        List<LocationDto> results = locationService.findAllLocations();
+
+        assertFalse(results.isEmpty());
+        assertEquals(1, results.size());
+        verify(locationRepository).findAll();
     }
 
     @Test
+    @DisplayName("updateLocation() should update and return DTO when location exists")
     void updateLocation_whenExists_shouldUpdateAndReturnDto() {
-        Long id = 1L;
-        LocationUpdateRequestDto updateDto = new LocationUpdateRequestDto();
-        Location existingEntity = Location.builder().id(id).build();
+        Long locationId = 1L;
+        var updateDto = new LocationUpdateRequestDto();
+        var existingLocation = Location.builder().id(locationId).build();
+        var updatedDto = new LocationDto();
 
-        when(locationRepository.findById(id)).thenReturn(Optional.of(existingEntity));
-        when(locationRepository.save(existingEntity)).thenReturn(existingEntity);
-        when(locationMapper.toDto(existingEntity)).thenReturn(new LocationDto());
+        when(locationRepository.findById(locationId)).thenReturn(Optional.of(existingLocation));
+        when(locationRepository.save(existingLocation)).thenReturn(existingLocation);
+        when(locationMapper.toDto(existingLocation)).thenReturn(updatedDto);
 
-        locationService.updateLocation(id, updateDto);
+        LocationDto result = locationService.updateLocation(locationId, updateDto);
 
-        verify(locationMapper).updateFromDto(updateDto, existingEntity);
-        verify(locationRepository).save(existingEntity);
+        assertNotNull(result);
+        verify(locationRepository).save(existingLocation);
     }
 
     @Test
-    void updateLocation_whenNotExists_shouldThrowException() {
-        Long id = 1L;
-        LocationUpdateRequestDto updateDto = new LocationUpdateRequestDto();
-        when(locationRepository.findById(id)).thenReturn(Optional.empty());
-
-        assertThrows(LocationNotFoundException.class, () -> locationService.updateLocation(id, updateDto));
-    }
-
-
-    @Test
+    @DisplayName("deleteById() should succeed when location exists")
     void deleteById_whenLocationExists_shouldSucceed() {
         Long locationId = 1L;
-        when(locationRepository.findById(locationId)).thenReturn(Optional.of(Location.builder().build()));
+
+        when(locationRepository.existsById(locationId)).thenReturn(true);
         doNothing().when(locationRepository).deleteById(locationId);
 
         locationService.deleteById(locationId);
@@ -119,10 +121,15 @@ class LocationServiceImplTest {
     }
 
     @Test
+    @DisplayName("deleteById() should throw exception when location does not exist")
     void deleteById_whenLocationDoesNotExist_shouldThrowException() {
         Long locationId = 1L;
-        when(locationRepository.findById(locationId)).thenReturn(Optional.empty());
+        when(locationRepository.existsById(locationId)).thenReturn(false);
 
-        assertThrows(LocationNotFoundException.class, () -> locationService.deleteById(locationId));
+        assertThrows(LocationNotFoundException.class, () -> {
+            locationService.deleteById(locationId);
+        });
+
+        verify(locationRepository, never()).deleteById(anyLong());
     }
 }

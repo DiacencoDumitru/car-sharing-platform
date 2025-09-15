@@ -19,6 +19,21 @@ services:
       retries: 5
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "60", "1000", "--loglevel", "warning"]
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   eureka-server:
     build:
       context: .
@@ -133,10 +148,17 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       logstash:
         condition: service_started
       zipkin:
         condition: service_started
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=E0nD6k7s3yq0s5jD8L3Qw3N8jH2rVg7w1vYJ3p6xKf0U=
+
     networks:
       - microservices-network
     healthcheck:

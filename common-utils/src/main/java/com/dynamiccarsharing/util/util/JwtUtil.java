@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 @Component
@@ -22,8 +23,24 @@ public class JwtUtil {
         return extractClaim(token, Claims::getSubject);
     }
 
+    public Long extractUserId(String token) {
+        return extractClaim(token, claims -> {
+            Object raw = claims.get("userId");
+            if (raw == null) return null;
+            if (raw instanceof Number n) return n.longValue();
+            try { return Long.parseLong(raw.toString()); }
+            catch (NumberFormatException e) { return null; }
+        });
+    }
+
     public List<String> extractAuthorities(String token) {
-        return extractClaim(token, claims -> (List<String>) claims.get("authorities"));
+        return extractClaim(token, claims -> {
+            Object raw = claims.get("authorities");
+            if (raw instanceof List<?> list) {
+                return list.stream().filter(Objects::nonNull).map(Object::toString).toList();
+            }
+            return List.of();
+        });
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -36,7 +53,8 @@ public class JwtUtil {
     }
 
     private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        Date exp = extractExpiration(token);
+        return exp != null && exp.before(new Date());
     }
 
     private Date extractExpiration(String token) {
