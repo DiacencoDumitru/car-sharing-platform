@@ -30,6 +30,8 @@ public class CarSearchServiceImpl implements CarSearchService {
     private final CarRepository carRepository;
     private final CarDocumentMapper mapper;
 
+    private final DemoSwitch demoSwitch;
+
     @Value("${application.search.indexing-enabled:true}")
     private boolean indexingEnabled;
 
@@ -99,6 +101,22 @@ public class CarSearchServiceImpl implements CarSearchService {
     @Transactional(readOnly = true)
     public void indexCar(Long carId) {
         if (!indexingEnabled) return;
+
+        DemoSwitch.Mode mode = demoSwitch.get();
+
+        if (mode == DemoSwitch.Mode.FAIL) {
+            log.warn("DemoSwitch=FAIL -> forcing exception before indexing");
+            throw new RuntimeException("FORCED_DEMO_FAILURE: Elasticsearch unavailable (simulated)");
+        }
+        if (mode == DemoSwitch.Mode.SLOW) {
+            try {
+                log.warn("DemoSwitch=SLOW -> simulating slow ES by sleeping 2500ms");
+                Thread.sleep(2500);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
         carRepository.findById(carId).ifPresent(car -> {
             CarDocument doc = mapper.toDocument(car);
             repository.save(doc);
@@ -109,6 +127,21 @@ public class CarSearchServiceImpl implements CarSearchService {
     @Override
     public void deleteFromIndex(Long carId) {
         if (!indexingEnabled) return;
+
+        DemoSwitch.Mode mode = demoSwitch.get();
+        if (mode == DemoSwitch.Mode.FAIL) {
+            log.warn("DemoSwitch=FAIL -> forcing exception before deleteFromIndex");
+            throw new RuntimeException("FORCED_DEMO_FAILURE: Elasticsearch delete failed (simulated)");
+        }
+        if (mode == DemoSwitch.Mode.SLOW) {
+            try {
+                log.warn("DemoSwitch=SLOW -> simulating slow ES by sleeping 2500ms on delete");
+                Thread.sleep(2500);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
         repository.deleteById(String.valueOf(carId));
         log.info("Deleted car {} from Elasticsearch index", carId);
     }
