@@ -28,6 +28,23 @@ spring:
       use-key-prefix: true
       key-prefix: "car-service::"
       cache-null-values: false
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    client-id: ${spring.application.name}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      group-id: car-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.dynamiccarsharing.*"
+    listener:
+      ack-mode: record
+      missing-topics-fatal: false
 
   datasource:
     url: jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
@@ -43,10 +60,10 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-elasticsearch:
-  uris: ${SPRING_ELASTICSEARCH_URIS:http://elasticsearch:9200}
-  connection-timeout: 2s
-  socket-timeout: 5s
+  elasticsearch:
+    uris: ${SPRING_ELASTICSEARCH_URIS:http://elasticsearch:9200}
+    connection-timeout: 2s
+    socket-timeout: 5s
 
 eureka:
   client:
@@ -115,3 +132,8 @@ application:
   search:
     index-name: cars
     indexing-enabled: true
+  messaging:
+    topics:
+      car-events: car.events
+      car-commands: car.commands
+      car-commands-dlt: car.commands.dlt
