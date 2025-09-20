@@ -6,6 +6,7 @@ import com.dynamiccarsharing.car.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.car.exception.CarNotFoundException;
 import com.dynamiccarsharing.car.exception.InvalidVerificationStatusException;
 import com.dynamiccarsharing.car.mapper.CarMapper;
+import com.dynamiccarsharing.car.messaging.CarEventPublisher;
 import com.dynamiccarsharing.car.model.Car;
 import com.dynamiccarsharing.car.model.Location;
 import com.dynamiccarsharing.car.repository.CarRepository;
@@ -45,11 +46,13 @@ class CarServiceImplTest {
 
     @Mock private CarSearchService carSearchService;
 
+    @Mock private CarEventPublisher carEventPublisher;
+
     private CarServiceImpl carService;
 
     @BeforeEach
     void setUp() {
-        carService = new CarServiceImpl(carRepository, locationRepository, carMapper, carSearchService);
+        carService = new CarServiceImpl(carRepository, locationRepository, carMapper, carSearchService, carEventPublisher);
     }
 
     private static Car createTestCar(Long id, Long ownerId, CarStatus status, VerificationStatus vs) {
