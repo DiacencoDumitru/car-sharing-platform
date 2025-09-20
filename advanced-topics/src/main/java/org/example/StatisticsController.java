@@ -31,7 +31,7 @@ public class StatisticsController {
         Bench.Output result = switch (request.mode()) {
             case "sync" -> Strategies.synchronizedBlock(paths);
             case "chm" -> Strategies.concurrentHashMap(paths);
-            case "pool" -> Strategies.fixedPool(paths, cache); // uses the configured, bigger cache
+            case "pool" -> Strategies.fixedPool(paths, cache);
             default -> throw new IllegalArgumentException("Unsupported mode: " + request.mode());
         };
 

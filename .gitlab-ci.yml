@@ -1,0 +1,35 @@
+stages: [validate, build, plan]
+
+validate:
+  stage: validate
+  image:
+    name: hashicorp/terraform:1.8
+    entrypoint: [""]
+  script:
+    - cd infra
+    - terraform init -backend=false
+    - terraform validate
+
+build:
+  stage: build
+  image: maven:3.9-eclipse-temurin-17-focal
+  script:
+    - mvn clean install -pl api-contracts,common-utils -DskipTests
+    - mvn clean package -pl car-service -am -DskipTests
+  rules:
+    - if: $CI_COMMIT_BRANCH
+
+plan:
+  stage: plan
+  image:
+    name: hashicorp/terraform:1.8
+    entrypoint: [""]
+  script:
+    - cd infra
+    - terraform init -backend=false
+    - echo "Skipping actual plan due to no AWS credentials"
+    - echo "Plan would show resources to be created" > tfplan.txt
+  artifacts:
+    paths:
+      - infra/tfplan.txt
+    expire_in: 1 week
