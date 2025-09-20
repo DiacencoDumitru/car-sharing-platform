@@ -10,6 +10,7 @@ import com.dynamiccarsharing.car.model.Car;
 import com.dynamiccarsharing.car.model.Location;
 import com.dynamiccarsharing.car.repository.CarRepository;
 import com.dynamiccarsharing.car.repository.LocationRepository;
+import com.dynamiccarsharing.car.search.es.CarSearchService;
 import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.enums.CarStatus;
 import com.dynamiccarsharing.contracts.enums.VerificationStatus;
@@ -37,14 +38,18 @@ import static org.mockito.Mockito.*;
 class CarServiceImplTest {
 
     @Mock private CarRepository carRepository;
+
     @Mock private LocationRepository locationRepository;
+
     @Mock private CarMapper carMapper;
+
+    @Mock private CarSearchService carSearchService;
 
     private CarServiceImpl carService;
 
     @BeforeEach
     void setUp() {
-        carService = new CarServiceImpl(carRepository, locationRepository, carMapper);
+        carService = new CarServiceImpl(carRepository, locationRepository, carMapper, carSearchService);
     }
 
     private static Car createTestCar(Long id, Long ownerId, CarStatus status, VerificationStatus vs) {
@@ -82,6 +87,7 @@ class CarServiceImplTest {
         assertEquals(location, carEntity.getLocation());
         verify(carMapper).toEntity(createDto, ownerId);
         verify(carRepository).save(carEntity);
+        verify(carSearchService).indexCar(1L);
     }
 
     @Test
@@ -98,6 +104,7 @@ class CarServiceImplTest {
 
         assertNotNull(result);
         assertEquals(carId, result.getId());
+        verifyNoInteractions(carSearchService);
     }
 
     @Test
@@ -105,15 +112,20 @@ class CarServiceImplTest {
         Long carId = 1L;
         when(carRepository.findById(carId)).thenReturn(Optional.of(new Car()));
         doNothing().when(carRepository).deleteById(carId);
+
         assertDoesNotThrow(() -> carService.deleteById(carId));
+
         verify(carRepository).deleteById(carId);
+        verify(carSearchService).deleteFromIndex(carId);
     }
 
     @Test
     void deleteById_whenCarDoesNotExist_shouldThrowException() {
         Long carId = 1L;
         when(carRepository.findById(carId)).thenReturn(Optional.empty());
+
         assertThrows(CarNotFoundException.class, () -> carService.deleteById(carId));
+        verifyNoInteractions(carSearchService);
     }
 
     @Test
@@ -131,6 +143,7 @@ class CarServiceImplTest {
 
         assertEquals(CarStatus.AVAILABLE, result.getStatus());
         verify(carRepository).save(argThat(c -> c.getStatus() == CarStatus.AVAILABLE));
+        verify(carSearchService).indexCar(carId);
     }
 
     @Test
@@ -142,6 +155,7 @@ class CarServiceImplTest {
 
         assertDoesNotThrow(() -> carService.setMaintenance(carId));
         verify(carRepository).save(argThat(c -> c.getStatus() == CarStatus.MAINTENANCE));
+        verify(carSearchService).indexCar(carId);
     }
 
     @Test
@@ -153,6 +167,7 @@ class CarServiceImplTest {
 
         assertDoesNotThrow(() -> carService.verifyCar(carId));
         verify(carRepository).save(argThat(c -> c.getVerificationStatus() == VerificationStatus.VERIFIED));
+        verify(carSearchService).indexCar(carId);
     }
 
     @Test
@@ -162,6 +177,7 @@ class CarServiceImplTest {
         when(carRepository.findById(carId)).thenReturn(Optional.of(verified));
 
         assertThrows(InvalidVerificationStatusException.class, () -> carService.rejectVerification(carId));
+        verifyNoInteractions(carSearchService);
     }
 
     @Test
@@ -183,6 +199,7 @@ class CarServiceImplTest {
         assertNotNull(result);
         verify(carMapper).updateCarFromDto(updateDto, car);
         verify(carRepository).save(car);
+        verify(carSearchService).indexCar(carId);
     }
 
     @Test
@@ -194,11 +211,13 @@ class CarServiceImplTest {
         when(carRepository.findById(carId)).thenReturn(Optional.of(car));
 
         assertThrows(AccessDeniedException.class, () -> carService.updateCar(carId, new CarUpdateRequestDto(), currentUserId));
+        verifyNoInteractions(carSearchService);
     }
 
     @Test
     void updatePrice_negative_shouldThrowValidationException() {
         assertThrows(ValidationException.class, () -> carService.updatePrice(1L, new BigDecimal("-10")));
+        verifyNoInteractions(carSearchService);
     }
 
     @Test
@@ -216,5 +235,6 @@ class CarServiceImplTest {
 
         assertEquals(1, result.getTotalElements());
         verify(carRepository).findAll(criteria, pageable);
+        verifyNoInteractions(carSearchService);
     }
 }
