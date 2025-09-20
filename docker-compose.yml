@@ -154,11 +154,14 @@ services:
         condition: service_started
       zipkin:
         condition: service_started
+      elasticsearch:
+        condition: service_healthy
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=E0nD6k7s3yq0s5jD8L3Qw3N8jH2rVg7w1vYJ3p6xKf0U=
-
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+      - SPRING_PROFILES_ACTIVE=jpa,es
     networks:
       - microservices-network
     healthcheck:
@@ -236,6 +239,12 @@ services:
       - elasticsearch_data:/usr/share/elasticsearch/data
     networks:
       - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health | grep -q '\"status\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
 
   logstash:
