@@ -21,6 +21,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
+import org.springframework.cloud.client.circuitbreaker.ConfigBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -29,30 +34,56 @@ import org.springframework.security.access.AccessDeniedException;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class CarServiceImplTest {
 
-    @Mock private CarRepository carRepository;
+    @Mock
+    private CarRepository carRepository;
+    @Mock
+    private LocationRepository locationRepository;
+    @Mock
+    private CarMapper carMapper;
+    @Mock
+    private CarSearchService carSearchService;
+    @Mock
+    private CarEventPublisher carEventPublisher;
 
-    @Mock private LocationRepository locationRepository;
-
-    @Mock private CarMapper carMapper;
-
-    @Mock private CarSearchService carSearchService;
-
-    @Mock private CarEventPublisher carEventPublisher;
+    @Mock
+    private CircuitBreakerFactory<Object, ? extends ConfigBuilder<Object>> circuitBreakerFactory;
 
     private CarServiceImpl carService;
 
     @BeforeEach
     void setUp() {
-        carService = new CarServiceImpl(carRepository, locationRepository, carMapper, carSearchService, carEventPublisher);
+        CircuitBreaker noopBreaker = new CircuitBreaker() {
+            @Override
+            public <T> T run(Supplier<T> toRun, Function<Throwable, T> fallback) {
+                try {
+                    return toRun.get();
+                } catch (Throwable t) {
+                    return (fallback != null) ? fallback.apply(t) : null;
+                }
+            }
+        };
+        lenient().when(circuitBreakerFactory.create(anyString())).thenReturn(noopBreaker);
+
+        carService = new CarServiceImpl(
+                carRepository,
+                locationRepository,
+                carMapper,
+                carSearchService,
+                carEventPublisher,
+                circuitBreakerFactory
+        );
     }
 
     private static Car createTestCar(Long id, Long ownerId, CarStatus status, VerificationStatus vs) {
