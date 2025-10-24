@@ -38,8 +38,13 @@ build/
 *.jar
 
 # Terraform
-.terraform/
-.terraform.lock.hcl
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
 .infra/
 
 ### VS Code ###
