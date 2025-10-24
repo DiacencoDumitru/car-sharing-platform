@@ -1,4 +1,4 @@
-package com.dynamiccarsharing.util.util;
+package com.dynamiccarsharing.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
