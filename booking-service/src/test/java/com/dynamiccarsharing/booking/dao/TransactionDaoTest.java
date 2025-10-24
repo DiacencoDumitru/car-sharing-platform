@@ -5,6 +5,7 @@ import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.booking.filter.TransactionFilter;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.model.Transaction;
+import com.dynamiccarsharing.util.exception.DataAccessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -55,6 +56,8 @@ class TransactionDaoTest extends BookingBaseDaoTest {
             Transaction transaction = createUnsavedTransaction(bookingId1, TransactionStatus.COMPLETED, PaymentType.APPLE_PAY);
             Transaction saved = transactionDao.save(transaction);
             assertNotNull(saved.getId());
+            assertNotNull(saved.getCreatedAt());
+            assertNull(saved.getUpdatedAt());
             assertEquals(transaction.getBooking().getId(), saved.getBooking().getId());
         }
 
@@ -66,8 +69,16 @@ class TransactionDaoTest extends BookingBaseDaoTest {
             original.setStatus(TransactionStatus.CANCELED);
 
             Transaction updated = transactionDao.save(original);
+            assertNotNull(updated.getUpdatedAt());
             assertEquals(original.getId(), updated.getId());
             assertEquals(TransactionStatus.CANCELED, updated.getStatus());
+        }
+
+        @Test
+        @DisplayName("Should throw DataAccessException on constraint violation")
+        void save_invalidBookingId_shouldThrowException() {
+            Transaction transaction = createUnsavedTransaction(999L, TransactionStatus.PENDING, PaymentType.CREDIT_CARD);
+            assertThrows(DataAccessException.class, () -> transactionDao.save(transaction));
         }
     }
 
@@ -81,6 +92,59 @@ class TransactionDaoTest extends BookingBaseDaoTest {
             Optional<Transaction> found = transactionDao.findById(saved.getId());
             assertTrue(found.isPresent());
             assertEquals(saved.getId(), found.get().getId());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for invalid ID")
+        void findById_invalidId_shouldReturnEmpty() {
+            Optional<Transaction> found = transactionDao.findById(999L);
+            assertFalse(found.isPresent());
+        }
+
+        @Test
+        @DisplayName("Should find all transactions")
+        void findAll_shouldReturnAllTransactions() {
+            transactionDao.save(createUnsavedTransaction(bookingId1, TransactionStatus.COMPLETED, PaymentType.CREDIT_CARD));
+            transactionDao.save(createUnsavedTransaction(bookingId2, TransactionStatus.PENDING, PaymentType.PAYPAL));
+            List<Transaction> all = transactionDao.findAll();
+            assertEquals(2, all.size());
+        }
+
+        @Test
+        @DisplayName("Should find transactions by status")
+        void findByStatus_validStatus_shouldReturnList() {
+            transactionDao.save(createUnsavedTransaction(bookingId1, TransactionStatus.PENDING, PaymentType.CREDIT_CARD));
+            transactionDao.save(createUnsavedTransaction(bookingId2, TransactionStatus.PENDING, PaymentType.PAYPAL));
+
+            List<Transaction> found = transactionDao.findByStatus(TransactionStatus.PENDING);
+            assertEquals(2, found.size());
+        }
+
+        @Test
+        @DisplayName("Should return empty list for status with no transactions")
+        void findByStatus_noMatchingStatus_shouldReturnEmptyList() {
+            transactionDao.save(createUnsavedTransaction(bookingId1, TransactionStatus.PENDING, PaymentType.CREDIT_CARD));
+            List<Transaction> found = transactionDao.findByStatus(TransactionStatus.COMPLETED);
+            assertTrue(found.isEmpty());
+        }
+
+        @Test
+        @DisplayName("Should find transactions by booking ID")
+        void findByBookingId_validId_shouldReturnList() {
+            transactionDao.save(createUnsavedTransaction(bookingId1, TransactionStatus.COMPLETED, PaymentType.CREDIT_CARD));
+            transactionDao.save(createUnsavedTransaction(bookingId1, TransactionStatus.PENDING, PaymentType.PAYPAL));
+            createUnsavedTransaction(bookingId2, TransactionStatus.PENDING, PaymentType.PAYPAL);
+
+
+            List<Transaction> found = transactionDao.findByBookingId(bookingId1);
+            assertEquals(2, found.size());
+        }
+
+        @Test
+        @DisplayName("Should return empty list for invalid booking ID")
+        void findByBookingId_invalidId_shouldReturnEmptyList() {
+            List<Transaction> found = transactionDao.findByBookingId(999L);
+            assertTrue(found.isEmpty());
         }
     }
 

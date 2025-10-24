@@ -5,6 +5,7 @@ import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.booking.filter.PaymentFilter;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.model.Payment;
+import com.dynamiccarsharing.util.exception.DataAccessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -54,7 +55,31 @@ class PaymentDaoTest extends BookingBaseDaoTest {
             Payment payment = createUnsavedPayment(bookingId1, BigDecimal.valueOf(150.00), TransactionStatus.PENDING, PaymentType.CREDIT_CARD);
             Payment saved = paymentDao.save(payment);
             assertNotNull(saved.getId());
+            assertNotNull(saved.getCreatedAt());
+            assertNull(saved.getUpdatedAt());
             assertEquals(0, BigDecimal.valueOf(150.00).compareTo(saved.getAmount()));
+        }
+
+        @Test
+        @DisplayName("Should update an existing payment")
+        void save_existingPayment_shouldUpdate() {
+            Payment original = paymentDao.save(createUnsavedPayment(bookingId1, BigDecimal.valueOf(100.0), TransactionStatus.PENDING, PaymentType.CREDIT_CARD));
+
+            original.setStatus(TransactionStatus.COMPLETED);
+            original.setAmount(BigDecimal.valueOf(120.00));
+            Payment updated = paymentDao.save(original);
+
+            assertNotNull(updated.getUpdatedAt());
+            assertEquals(original.getId(), updated.getId());
+            assertEquals(TransactionStatus.COMPLETED, updated.getStatus());
+            assertEquals(0, BigDecimal.valueOf(120.00).compareTo(updated.getAmount()));
+        }
+
+        @Test
+        @DisplayName("Should throw DataAccessException on constraint violation")
+        void save_invalidBookingId_shouldThrowException() {
+            Payment payment = createUnsavedPayment(999L, BigDecimal.valueOf(100), TransactionStatus.PENDING, PaymentType.CREDIT_CARD);
+            assertThrows(DataAccessException.class, () -> paymentDao.save(payment));
         }
     }
 
@@ -71,12 +96,53 @@ class PaymentDaoTest extends BookingBaseDaoTest {
         }
 
         @Test
+        @DisplayName("Should return empty Optional for invalid ID")
+        void findById_invalidId_shouldReturnEmpty() {
+            Optional<Payment> found = paymentDao.findById(999L);
+            assertFalse(found.isPresent());
+        }
+
+        @Test
+        @DisplayName("Should find all payments")
+        void findAll_shouldReturnAllPayments() {
+            paymentDao.save(createUnsavedPayment(bookingId1, BigDecimal.valueOf(100.0), TransactionStatus.PENDING, PaymentType.CREDIT_CARD));
+            paymentDao.save(createUnsavedPayment(bookingId2, BigDecimal.valueOf(200.0), TransactionStatus.COMPLETED, PaymentType.PAYPAL));
+            List<Payment> all = paymentDao.findAll();
+            assertEquals(2, all.size());
+        }
+
+        @Test
         @DisplayName("Should find payment by booking ID")
         void findByBookingId_validId_shouldReturnPayment() {
             paymentDao.save(createUnsavedPayment(bookingId1, BigDecimal.valueOf(100.0), TransactionStatus.PENDING, PaymentType.CREDIT_CARD));
             Optional<Payment> found = paymentDao.findByBookingId(bookingId1);
             assertTrue(found.isPresent());
             assertEquals(bookingId1, found.get().getBooking().getId());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for invalid booking ID")
+        void findByBookingId_invalidId_shouldReturnEmpty() {
+            Optional<Payment> found = paymentDao.findByBookingId(999L);
+            assertFalse(found.isPresent());
+        }
+
+        @Test
+        @DisplayName("Should find payments by status")
+        void findByStatus_validStatus_shouldReturnList() {
+            paymentDao.save(createUnsavedPayment(bookingId1, BigDecimal.valueOf(100.0), TransactionStatus.PENDING, PaymentType.CREDIT_CARD));
+            paymentDao.save(createUnsavedPayment(bookingId2, BigDecimal.valueOf(200.0), TransactionStatus.PENDING, PaymentType.PAYPAL));
+
+            List<Payment> found = paymentDao.findByStatus(TransactionStatus.PENDING);
+            assertEquals(2, found.size());
+        }
+
+        @Test
+        @DisplayName("Should return empty list for status with no payments")
+        void findByStatus_noMatchingStatus_shouldReturnEmptyList() {
+            paymentDao.save(createUnsavedPayment(bookingId1, BigDecimal.valueOf(100.0), TransactionStatus.PENDING, PaymentType.CREDIT_CARD));
+            List<Payment> found = paymentDao.findByStatus(TransactionStatus.COMPLETED);
+            assertTrue(found.isEmpty());
         }
     }
 

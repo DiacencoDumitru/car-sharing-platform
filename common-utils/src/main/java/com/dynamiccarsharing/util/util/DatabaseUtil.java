@@ -1,4 +1,4 @@
-package com.dynamiccarsharing.util;
+package com.dynamiccarsharing.util.util;
 
 import com.dynamiccarsharing.util.exception.DataAccessException;
 import org.springframework.stereotype.Component;

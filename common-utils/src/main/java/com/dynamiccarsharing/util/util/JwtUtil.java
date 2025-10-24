@@ -1,4 +1,4 @@
-package com.dynamiccarsharing.util;
+package com.dynamiccarsharing.util.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -45,16 +45,20 @@ public class JwtUtil {
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+        return (claims != null) ? claimsResolver.apply(claims) : null;
     }
 
     public boolean isTokenValid(String token) {
-        return !isTokenExpired(token);
+        try {
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private boolean isTokenExpired(String token) {
         Date exp = extractExpiration(token);
-        return exp != null && exp.before(new Date());
+        return exp == null || exp.before(new Date());
     }
 
     private Date extractExpiration(String token) {

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -40,7 +41,11 @@ public class TransactionDao implements TransactionRepository {
 
             Long newId = databaseUtil.executeUpdateWithGeneratedKeys(insertSql, statement -> {
                 try {
-                    statement.setLong(1, transaction.getBooking().getId());
+                    if (transaction.getBooking() != null && transaction.getBooking().getId() != null) {
+                        statement.setLong(1, transaction.getBooking().getId());
+                    } else {
+                        statement.setNull(1, Types.BIGINT);
+                    }
                     statement.setBigDecimal(2, transaction.getAmount());
                     statement.setString(3, transaction.getStatus().name());
                     statement.setString(4, transaction.getPaymentMethod().name());

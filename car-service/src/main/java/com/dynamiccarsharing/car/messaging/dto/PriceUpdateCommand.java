@@ -4,6 +4,7 @@ import lombok.*;
 import java.math.BigDecimal;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@EqualsAndHashCode
 public class PriceUpdateCommand {
     private Long carId;
     private BigDecimal newPrice;

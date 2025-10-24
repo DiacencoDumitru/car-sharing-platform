@@ -1,14 +1,16 @@
 package com.dynamiccarsharing.user.controller;
 
+import com.dynamiccarsharing.contracts.dto.ContactInfoDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
 import com.dynamiccarsharing.contracts.enums.UserRole;
 import com.dynamiccarsharing.contracts.enums.UserStatus;
+import com.dynamiccarsharing.user.config.SecurityConfig;
 import com.dynamiccarsharing.user.dto.ContactInfoCreateRequestDto;
+import com.dynamiccarsharing.user.dto.ContactInfoUpdateRequestDto;
 import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
 import com.dynamiccarsharing.user.dto.UserStatusUpdateRequestDto;
-import com.dynamiccarsharing.user.service.interfaces.UserService;
+import com.dynamiccarsharing.user.service.UserServiceImpl;
 import com.dynamiccarsharing.util.security.JwtAuthenticationFilter;
-import com.dynamiccarsharing.util.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
@@ -18,12 +20,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(value = UserController.class, properties = "eureka.instance.instance-id=test-instance-1")
+@Import(SecurityConfig.class)
 class UserControllerTest {
 
     @Autowired
@@ -44,30 +48,122 @@ class UserControllerTest {
     ObjectMapper objectMapper;
 
     @MockBean
-    UserService userService;
-
-    @MockBean
-    private JwtUtil jwtUtil;
+    private UserServiceImpl userServiceImpl;
 
     @MockBean
     JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @MockBean
-    AuthenticationProvider authenticationProvider;
-
     @BeforeEach
     void passThroughFilter() throws Exception {
         doAnswer(inv -> {
-            var request = inv.getArgument(0, ServletRequest.class);
-            var response = inv.getArgument(1, ServletResponse.class);
             var filterChain = inv.getArgument(2, FilterChain.class);
-            filterChain.doFilter(request, response);
+            filterChain.doFilter(inv.getArgument(0), inv.getArgument(1));
             return null;
         }).when(jwtAuthenticationFilter).doFilter(
                 any(ServletRequest.class),
                 any(ServletResponse.class),
                 any(FilterChain.class)
         );
+    }
+
+    @Test
+    @WithMockUser
+    void getUserById_whenUserExists_shouldReturnUser() throws Exception {
+        ContactInfoDto contactDto = new ContactInfoDto();
+        contactDto.setEmail("test@example.com");
+        UserDto userDto = new UserDto();
+        userDto.setId(1L);
+        userDto.setContactInfo(contactDto);
+
+        when(userServiceImpl.findUserById(1L)).thenReturn(Optional.of(userDto));
+
+        mockMvc.perform(get("/api/v1/users/{userId}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.contactInfo.email").value("test@example.com"))
+                .andExpect(jsonPath("$.instanceId").value("test-instance-1"));
+    }
+
+    @Test
+    @WithMockUser
+    void getUserById_whenUserNotExists_shouldReturnNoContent() throws Exception {
+        when(userServiceImpl.findUserById(1L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/users/{userId}", 1L))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "123")
+    void getCurrentUserProfile_whenUserExists_shouldReturnProfile() throws Exception {
+        UserDto userDto = new UserDto();
+        userDto.setId(123L);
+
+        when(userServiceImpl.findUserById(123L)).thenReturn(Optional.of(userDto));
+
+        mockMvc.perform(get("/api/v1/profile/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(123L));
+    }
+
+    @Test
+    @WithMockUser(username = "123")
+    void getCurrentUserProfile_whenUserNotExists_shouldReturnNoContent() throws Exception {
+        when(userServiceImpl.findUserById(123L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/profile/me"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(username = "123")
+    void updateCurrentUserContactInfo_shouldReturnUpdatedUser() throws Exception {
+        ContactInfoUpdateRequestDto updateDto = new ContactInfoUpdateRequestDto();
+        updateDto.setPhoneNumber("111-222-333");
+
+        ContactInfoDto contactDto = new ContactInfoDto();
+        contactDto.setPhoneNumber("111-222-333");
+        UserDto updatedUser = new UserDto();
+        updatedUser.setId(123L);
+        updatedUser.setContactInfo(contactDto);
+
+        when(userServiceImpl.updateUserContactInfo(eq(123L), any(ContactInfoUpdateRequestDto.class)))
+                .thenReturn(updatedUser);
+
+        mockMvc.perform(patch("/api/v1/profile/me")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(123L))
+                .andExpect(jsonPath("$.contactInfo.phoneNumber").value("111-222-333"));
+    }
+
+    @Test
+    @WithMockUser
+    void getUserByEmailForService_whenUserExists_shouldReturnUser() throws Exception {
+        String email = "internal@example.com";
+        ContactInfoDto contactDto = new ContactInfoDto();
+        contactDto.setEmail(email);
+        UserDto userDto = new UserDto();
+        userDto.setId(1L);
+        userDto.setContactInfo(contactDto);
+
+        when(userServiceImpl.findByEmail(email)).thenReturn(Optional.of(userDto));
+
+        mockMvc.perform(get("/api/v1/internal/users/by-email/{email}", email))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contactInfo.email").value(email));
+    }
+
+    @Test
+    @WithMockUser
+    void getUserByEmailForService_whenUserNotExists_shouldReturnNotFound() throws Exception {
+        String email = "notfound@example.com";
+        when(userServiceImpl.findByEmail(email)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/internal/users/by-email/{email}", email))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -87,7 +183,7 @@ class UserControllerTest {
         var savedDto = new UserDto();
         savedDto.setId(1L);
 
-        when(userService.registerUser(any(UserCreateRequestDto.class))).thenReturn(savedDto);
+        when(userServiceImpl.registerUser(any(UserCreateRequestDto.class))).thenReturn(savedDto);
 
         mockMvc.perform(post("/api/v1/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -100,7 +196,7 @@ class UserControllerTest {
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     void getAllUsers_asAdmin_shouldReturnUserList() throws Exception {
-        when(userService.findAllUsers()).thenReturn(List.of(new UserDto(), new UserDto()));
+        when(userServiceImpl.findAllUsers()).thenReturn(List.of(new UserDto(), new UserDto()));
 
         mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isOk())
@@ -117,7 +213,7 @@ class UserControllerTest {
         updatedDto.setId(1L);
         updatedDto.setStatus(UserStatus.SUSPENDED);
 
-        when(userService.updateUserStatus(eq(1L), any(UserStatusUpdateRequestDto.class))).thenReturn(updatedDto);
+        when(userServiceImpl.updateUserStatus(eq(1L), any(UserStatusUpdateRequestDto.class))).thenReturn(updatedDto);
 
         mockMvc.perform(patch("/api/v1/users/{userId}/status", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -130,11 +226,11 @@ class UserControllerTest {
     @Test
     @WithMockUser(authorities = "ROLE_ADMIN")
     void deleteUser_asAdmin_shouldReturnNoContent() throws Exception {
-        doNothing().when(userService).deleteById(1L);
+        doNothing().when(userServiceImpl).deleteById(1L);
 
         mockMvc.perform(delete("/api/v1/users/{userId}", 1L).with(csrf()))
                 .andExpect(status().isNoContent());
 
-        verify(userService, times(1)).deleteById(1L);
+        verify(userServiceImpl, times(1)).deleteById(1L);
     }
 }
