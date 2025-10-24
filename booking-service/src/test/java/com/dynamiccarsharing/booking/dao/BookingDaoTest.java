@@ -4,6 +4,7 @@ import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.booking.filter.BookingFilter;
 import com.dynamiccarsharing.booking.model.Booking;
+import com.dynamiccarsharing.util.exception.DataAccessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -77,6 +78,13 @@ class BookingDaoTest extends BookingBaseDaoTest {
             assertEquals(original.getId(), result.getId());
             assertEquals(TransactionStatus.COMPLETED, result.getStatus());
         }
+
+        @Test
+        @DisplayName("Should throw DataAccessException on constraint violation")
+        void save_nullRenterId_shouldThrowException() {
+            Booking booking = createUnsavedBooking(null, testCarId, TransactionStatus.PENDING);
+            assertThrows(DataAccessException.class, () -> bookingDao.save(booking));
+        }
     }
 
     @Nested
@@ -90,6 +98,42 @@ class BookingDaoTest extends BookingBaseDaoTest {
 
             assertTrue(found.isPresent());
             assertEquals(saved.getId(), found.get().getId());
+        }
+
+        @Test
+        @DisplayName("Should return empty Optional for invalid ID")
+        void findById_invalidId_shouldReturnEmpty() {
+            Optional<Booking> found = bookingDao.findById(999L);
+            assertFalse(found.isPresent());
+        }
+
+        @Test
+        @DisplayName("Should find all bookings")
+        void findAll_shouldReturnAllBookings() {
+            createBooking(testUserId, testCarId, testLocationId, TransactionStatus.PENDING);
+            createBooking(2L, 20L, testLocationId, TransactionStatus.COMPLETED);
+            List<Booking> all = bookingDao.findAll();
+            assertEquals(2, all.size());
+        }
+
+        @Test
+        @DisplayName("Should find bookings by renter ID")
+        void findByRenterId_validRenterId_shouldReturnBookings() {
+            createBooking(testUserId, testCarId, testLocationId, TransactionStatus.PENDING);
+            createBooking(testUserId, 20L, testLocationId, TransactionStatus.COMPLETED);
+            createBooking(2L, 30L, testLocationId, TransactionStatus.PENDING);
+
+            List<Booking> found = bookingDao.findByRenterId(testUserId);
+            assertEquals(2, found.size());
+            assertTrue(found.stream().allMatch(b -> b.getRenterId().equals(testUserId)));
+        }
+
+        @Test
+        @DisplayName("Should return empty list for invalid renter ID")
+        void findByRenterId_invalidRenterId_shouldReturnEmptyList() {
+            createBooking(testUserId, testCarId, testLocationId, TransactionStatus.PENDING);
+            List<Booking> found = bookingDao.findByRenterId(999L);
+            assertTrue(found.isEmpty());
         }
     }
 

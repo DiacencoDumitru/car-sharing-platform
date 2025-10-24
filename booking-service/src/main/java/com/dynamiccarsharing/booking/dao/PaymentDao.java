@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -40,7 +41,11 @@ public class PaymentDao implements PaymentRepository {
 
             Long newId = databaseUtil.executeUpdateWithGeneratedKeys(insertSql, statement -> {
                 try {
-                    statement.setLong(1, payment.getBooking().getId());
+                    if (payment.getBooking() != null && payment.getBooking().getId() != null) {
+                        statement.setLong(1, payment.getBooking().getId());
+                    } else {
+                        statement.setNull(1, Types.BIGINT);
+                    }
                     statement.setBigDecimal(2, payment.getAmount());
                     statement.setString(3, payment.getStatus().name());
                     statement.setString(4, payment.getPaymentMethod().name());
@@ -53,7 +58,6 @@ public class PaymentDao implements PaymentRepository {
             payment.setId(newId);
             payment.setCreatedAt(creationTime);
             return payment;
-
         } else {
             String updateSql = "UPDATE payments SET booking_id = ?, amount = ?, status = ?, payment_method = ?, updated_at = ? WHERE id = ?";
             LocalDateTime updateTime = LocalDateTime.now();

@@ -4,6 +4,7 @@ import lombok.*;
 import java.time.Instant;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@EqualsAndHashCode
 public class CarEvent {
     private String type;
     private Long carId;

@@ -27,8 +27,6 @@
         <module>api-contracts</module>
         <module>common-utils</module>
         <module>api-gateway</module>
-        <module>advanced-topics</module>
-        <module>load-generator</module>
     </modules>
 
     <properties>
@@ -79,6 +77,27 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.11</version> <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase> <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                             <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
+                        </configuration>
+                    </execution>
+                    </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

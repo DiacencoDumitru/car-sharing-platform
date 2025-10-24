@@ -20,6 +20,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,12 +41,27 @@ public class BookingDao implements BookingRepository {
             String insertSql = "INSERT INTO bookings (renter_id, car_id, start_time, end_time, status, pickup_location_id) VALUES (?, ?, ?, ?, ?, ?)";
             Long newId = databaseUtil.executeUpdateWithGeneratedKeys(insertSql, statement -> {
                 try {
-                    statement.setLong(1, booking.getRenterId());
-                    statement.setLong(2, booking.getCarId());
+                    if (booking.getRenterId() != null) {
+                        statement.setLong(1, booking.getRenterId());
+                    } else {
+                        statement.setNull(1, Types.BIGINT);
+                    }
+
+                    if (booking.getCarId() != null) {
+                        statement.setLong(2, booking.getCarId());
+                    } else {
+                        statement.setNull(2, Types.BIGINT);
+                    }
+
                     statement.setTimestamp(3, Timestamp.valueOf(booking.getStartTime()));
                     statement.setTimestamp(4, Timestamp.valueOf(booking.getEndTime()));
                     statement.setString(5, booking.getStatus().name());
-                    statement.setLong(6, booking.getPickupLocationId());
+
+                    if (booking.getPickupLocationId() != null) {
+                        statement.setLong(6, booking.getPickupLocationId());
+                    } else {
+                        statement.setNull(6, Types.BIGINT);
+                    }
                 } catch (SQLException e) {
                     throw new RepositoryException("Failed to insert booking", e);
                 }
@@ -106,7 +122,6 @@ public class BookingDao implements BookingRepository {
 
         return databaseUtil.findMany(fullQuery, this::mapToBooking, sqlFilter.parametersArray());
     }
-
 
     private Booking mapToBooking(ResultSet rs) throws SQLException {
         return Booking.builder()

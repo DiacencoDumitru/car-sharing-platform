@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
 
@@ -18,6 +20,9 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
     @Autowired
     private JwtUtil jwtUtil;
+    
+    private static final String TOKEN_PREFIX = "Bearer ";
+    private static final int TOKEN_PREFIX_LENGTH = TOKEN_PREFIX.length();
 
     public AuthenticationFilter() {
         super(Config.class);
@@ -31,13 +36,23 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                     return this.onError(exchange, "Missing authorization header", HttpStatus.UNAUTHORIZED);
                 }
 
-                String authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    authHeader = authHeader.substring(7);
+                List<String> authHeaders = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION);
+                if (authHeaders == null || authHeaders.isEmpty()) {
+                    return this.onError(exchange, "Authorization header is empty", HttpStatus.UNAUTHORIZED);
                 }
+
+                String authHeader = authHeaders.get(0);
+                
+                if (authHeader == null || !authHeader.startsWith(TOKEN_PREFIX)) {
+                    return this.onError(exchange, "Authorization header must be a Bearer token", HttpStatus.UNAUTHORIZED);
+                }
+                
+                String token = authHeader.substring(TOKEN_PREFIX_LENGTH);
+                
                 try {
-                    jwtUtil.isTokenValid(authHeader);
+                    jwtUtil.isTokenValid(token);
                 } catch (Exception e) {
+                    System.err.println("Token validation failed: " + e.getMessage());
                     return this.onError(exchange, "Unauthorized access to application", HttpStatus.UNAUTHORIZED);
                 }
             }
