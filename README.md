@@ -23,7 +23,7 @@ Core services:
 Infrastructure services:
 
 * Eureka Server – service discovery
-* Kafka / RabbitMQ – asynchronous messaging
+* Kafka – asynchronous messaging
 * PostgreSQL – relational database
 * Redis – caching layer
 * Prometheus + Grafana – monitoring and metrics
@@ -47,7 +47,7 @@ Infrastructure
 ├── Eureka Server
 ├── PostgreSQL
 ├── Redis
-├── Kafka / RabbitMQ
+├── Kafka
 ├── Prometheus
 ├── Grafana
 └── Elasticsearch / Logstash
@@ -73,7 +73,6 @@ Data
 Messaging
 
 * Kafka
-* RabbitMQ
 
 Observability
 
