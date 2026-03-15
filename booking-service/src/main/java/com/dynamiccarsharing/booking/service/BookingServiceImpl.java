@@ -10,6 +10,7 @@ import com.dynamiccarsharing.booking.mapper.BookingMapper;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
+import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
 import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,6 +42,7 @@ public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
+    private final PaymentService paymentService;
     private final WebClient.Builder webClientBuilder;
 
     private WebClient userWebClient;
@@ -55,6 +58,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingDto save(BookingCreateRequestDto createDto) {
         validateUserExists(createDto.getRenterId());
         validateCarIsAvailable(createDto.getCarId());
+        validateNoOverlappingBooking(createDto.getCarId(), createDto.getStartTime(), createDto.getEndTime());
 
         Booking booking = bookingMapper.toEntity(createDto);
         Booking savedBooking = bookingRepository.save(booking);
@@ -104,6 +108,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingDto completeBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
         validateBookingStatus(booking.getStatus(), List.of(APPROVED), "Booking can only be completed from APPROVED status");
+        validateCompletedPaymentExists(bookingId);
 
         booking.setStatus(COMPLETED);
         Booking updatedBooking = bookingRepository.save(booking);
@@ -176,7 +181,7 @@ public class BookingServiceImpl implements BookingService {
     private void validateCarIsAvailable(Long carId) {
         try {
             CarDto car = carWebClient.get()
-                    .uri("/" + carId)
+                    .uri("/api/v1/cars/" + carId)
                     .retrieve()
                     .bodyToMono(CarDto.class)
                     .block();
@@ -190,6 +195,21 @@ public class BookingServiceImpl implements BookingService {
             }
         } catch (Exception e) {
             throw new ValidationException("Car with ID " + carId + " does not exist or is unavailable.");
+        }
+    }
+
+    private void validateNoOverlappingBooking(Long carId, LocalDateTime startTime, LocalDateTime endTime) {
+        if (bookingRepository.hasOverlappingBooking(carId, startTime, endTime)) {
+            throw new ValidationException("Car is already booked for the selected time range.");
+        }
+    }
+
+    private void validateCompletedPaymentExists(Long bookingId) {
+        boolean hasCompletedPayment = paymentService.findByBookingId(bookingId)
+                .filter(p -> TransactionStatus.COMPLETED.equals(p.getStatus()))
+                .isPresent();
+        if (!hasCompletedPayment) {
+            throw new ValidationException("Booking cannot be completed without a completed payment.");
         }
     }
 }
