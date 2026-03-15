@@ -1,6 +1,7 @@
 package com.dynamiccarsharing.gateway.filter;
 
 import com.dynamiccarsharing.util.util.JwtUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @Component
+@Slf4j
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
 
     @Autowired
@@ -20,7 +22,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
     @Autowired
     private JwtUtil jwtUtil;
-    
+
     private static final String TOKEN_PREFIX = "Bearer ";
     private static final int TOKEN_PREFIX_LENGTH = TOKEN_PREFIX.length();
 
@@ -42,17 +44,21 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 }
 
                 String authHeader = authHeaders.get(0);
-                
+
                 if (authHeader == null || !authHeader.startsWith(TOKEN_PREFIX)) {
                     return this.onError(exchange, "Authorization header must be a Bearer token", HttpStatus.UNAUTHORIZED);
                 }
-                
+
                 String token = authHeader.substring(TOKEN_PREFIX_LENGTH);
-                
+
                 try {
-                    jwtUtil.isTokenValid(token);
+                    boolean valid = jwtUtil.isTokenValid(token);
+                    if (!valid) {
+                        log.warn("Token validation failed: token is not valid");
+                        return this.onError(exchange, "Unauthorized access to application", HttpStatus.UNAUTHORIZED);
+                    }
                 } catch (Exception e) {
-                    System.err.println("Token validation failed: " + e.getMessage());
+                    log.warn("Token validation failed: {}", e.getMessage());
                     return this.onError(exchange, "Unauthorized access to application", HttpStatus.UNAUTHORIZED);
                 }
             }

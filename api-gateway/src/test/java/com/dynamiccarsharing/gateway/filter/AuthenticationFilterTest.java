@@ -118,7 +118,7 @@ class AuthenticationFilterTest {
         when(request.getHeaders()).thenReturn(headers);
         when(headers.containsKey(HttpHeaders.AUTHORIZATION)).thenReturn(true);
         when(headers.get(HttpHeaders.AUTHORIZATION)).thenReturn(List.of(authHeader));
-        doThrow(new RuntimeException("Invalid token")).when(jwtUtil).isTokenValid(invalidToken);
+        when(jwtUtil.isTokenValid(invalidToken)).thenReturn(false);
 
         Mono<Void> result = authenticationFilter.apply(config).filter(exchange, chain);
 
@@ -138,6 +138,7 @@ class AuthenticationFilterTest {
         when(request.getHeaders()).thenReturn(headers);
         when(headers.containsKey(HttpHeaders.AUTHORIZATION)).thenReturn(true);
         when(headers.get(HttpHeaders.AUTHORIZATION)).thenReturn(List.of(authHeader));
+        when(jwtUtil.isTokenValid(validToken)).thenReturn(true);
         when(chain.filter(exchange)).thenReturn(Mono.empty());
 
         Mono<Void> result = authenticationFilter.apply(config).filter(exchange, chain);

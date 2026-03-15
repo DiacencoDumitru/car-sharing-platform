@@ -64,10 +64,33 @@ class JwtUtilTest {
 
         claims.clear();
         claims.put("authorities", "ROLE_USER");
-         tokenWithNonListAuthorities = generateToken(claims, "userBadAuths", EXPIRATION_MS);
+        tokenWithNonListAuthorities = generateToken(claims, "userBadAuths", EXPIRATION_MS);
 
-        tokenInvalidSignature = validToken.substring(0, validToken.length() - 1) + "X";
+        JwtParts jwt = JwtParts.parse(validToken);
+        String corruptedSignature = corruptLastChar(jwt.signature());
+        tokenInvalidSignature = new JwtParts(jwt.header(), jwt.payload(), corruptedSignature).toToken();
         tokenMalformed = "this.is.not.a.jwt";
+    }
+
+    private static String corruptLastChar(String s) {
+        if (s.isEmpty()) return "A";
+        char last = s.charAt(s.length() - 1);
+        char corrupted = (last == 'A') ? 'B' : 'A';
+        return s.substring(0, s.length() - 1) + corrupted;
+    }
+
+    private record JwtParts(String header, String payload, String signature) {
+        static JwtParts parse(String token) {
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                throw new IllegalArgumentException("Expected 3 parts, got: " + parts.length);
+            }
+            return new JwtParts(parts[0], parts[1], parts[2]);
+        }
+
+        String toToken() {
+            return header + "." + payload + "." + signature;
+        }
     }
 
     private String generateToken(Map<String, Object> extraClaims, String subject, long expirationMs) {
