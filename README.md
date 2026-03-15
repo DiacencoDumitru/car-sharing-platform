@@ -260,5 +260,5 @@ This project demonstrates practical experience with:
 
 ## Author
 
-Dumitru Diacenco
-Java Backend Engineer
+- Dumitru Diacenco
+- Java Backend Engineer
