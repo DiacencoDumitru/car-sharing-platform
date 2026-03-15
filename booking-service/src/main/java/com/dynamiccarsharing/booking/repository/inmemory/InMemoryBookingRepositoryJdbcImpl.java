@@ -4,11 +4,13 @@ import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.booking.filter.BookingFilter;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
+import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.util.filter.Filter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class InMemoryBookingRepositoryJdbcImpl implements BookingRepository {
@@ -58,5 +60,12 @@ public class InMemoryBookingRepositoryJdbcImpl implements BookingRepository {
         return bookingMap.values().stream()
                 .filter(booking -> booking.getRenterId().equals(renterId))
                 .toList();
+    }
+
+    @Override
+    public boolean hasOverlappingBooking(Long carId, LocalDateTime startTime, LocalDateTime endTime) {
+        return bookingMap.values().stream()
+                .filter(b -> carId.equals(b.getCarId()) && (b.getStatus() == TransactionStatus.PENDING || b.getStatus() == TransactionStatus.APPROVED))
+                .anyMatch(b -> b.getStartTime().isBefore(endTime) && b.getEndTime().isAfter(startTime));
     }
 }

@@ -8,6 +8,7 @@ import com.dynamiccarsharing.util.filter.Filter;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.specification.BookingSpecification;
+import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -70,5 +72,11 @@ public class BookingJpaRepositoryImpl implements BookingRepository {
                 criteria.getStatus()
         );
         return bookingJpaRepository.findAll(spec, pageable);
+    }
+
+    @Override
+    public boolean hasOverlappingBooking(Long carId, LocalDateTime startTime, LocalDateTime endTime) {
+        List<TransactionStatus> active = List.of(TransactionStatus.PENDING, TransactionStatus.APPROVED);
+        return !bookingJpaRepository.findOverlapping(carId, active, startTime, endTime).isEmpty();
     }
 }
