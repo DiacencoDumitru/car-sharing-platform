@@ -1,34 +1,48 @@
-# Car Sharing Platform — Microservices Backend System
+# Car Sharing Platform — Distributed Microservices Backend System
 
 A distributed backend platform for a car sharing service that allows users to list vehicles, search available cars, and manage bookings.
 
-The system is implemented using a microservices architecture with Spring Boot and integrates messaging, caching, monitoring, and containerized deployment.
-
-This project demonstrates production-style backend architecture including service discovery, API gateway routing, distributed logging, monitoring, and container orchestration.
+The system is built using a **microservices architecture with Spring Boot and Spring Cloud**, integrating service discovery, distributed tracing, centralized logging, monitoring, caching, and asynchronous messaging.
+The entire environment can be started using **Docker Compose**, simulating a production-style backend infrastructure.
 
 ---
 
 ## System Architecture
 
-The platform is composed of multiple independent microservices communicating through REST APIs and messaging.
+The platform is composed of multiple microservices communicating via REST APIs and asynchronous messaging.
 
-Core services:
+### Core Services
 
-* API Gateway – central entry point for all client requests
-* User Service – user management and authentication
-* Car Service – car catalog and vehicle listings
-* Booking Service – booking management
-* Dispute Service – dispute handling and resolution
+* **API Gateway** – single entry point for client requests and routing
+* **User Service** – user management and authentication
+* **Car Service** – car catalog management and search
+* **Booking Service** – reservation and booking logic
+* **Dispute Service** – dispute resolution between renters and owners
 
-Infrastructure services:
+### Service Discovery
 
-* Eureka Server – service discovery
-* Kafka – asynchronous messaging
-* PostgreSQL – relational database
-* Redis – caching layer
-* Prometheus + Grafana – monitoring and metrics
-* Elasticsearch + Logstash – centralized logging
-* Docker Compose – container orchestration
+* **Eureka Server** – service registry and discovery
+
+### Messaging
+
+* **Kafka** – asynchronous communication between services
+
+### Data Layer
+
+* **PostgreSQL** – primary relational database
+* **Redis** – caching layer
+
+### Observability Stack
+
+* **Prometheus** – metrics collection
+* **Grafana** – metrics visualization dashboards
+* **Elasticsearch + Logstash + Kibana (ELK)** – centralized logging
+* **Zipkin** – distributed tracing across microservices
+
+### Containerization
+
+* **Docker**
+* **Docker Compose**
 
 ---
 
@@ -38,7 +52,7 @@ Client
 │
 API Gateway
 │
-├── User Service
+├── User Service (2 instances)
 ├── Car Service
 ├── Booking Service
 └── Dispute Service
@@ -50,57 +64,63 @@ Infrastructure
 ├── Kafka
 ├── Prometheus
 ├── Grafana
-└── Elasticsearch / Logstash
+├── Elasticsearch
+├── Logstash
+├── Kibana
+└── Zipkin
 
 ---
 
 ## Tech Stack
 
-Backend
+### Backend
 
 * Java 17
 * Spring Boot
+* Spring Cloud
 * Spring Security
 * Spring Data JPA
-* Spring Cloud
+* Maven
 
-Data
+### Data
 
 * PostgreSQL
 * H2 (testing)
 * Redis
 
-Messaging
+### Messaging
 
-* Kafka
+* Apache Kafka
 
-Observability
+### Observability
 
 * Prometheus
 * Grafana
 * Elasticsearch
 * Logstash
+* Kibana
+* Zipkin
 
-Infrastructure
+### Infrastructure
 
 * Docker
 * Docker Compose
-* Maven
 
 ---
 
 ## Key Features
 
-* Car catalog and vehicle listings
-* User management and authentication
-* Car booking and reservation system
-* Dispute management
-* Rating and review system
-* REST API communication between services
+* Car catalog and vehicle listing
+* Booking and reservation management
+* User authentication and authorization
+* Dispute handling
 * Distributed service discovery
-* Monitoring and metrics collection
-* Centralized logging
-* Containerized deployment
+* Centralized logging (ELK stack)
+* Distributed tracing (Zipkin)
+* Metrics monitoring (Prometheus + Grafana)
+* Redis caching
+* Asynchronous messaging with Kafka
+* Containerized microservices deployment
 
 ---
 
@@ -113,31 +133,56 @@ Infrastructure
 * Docker
 * Docker Compose
 
+---
+
 ### Clone the repository
 
 git clone https://github.com/DiacencoDumitru/car-sharing-platform.git
+
+cd car-sharing-platform
+
+---
 
 ### Build the project
 
 mvn clean package
 
-### Run with Docker
+---
+
+### Start the infrastructure and services
 
 docker-compose up --build
 
 ---
 
-## Access Services
+## Service Endpoints
 
 API Gateway
-http://localhost:8080
+http://localhost:8085
 
-Monitoring
-Grafana: http://localhost:3000
-Prometheus: http://localhost:9090
+Eureka Dashboard
+http://localhost:8761
 
-Database management
-pgAdmin: http://localhost:5050
+Prometheus
+http://localhost:9090
+
+Grafana
+http://localhost:3000
+
+Kibana
+http://localhost:5601
+
+Zipkin
+http://localhost:9411
+
+PostgreSQL
+localhost:5432
+
+Redis
+localhost:6379
+
+Kafka
+localhost:9092
 
 ---
 
@@ -157,39 +202,43 @@ grafana
 logstash
 scripts
 
+docker-compose.yml
+
 ---
 
 ## Observability
 
-The platform includes monitoring and logging components:
+The system includes a full observability stack:
 
-* Prometheus collects application metrics
-* Grafana visualizes performance dashboards
-* Logstash + Elasticsearch aggregate and store logs
-* JVM profiling tools included for performance analysis
+* **Prometheus** collects metrics from microservices
+* **Grafana** visualizes system performance dashboards
+* **Logstash** collects and processes application logs
+* **Elasticsearch** stores and indexes logs
+* **Kibana** provides log visualization
+* **Zipkin** enables distributed tracing across services
 
-This setup allows monitoring system health, request throughput, and service performance.
+This setup allows monitoring request flows, system health, and service performance.
 
 ---
 
 ## Performance Considerations
 
-The system includes several performance optimizations:
+The platform includes several performance optimizations:
 
 * Redis caching for frequently accessed data
+* Kafka-based asynchronous processing
 * Database indexing strategies
 * Connection pooling
-* Asynchronous messaging via Kafka / RabbitMQ
 * JVM profiling and GC tuning scripts
 
 ---
 
 ## Security
 
-Authentication and authorization implemented using:
+Authentication and authorization are implemented using:
 
 * Spring Security
-* Secure REST API communication
+* JWT-based authentication
 * Role-based access control
 
 ---
@@ -199,11 +248,13 @@ Authentication and authorization implemented using:
 This project demonstrates practical experience with:
 
 * microservices architecture
-* distributed systems
-* REST API design
+* distributed systems design
+* service discovery
+* API gateway patterns
+* distributed tracing
+* centralized logging
+* containerized infrastructure
 * backend scalability
-* monitoring and observability
-* containerized environments
 
 ---
 
@@ -211,6 +262,3 @@ This project demonstrates practical experience with:
 
 Dumitru Diacenco
 Java Backend Engineer
-
-GitHub: https://github.com/DiacencoDumitru
-LinkedIn: https://linkedin.com/in/dumitru-diacenco-198121283
