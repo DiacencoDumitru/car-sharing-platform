@@ -2,9 +2,11 @@ package com.dynamiccarsharing.booking.service;
 
 import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
+import com.dynamiccarsharing.booking.dto.PaymentDto;
 import com.dynamiccarsharing.booking.mapper.BookingMapper;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
+import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
 import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
@@ -24,6 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClient.RequestHeadersUriSpec;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -42,6 +45,8 @@ class BookingServiceImplTest {
     @Mock
     private BookingMapper bookingMapper;
     @Mock
+    private PaymentService paymentService;
+    @Mock
     private WebClient.Builder webClientBuilder;
     @Mock
     private WebClient userWebClient;
@@ -55,6 +60,7 @@ class BookingServiceImplTest {
         bookingService = new BookingServiceImpl(
                 bookingRepository,
                 bookingMapper,
+                paymentService,
                 webClientBuilder
         );
 
@@ -97,6 +103,7 @@ class BookingServiceImplTest {
         mockCarWebClient(createDto.getCarId(), availableCar);
 
         when(bookingMapper.toEntity(createDto)).thenReturn(bookingEntity);
+        when(bookingRepository.hasOverlappingBooking(any(), any(), any())).thenReturn(false);
         when(bookingRepository.save(bookingEntity)).thenReturn(savedBookingEntity);
         when(bookingMapper.toDto(savedBookingEntity)).thenReturn(expectedDto);
 
@@ -107,7 +114,7 @@ class BookingServiceImplTest {
 
         verify(userWebClient.get()).uri("/api/v1/users/" + createDto.getRenterId());
 
-        verify(carWebClient.get()).uri("/" + createDto.getCarId());
+        verify(carWebClient.get()).uri("/api/v1/cars/" + createDto.getCarId());
     }
 
     @Test
@@ -163,11 +170,14 @@ class BookingServiceImplTest {
     }
 
     @Test
-    void completeBooking_withApprovedStatus_shouldSucceed() {
+    void completeBooking_withApprovedStatusAndCompletedPayment_shouldSucceed() {
         Long bookingId = 1L;
         Booking approvedBooking = createTestBooking(bookingId, TransactionStatus.APPROVED);
+        PaymentDto completedPayment = new PaymentDto();
+        completedPayment.setStatus(TransactionStatus.COMPLETED);
 
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(approvedBooking));
+        when(paymentService.findByBookingId(bookingId)).thenReturn(Optional.of(completedPayment));
         ArgumentCaptor<Booking> bookingCaptor = ArgumentCaptor.forClass(Booking.class);
         when(bookingRepository.save(bookingCaptor.capture())).thenReturn(new Booking());
 
@@ -187,7 +197,7 @@ class BookingServiceImplTest {
     }
 
     private void mockUserWebClient(Long userId, UserDto responseDto) {
-        WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
+        var requestHeadersUriSpec = mock(RequestHeadersUriSpec.class);
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
         Mono<UserDto> mono = mock(Mono.class);
 
@@ -206,12 +216,12 @@ class BookingServiceImplTest {
     }
 
     private void mockCarWebClient(Long carId, CarDto responseDto) {
-        WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(WebClient.RequestHeadersUriSpec.class);
+        var requestHeadersUriSpec = mock(RequestHeadersUriSpec.class);
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
         Mono<CarDto> mono = mock(Mono.class);
 
         when(carWebClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri("/" + carId)).thenReturn(requestHeadersUriSpec);
+        when(requestHeadersUriSpec.uri("/api/v1/cars/" + carId)).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.bodyToMono(any(Class.class))).thenReturn(mono);
 

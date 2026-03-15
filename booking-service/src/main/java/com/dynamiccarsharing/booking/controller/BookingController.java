@@ -31,7 +31,7 @@ public class BookingController {
                     booking.setInstanceId(instanceId);
                     return ResponseEntity.ok(booking);
                 })
-                .orElse(ResponseEntity.noContent().build());
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @GetMapping
