@@ -21,6 +21,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -139,5 +140,12 @@ public class BookingDao implements BookingRepository {
     public List<Booking> findByRenterId(Long renterId) {
         String query = "SELECT * FROM bookings WHERE renter_id = ?";
         return databaseUtil.findMany(query, this::mapToBooking, renterId);
+    }
+
+    @Override
+    public boolean hasOverlappingBooking(Long carId, LocalDateTime startTime, LocalDateTime endTime) {
+        String query = "SELECT 1 FROM bookings WHERE car_id = ? AND status IN ('PENDING', 'APPROVED') AND start_time < ? AND end_time > ? LIMIT 1";
+        Long count = databaseUtil.findOne(query, rs -> 1L, carId, Timestamp.valueOf(endTime), Timestamp.valueOf(startTime));
+        return count != null;
     }
 }
