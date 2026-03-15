@@ -137,21 +137,74 @@ Infrastructure
 
 ### Clone the repository
 
+```bash
 git clone https://github.com/DiacencoDumitru/car-sharing-platform.git
-
 cd car-sharing-platform
-
----
+```
 
 ### Build the project
 
+```bash
 mvn clean package
-
----
+```
 
 ### Start the infrastructure and services
 
+```bash
 docker-compose up --build
+```
+
+---
+
+## Business Flows
+
+### Booking lifecycle
+
+1. **Create booking** — Client sends `POST /api/v1/bookings` with renter, car, time range and pickup location. Booking Service validates that the user exists (User Service), the car is available (Car Service), and **no other active booking overlaps the same car and time**; then creates a booking in status `PENDING`.
+2. **Approve** — `PATCH /api/v1/bookings/{id}` with `{"status": "APPROVED"}` moves the booking from `PENDING` to `APPROVED`.
+3. **Complete** — Same endpoint with `{"status": "COMPLETED"}` moves from `APPROVED` to `COMPLETED`. **A completed payment is required** for the booking before it can be completed.
+4. **Cancel** — `{"status": "CANCELED"}` is allowed from `PENDING` or `APPROVED`; completed bookings cannot be canceled.
+
+### Payment flow
+
+1. **Create payment** — For an existing booking, `POST /api/v1/bookings/{bookingId}/payment` creates a payment (amount, method, status `PENDING`). **Not allowed** for canceled or already completed bookings.
+2. **Confirm** — `PATCH /api/v1/admin/payments/{paymentId}/confirm` sets payment to `COMPLETED`.
+3. **Refund** — `PATCH /api/v1/admin/payments/{paymentId}/refund` is allowed only for `COMPLETED` payments.
+
+---
+
+## Tests and coverage
+
+All tests are integration-style: they use the Spring context, in-memory H2 where applicable, and mock external calls where needed.
+
+**Run all tests** (from project root; builds all modules and runs tests):
+
+```bash
+mvn test
+```
+
+**Run tests for a single module** (build dependencies first, or use `-am`):
+
+```bash
+mvn test -pl booking-service -am
+mvn test -pl api-gateway -am
+```
+
+If you already ran `mvn install` from the root, you can use `mvn test -pl booking-service` without `-am`.
+
+**Run a specific test class:**
+
+```bash
+mvn test -pl booking-service -Dtest=BookingControllerIntegrationTest
+```
+
+**Generate JaCoCo coverage report** (for modules that define the JaCoCo plugin):
+
+```bash
+mvn clean test jacoco:report
+```
+
+Reports are written under `target/site/jacoco/index.html` in each module.
 
 ---
 
@@ -188,21 +241,17 @@ localhost:9092
 
 ## Project Structure
 
-api-gateway
-user-service
-car-service
-booking-service
-dispute-service
-common-utils
-eureka-server
+* **api-gateway** — entry point, routing, JWT validation
+* **user-service** — users and auth
+* **car-service** — car catalog and availability
+* **booking-service** — bookings, payments, transactions
+* **dispute-service** — disputes
+* **common-utils** — JWT and shared utilities
+* **api-contracts** — shared DTOs and enums
+* **eureka-server** — service discovery
 
-infrastructure
-prometheus
-grafana
-logstash
-scripts
-
-docker-compose.yml
+* **infrastructure** — Docker and config for Prometheus, Grafana, Logstash, scripts  
+* **docker-compose.yml** — full stack run
 
 ---
 
