@@ -7,12 +7,14 @@ import com.dynamiccarsharing.booking.exception.BookingNotFoundException;
 import com.dynamiccarsharing.booking.exception.PaymentNotFoundException;
 import com.dynamiccarsharing.booking.filter.PaymentFilter;
 import com.dynamiccarsharing.booking.mapper.PaymentMapper;
+import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.model.Payment;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.repository.PaymentRepository;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.util.exception.ServiceException;
+import com.dynamiccarsharing.util.exception.ValidationException;
 import com.dynamiccarsharing.util.filter.Filter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,7 +36,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentDto createPayment(Long bookingId, PaymentRequestDto requestDto) {
-        bookingRepository.findById(bookingId).orElseThrow(() -> new BookingNotFoundException("Booking with ID " + bookingId + " not found."));
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new BookingNotFoundException("Booking with ID " + bookingId + " not found."));
+        if (booking.getStatus() == TransactionStatus.CANCELED || booking.getStatus() == TransactionStatus.COMPLETED) {
+            throw new ValidationException("Payment cannot be created for a canceled or completed booking.");
+        }
 
         requestDto.setBookingId(bookingId);
         Payment payment = paymentMapper.toEntity(requestDto);
