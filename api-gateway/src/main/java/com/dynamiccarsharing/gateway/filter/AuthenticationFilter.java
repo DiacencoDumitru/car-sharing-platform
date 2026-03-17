@@ -7,11 +7,13 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Objects;
 
 @Component
 @Slf4j
@@ -33,12 +35,14 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     @Override
     public GatewayFilter apply(Config config) {
         return ((exchange, chain) -> {
-            if (validator.isSecured.test(exchange.getRequest())) {
-                if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+            ServerHttpRequest request = exchange.getRequest();
+
+            if (validator.isSecured.test(request)) {
+                if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                     return this.onError(exchange, "Missing authorization header", HttpStatus.UNAUTHORIZED);
                 }
 
-                List<String> authHeaders = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION);
+                List<String> authHeaders = request.getHeaders().get(HttpHeaders.AUTHORIZATION);
                 if (authHeaders == null || authHeaders.isEmpty()) {
                     return this.onError(exchange, "Authorization header is empty", HttpStatus.UNAUTHORIZED);
                 }
@@ -51,15 +55,42 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
                 String token = authHeader.substring(TOKEN_PREFIX_LENGTH);
 
+                List<String> authorities;
                 try {
                     boolean valid = jwtUtil.isTokenValid(token);
                     if (!valid) {
                         log.warn("Token validation failed: token is not valid");
                         return this.onError(exchange, "Unauthorized access to application", HttpStatus.UNAUTHORIZED);
                     }
+
+                    Long userId = jwtUtil.extractUserId(token);
+                    authorities = jwtUtil.extractAuthorities(token);
+
+                    ServerHttpRequest mutatedRequest = request.mutate()
+                            .headers(headers -> {
+                                if (userId != null) {
+                                    headers.set("X-User-Id", userId.toString());
+                                }
+                                if (authorities != null && !authorities.isEmpty()) {
+                                    headers.set("X-User-Roles", String.join(",", authorities));
+                                }
+                            })
+                            .build();
+                    exchange = exchange.mutate().request(mutatedRequest).build();
+                    request = mutatedRequest;
                 } catch (Exception e) {
                     log.warn("Token validation failed: {}", e.getMessage());
                     return this.onError(exchange, "Unauthorized access to application", HttpStatus.UNAUTHORIZED);
+                }
+
+                String path = request.getURI().getPath();
+                boolean isAdminPath = path.startsWith("/api/v1/admin");
+                if (isAdminPath) {
+                    boolean isAdmin = authorities != null &&
+                            authorities.stream().filter(Objects::nonNull).anyMatch(role -> role.equals("ROLE_ADMIN"));
+                    if (!isAdmin) {
+                        return this.onError(exchange, "Forbidden: admin role required", HttpStatus.FORBIDDEN);
+                    }
                 }
             }
             return chain.filter(exchange);
