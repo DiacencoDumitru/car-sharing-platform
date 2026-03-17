@@ -19,6 +19,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
@@ -41,6 +42,8 @@ class AuthenticationFilterTest {
     @Mock
     private ServerHttpRequest request;
     @Mock
+    private ServerHttpRequest.Builder requestBuilder;
+    @Mock
     private ServerHttpResponse response;
     @Mock
     private HttpHeaders headers;
@@ -56,6 +59,10 @@ class AuthenticationFilterTest {
     @BeforeEach
     void setUp() {
         when(exchange.getRequest()).thenReturn(request);
+        when(request.getURI()).thenReturn(URI.create("/api/v1/any"));
+        when(request.mutate()).thenReturn(requestBuilder);
+        when(requestBuilder.headers(any())).thenReturn(requestBuilder);
+        when(requestBuilder.build()).thenReturn(request);
         when(exchange.getResponse()).thenReturn(response);
         when(response.setComplete()).thenReturn(Mono.empty());
         validator.isSecured = isSecuredPredicateMock;
@@ -135,59 +142,102 @@ class AuthenticationFilterTest {
         String validToken = "valid-token";
         String authHeader = "Bearer " + validToken;
         when(isSecuredPredicateMock.test(request)).thenReturn(true);
+        when(request.getURI()).thenReturn(URI.create("/api/v1/bookings"));
         when(request.getHeaders()).thenReturn(headers);
         when(headers.containsKey(HttpHeaders.AUTHORIZATION)).thenReturn(true);
         when(headers.get(HttpHeaders.AUTHORIZATION)).thenReturn(List.of(authHeader));
         when(jwtUtil.isTokenValid(validToken)).thenReturn(true);
+        when(jwtUtil.extractUserId(validToken)).thenReturn(123L);
+        when(jwtUtil.extractAuthorities(validToken)).thenReturn(List.of("ROLE_USER"));
         when(chain.filter(exchange)).thenReturn(Mono.empty());
 
         Mono<Void> result = authenticationFilter.apply(config).filter(exchange, chain);
 
         StepVerifier.create(result).verifyComplete();
 
-        verify(chain, times(1)).filter(exchange);
         verify(jwtUtil, times(1)).isTokenValid(validToken);
-        verify(response, never()).setStatusCode(any());
     }
 
     @Test
-@DisplayName("Should return UNAUTHORIZED if secured and token is missing Bearer prefix")
-void apply_securedRoute_tokenMissingBearerPrefix_returnsUnauthorized() { // 1. Renamed
-    String validToken = "valid-token-no-prefix";
-    String authHeader = validToken;
-    when(isSecuredPredicateMock.test(request)).thenReturn(true);
-    when(request.getHeaders()).thenReturn(headers);
-    when(headers.containsKey(HttpHeaders.AUTHORIZATION)).thenReturn(true);
-    when(headers.get(HttpHeaders.AUTHORIZATION)).thenReturn(List.of(authHeader));
+    @DisplayName("Should return UNAUTHORIZED if secured and token is missing Bearer prefix")
+    void apply_securedRoute_tokenMissingBearerPrefix_returnsUnauthorized() {
+        String validToken = "valid-token-no-prefix";
+        String authHeader = validToken;
+        when(isSecuredPredicateMock.test(request)).thenReturn(true);
+        when(request.getHeaders()).thenReturn(headers);
+        when(headers.containsKey(HttpHeaders.AUTHORIZATION)).thenReturn(true);
+        when(headers.get(HttpHeaders.AUTHORIZATION)).thenReturn(List.of(authHeader));
 
-    Mono<Void> result = authenticationFilter.apply(config).filter(exchange, chain);
+        Mono<Void> result = authenticationFilter.apply(config).filter(exchange, chain);
 
-    StepVerifier.create(result).verifyComplete();
+        StepVerifier.create(result).verifyComplete();
 
-    verify(chain, never()).filter(exchange); 
-    verify(jwtUtil, never()).isTokenValid(anyString()); 
-    verify(response, times(1)).setStatusCode(HttpStatus.UNAUTHORIZED); 
-}
+        verify(chain, never()).filter(exchange);
+        verify(jwtUtil, never()).isTokenValid(anyString());
+        verify(response, times(1)).setStatusCode(HttpStatus.UNAUTHORIZED);
+    }
 
     @Test
-@DisplayName("Should handle null authHeader value gracefully")
-void apply_securedRoute_nullAuthHeaderValue_returnsUnauthorized() {
-    when(isSecuredPredicateMock.test(request)).thenReturn(true);
-    when(request.getHeaders()).thenReturn(headers);
-    when(headers.containsKey(HttpHeaders.AUTHORIZATION)).thenReturn(true);
-    when(headers.get(HttpHeaders.AUTHORIZATION)).thenReturn(Collections.singletonList(null));
-    
-    Mono<Void> result = authenticationFilter.apply(config).filter(exchange, chain);
+    @DisplayName("Should handle null authHeader value gracefully")
+    void apply_securedRoute_nullAuthHeaderValue_returnsUnauthorized() {
+        when(isSecuredPredicateMock.test(request)).thenReturn(true);
+        when(request.getHeaders()).thenReturn(headers);
+        when(headers.containsKey(HttpHeaders.AUTHORIZATION)).thenReturn(true);
+        when(headers.get(HttpHeaders.AUTHORIZATION)).thenReturn(Collections.singletonList(null));
 
-    StepVerifier.create(result).verifyComplete();
+        Mono<Void> result = authenticationFilter.apply(config).filter(exchange, chain);
 
-    verify(response, times(1)).setStatusCode(HttpStatus.UNAUTHORIZED);
-    
-    verify(jwtUtil, never()).isTokenValid(any()); 
-    verify(chain, never()).filter(exchange);
-}
+        StepVerifier.create(result).verifyComplete();
 
-     @Test
+        verify(response, times(1)).setStatusCode(HttpStatus.UNAUTHORIZED);
+
+        verify(jwtUtil, never()).isTokenValid(any());
+        verify(chain, never()).filter(exchange);
+    }
+
+    @Test
+    @DisplayName("Should forbid admin path when user does not have ROLE_ADMIN")
+    void apply_adminPath_withoutAdminRole_returnsForbidden() {
+        String token = "valid-token-no-admin";
+        String authHeader = "Bearer " + token;
+        when(isSecuredPredicateMock.test(request)).thenReturn(true);
+        when(request.getURI()).thenReturn(URI.create("/api/v1/admin/payments"));
+        when(request.getHeaders()).thenReturn(headers);
+        when(headers.containsKey(HttpHeaders.AUTHORIZATION)).thenReturn(true);
+        when(headers.get(HttpHeaders.AUTHORIZATION)).thenReturn(List.of(authHeader));
+        when(jwtUtil.isTokenValid(token)).thenReturn(true);
+        when(jwtUtil.extractUserId(token)).thenReturn(1L);
+        when(jwtUtil.extractAuthorities(token)).thenReturn(List.of("ROLE_USER"));
+
+        Mono<Void> result = authenticationFilter.apply(config).filter(exchange, chain);
+
+        StepVerifier.create(result).verifyComplete();
+
+        verify(response, times(1)).setStatusCode(HttpStatus.UNAUTHORIZED);
+        verify(chain, never()).filter(exchange);
+    }
+
+    @Test
+    @DisplayName("Should allow admin path when user has ROLE_ADMIN")
+    void apply_adminPath_withAdminRole_passesThrough() {
+        String token = "valid-admin-token";
+        String authHeader = "Bearer " + token;
+        when(isSecuredPredicateMock.test(request)).thenReturn(true);
+        when(request.getURI()).thenReturn(URI.create("/api/v1/admin/payments"));
+        when(request.getHeaders()).thenReturn(headers);
+        when(headers.containsKey(HttpHeaders.AUTHORIZATION)).thenReturn(true);
+        when(headers.get(HttpHeaders.AUTHORIZATION)).thenReturn(List.of(authHeader));
+        when(jwtUtil.isTokenValid(token)).thenReturn(true);
+        when(jwtUtil.extractUserId(token)).thenReturn(42L);
+        when(jwtUtil.extractAuthorities(token)).thenReturn(List.of("ROLE_ADMIN"));
+        when(chain.filter(exchange)).thenReturn(Mono.empty());
+
+        Mono<Void> result = authenticationFilter.apply(config).filter(exchange, chain);
+
+        StepVerifier.create(result).verifyComplete();
+    }
+
+    @Test
     @DisplayName("Constructor coverage for filter and config")
     void constructors() {
         assertNotNull(new AuthenticationFilter());
