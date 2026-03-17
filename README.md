@@ -171,6 +171,14 @@ docker-compose up --build
 2. **Confirm** — `PATCH /api/v1/admin/payments/{paymentId}/confirm` sets payment to `COMPLETED`.
 3. **Refund** — `PATCH /api/v1/admin/payments/{paymentId}/refund` is allowed only for `COMPLETED` payments.
 
+### Security and roles via API Gateway
+
+* All secured requests pass through the API Gateway, where JWT tokens are validated.
+* After successful validation, the gateway forwards user identity and roles to downstream services via headers:
+  * `X-User-Id` — numeric user identifier from the `userId` claim.
+  * `X-User-Roles` — comma-separated list of roles from the `authorities` claim (for example `ROLE_USER,ROLE_ADMIN`).
+* Endpoints under `/api/v1/admin/**` are additionally protected at the gateway level and require the `ROLE_ADMIN` authority. Requests without this role receive `403 FORBIDDEN` before reaching downstream services.
+
 ---
 
 ## Tests and coverage
