@@ -7,7 +7,8 @@ create TABLE IF NOT EXISTS bookings (
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NOT NULL,
     status VARCHAR(50) NOT NULL CHECK (status IN ('PENDING', 'APPROVED', 'COMPLETED', 'CANCELED')),
-    pickup_location_id BIGINT NOT NULL
+    pickup_location_id BIGINT NOT NULL,
+    promo_code VARCHAR(255)
 );
 
 create TABLE IF NOT EXISTS payments (
