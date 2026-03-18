@@ -26,4 +26,6 @@ public class BookingCreateRequestDto {
 
     @NotNull(message = "Pickup location ID cannot be null.")
     private Long pickupLocationId;
+
+    private String promoCode;
 }
