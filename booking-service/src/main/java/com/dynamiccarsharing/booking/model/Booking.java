@@ -50,6 +50,9 @@ public class Booking {
     @Column(name = "pickup_location_id", nullable = false)
     private Long pickupLocationId;
 
+    @Column(name = "promo_code")
+    private String promoCode;
+
     @Builder.Default
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Transaction> transactions = new ArrayList<>();
