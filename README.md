@@ -112,6 +112,9 @@ Infrastructure
 
 * Car catalog and vehicle listing
 * Booking and reservation management
+* Dynamic pricing for bookings based on time and pickup location rules
+* Promo codes and discounts applied on top of dynamic pricing
+* Loyalty points earning and redemption linked to payments
 * User authentication and authorization
 * Dispute handling
 * Distributed service discovery
@@ -167,9 +170,13 @@ docker-compose up --build
 
 ### Payment flow
 
-1. **Create payment** — For an existing booking, `POST /api/v1/bookings/{bookingId}/payment` creates a payment (amount, method, status `PENDING`). **Not allowed** for canceled or already completed bookings.
-2. **Confirm** — `PATCH /api/v1/admin/payments/{paymentId}/confirm` sets payment to `COMPLETED`.
-3. **Refund** — `PATCH /api/v1/admin/payments/{paymentId}/refund` is allowed only for `COMPLETED` payments.
+1. **Create payment** — For an existing booking, `POST /api/v1/bookings/{bookingId}/payment` creates a payment (method, status `PENDING`). The **amount is calculated inside Booking Service** using:
+   * base price derived from booking duration,
+   * dynamic pricing rules (time-of-day and pickup location multipliers),
+   * optional promo code discounts,
+   * optional loyalty points redemption.
+2. **Confirm** — `PATCH /api/v1/admin/payments/{paymentId}/confirm` sets payment to `COMPLETED`. At this moment, the renter **earns loyalty points** based on the paid amount.
+3. **Refund** — `PATCH /api/v1/admin/payments/{paymentId}/refund` is allowed only for `COMPLETED` payments. (Loyalty adjustments for refunds can be extended in future iterations.)
 
 ### Security and roles via API Gateway
 
