@@ -9,6 +9,9 @@ import com.dynamiccarsharing.booking.filter.PaymentFilter;
 import com.dynamiccarsharing.booking.mapper.PaymentMapper;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.model.Payment;
+import com.dynamiccarsharing.booking.loyalty.LoyaltyService;
+import com.dynamiccarsharing.booking.pricing.PricingContext;
+import com.dynamiccarsharing.booking.pricing.PricingService;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.repository.PaymentRepository;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
@@ -31,8 +34,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentMapper paymentMapper;
-
     private final BookingRepository bookingRepository;
+    private final PricingService pricingService;
+    private final LoyaltyService loyaltyService;
 
     @Override
     public PaymentDto createPayment(Long bookingId, PaymentRequestDto requestDto) {
@@ -41,9 +45,30 @@ public class PaymentServiceImpl implements PaymentService {
             throw new ValidationException("Payment cannot be created for a canceled or completed booking.");
         }
 
+        PricingContext context = new PricingContext(
+                booking.getId(),
+                booking.getRenterId(),
+                booking.getCarId(),
+                booking.getPickupLocationId(),
+                booking.getStartTime(),
+                booking.getEndTime(),
+                booking.getPromoCode()
+        );
+
         requestDto.setBookingId(bookingId);
+        requestDto.setAmount(pricingService.calculateTotalPrice(context));
         Payment payment = paymentMapper.toEntity(requestDto);
         Payment savedPayment = paymentRepository.save(payment);
+        if (requestDto.getLoyaltyPointsToUse() != null) {
+            var discount = loyaltyService.redeemPoints(
+                    booking.getRenterId(),
+                    savedPayment.getId(),
+                    requestDto.getLoyaltyPointsToUse(),
+                    savedPayment.getAmount()
+            );
+            savedPayment.setAmount(savedPayment.getAmount().subtract(discount));
+            savedPayment = paymentRepository.save(savedPayment);
+        }
         return paymentMapper.toDto(savedPayment);
     }
 
@@ -74,8 +99,12 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalStateException("Payment must be PENDING to be confirmed.");
         }
         payment.setStatus(TransactionStatus.COMPLETED);
-        Payment confirmedPayment = paymentRepository.save(payment);
-        return paymentMapper.toDto(confirmedPayment);
+        payment = paymentRepository.save(payment);
+
+        Long renterId = payment.getBooking().getRenterId();
+        loyaltyService.earnPoints(renterId, payment.getId(), payment.getAmount());
+
+        return paymentMapper.toDto(payment);
     }
 
     @Override
