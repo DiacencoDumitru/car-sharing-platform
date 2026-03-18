@@ -18,4 +18,6 @@ public class PaymentRequestDto {
 
     @NotNull(message = "Payment method must be not null.")
     private PaymentType paymentMethod;
+
+    private BigDecimal loyaltyPointsToUse;
 }
