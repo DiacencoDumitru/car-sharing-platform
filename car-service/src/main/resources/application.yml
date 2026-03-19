@@ -137,6 +137,8 @@ application:
       car-events: car.events
       car-commands: car.commands
       car-commands-dlt: car.commands.dlt
+      booking-commands: booking.commands
+      booking-commands-dlt: booking.commands.dlt
 
 resilience4j:
   circuitbreaker:
