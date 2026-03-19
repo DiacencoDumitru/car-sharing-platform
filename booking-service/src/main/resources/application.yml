@@ -12,6 +12,15 @@ spring:
     password: ${DB_PASSWORD:password123}
     driver-class-name: org.postgresql.Driver
 
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    client-id: ${spring.application.name}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -68,3 +77,10 @@ management:
       endpoint: http://zipkin:9411/api/v2/spans
   server:
     port: ${server.port}
+
+application:
+  messaging:
+    kafka:
+      enabled: false
+    topics:
+      booking-commands: booking.commands

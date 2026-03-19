@@ -11,6 +11,7 @@ import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
+import com.dynamiccarsharing.contracts.dto.BookingLifecycleEventDto;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
 import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
@@ -25,10 +26,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +46,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
     private final PaymentService paymentService;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final WebClient.Builder webClientBuilder;
 
     private WebClient userWebClient;
@@ -101,6 +105,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(APPROVED);
         Booking updatedBooking = bookingRepository.save(booking);
 
+        publishAfterCommit(buildEvent(updatedBooking));
         return bookingMapper.toDto(updatedBooking);
     }
 
@@ -113,15 +118,21 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(COMPLETED);
         Booking updatedBooking = bookingRepository.save(booking);
 
+        publishAfterCommit(buildEvent(updatedBooking));
         return bookingMapper.toDto(updatedBooking);
     }
 
     @Override
     public BookingDto cancelBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
+        boolean shouldReturnCar = booking.getStatus() == APPROVED;
         validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.PENDING, APPROVED), "Cannot cancel a completed booking");
         booking.setStatus(CANCELED);
         Booking updatedBooking = bookingRepository.save(booking);
+
+        if (shouldReturnCar) {
+            publishAfterCommit(buildEvent(updatedBooking));
+        }
         return bookingMapper.toDto(updatedBooking);
     }
 
@@ -160,6 +171,20 @@ public class BookingServiceImpl implements BookingService {
         if (!allowedStatuses.contains(currentStatus)) {
             throw new InvalidBookingStatusException(errorMessage);
         }
+    }
+
+    private BookingLifecycleEventDto buildEvent(Booking booking) {
+        return BookingLifecycleEventDto.builder()
+                .bookingId(booking.getId())
+                .renterId(booking.getRenterId())
+                .carId(booking.getCarId())
+                .bookingStatus(booking.getStatus())
+                .occurredAt(Instant.now())
+                .build();
+    }
+
+    private void publishAfterCommit(BookingLifecycleEventDto event) {
+        applicationEventPublisher.publishEvent(event);
     }
 
     private void validateUserExists(Long userId) {
