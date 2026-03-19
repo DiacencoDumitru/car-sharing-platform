@@ -27,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestHeadersUriSpec;
+import org.springframework.context.ApplicationEventPublisher;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
@@ -47,6 +48,8 @@ class BookingServiceImplTest {
     @Mock
     private PaymentService paymentService;
     @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+    @Mock
     private WebClient.Builder webClientBuilder;
     @Mock
     private WebClient userWebClient;
@@ -61,6 +64,7 @@ class BookingServiceImplTest {
                 bookingRepository,
                 bookingMapper,
                 paymentService,
+                applicationEventPublisher,
                 webClientBuilder
         );
 
