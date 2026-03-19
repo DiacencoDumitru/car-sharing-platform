@@ -200,6 +200,7 @@ services:
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
       - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - APPLICATION_MESSAGING_KAFKA_ENABLED=true
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=E0nD6k7s3yq0s5jD8L3Qw3N8jH2rVg7w1vYJ3p6xKf0U=
@@ -223,6 +224,8 @@ services:
       - "8082:8082"
     environment:
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - APPLICATION_MESSAGING_KAFKA_ENABLED=true
     depends_on:
       db:
         condition: service_healthy
