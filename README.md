@@ -25,7 +25,7 @@ The platform is composed of multiple microservices communicating via REST APIs a
 
 ### Messaging
 
-* **Kafka** – asynchronous communication between services
+* **Kafka** – asynchronous communication between services. In this project it is also used for lifecycle commands: `booking-service` publishes `booking.commands` and `car-service` consumes it to update the car state.
 
 ### Data Layer
 
@@ -167,6 +167,8 @@ docker-compose up --build
 2. **Approve** — `PATCH /api/v1/bookings/{id}` with `{"status": "APPROVED"}` moves the booking from `PENDING` to `APPROVED`.
 3. **Complete** — Same endpoint with `{"status": "COMPLETED"}` moves from `APPROVED` to `COMPLETED`. **A completed payment is required** for the booking before it can be completed.
 4. **Cancel** — `{"status": "CANCELED"}` is allowed from `PENDING` or `APPROVED`; completed bookings cannot be canceled.
+
+After every lifecycle status change in `booking-service` (`APPROVED`, `COMPLETED`, `CANCELED`), the service publishes a command to Kafka topic `booking.commands`. The `car-service` consumes this command and updates the car state accordingly by calling `rentCar` / `returnCar`.
 
 ### Payment flow
 
