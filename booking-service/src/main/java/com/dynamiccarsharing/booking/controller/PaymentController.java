@@ -2,6 +2,7 @@ package com.dynamiccarsharing.booking.controller;
 
 import com.dynamiccarsharing.booking.dto.PaymentDto;
 import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
+import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +18,19 @@ import java.util.List;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final IdempotencyService idempotencyService;
 
     @PostMapping("/bookings/{bookingId}/payment")
     public ResponseEntity<PaymentDto> createPaymentForBooking(
             @PathVariable Long bookingId,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody PaymentRequestDto requestDto) {
-        PaymentDto savedDto = paymentService.createPayment(bookingId, requestDto);
+        PaymentDto savedDto = idempotencyService.execute(
+                "payments:create:" + bookingId,
+                idempotencyKey,
+                PaymentDto.class,
+                () -> paymentService.createPayment(bookingId, requestDto)
+        );
         return new ResponseEntity<>(savedDto, HttpStatus.CREATED);
     }
 

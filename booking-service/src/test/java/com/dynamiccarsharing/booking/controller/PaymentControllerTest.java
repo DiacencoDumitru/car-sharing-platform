@@ -3,6 +3,7 @@ package com.dynamiccarsharing.booking.controller;
 import com.dynamiccarsharing.booking.config.SecurityConfig;
 import com.dynamiccarsharing.booking.dto.PaymentDto;
 import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
+import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import com.dynamiccarsharing.contracts.enums.PaymentType;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
@@ -40,6 +41,8 @@ class PaymentControllerTest {
 
     @MockBean
     private PaymentService paymentService;
+    @MockBean
+    private IdempotencyService idempotencyService;
 
     @Test
     @WithMockUser
@@ -55,9 +58,10 @@ class PaymentControllerTest {
         savedDto.setBookingId(bookingId);
         savedDto.setStatus(TransactionStatus.PENDING);
 
-        when(paymentService.createPayment(eq(bookingId), any(PaymentRequestDto.class))).thenReturn(savedDto);
+        when(idempotencyService.execute(any(), any(), any(), any())).thenReturn(savedDto);
 
         mockMvc.perform(post("/api/v1/bookings/{bookingId}/payment", bookingId)
+                        .header("Idempotency-Key", "key-1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
                         .with(csrf()))
