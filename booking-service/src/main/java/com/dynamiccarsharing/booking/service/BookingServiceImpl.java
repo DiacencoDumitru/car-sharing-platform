@@ -10,6 +10,7 @@ import com.dynamiccarsharing.booking.mapper.BookingMapper;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
+import com.dynamiccarsharing.booking.service.interfaces.BookingCreationGuard;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import com.dynamiccarsharing.contracts.dto.BookingLifecycleEventDto;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
@@ -22,6 +23,9 @@ import com.dynamiccarsharing.util.filter.Filter;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -46,6 +50,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
     private final PaymentService paymentService;
+    private final BookingCreationGuard bookingCreationGuard;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final WebClient.Builder webClientBuilder;
 
@@ -59,30 +64,44 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(cacheNames = {"bookingPage", "bookingsByRenterId", "bookingSearch"}, allEntries = true)
+    })
     public BookingDto save(BookingCreateRequestDto createDto) {
-        validateUserExists(createDto.getRenterId());
-        validateCarIsAvailable(createDto.getCarId());
-        validateNoOverlappingBooking(createDto.getCarId(), createDto.getStartTime(), createDto.getEndTime());
+        return bookingCreationGuard.executeWithCarLock(createDto.getCarId(), () -> {
+            validateUserExists(createDto.getRenterId());
+            validateCarIsAvailable(createDto.getCarId());
+            validateNoOverlappingBooking(createDto.getCarId(), createDto.getStartTime(), createDto.getEndTime());
 
-        Booking booking = bookingMapper.toEntity(createDto);
-        Booking savedBooking = bookingRepository.save(booking);
-        return bookingMapper.toDto(savedBooking);
+            Booking booking = bookingMapper.toEntity(createDto);
+            Booking savedBooking = bookingRepository.save(booking);
+            return bookingMapper.toDto(savedBooking);
+        });
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "bookingById", key = "#id", unless = "#result == null || !#result.isPresent()")
     public Optional<BookingDto> findById(Long id) {
         return bookingRepository.findById(id).map(bookingMapper::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(
+            cacheNames = "bookingPage",
+            key = "(#criteria == null ? 'null' : #criteria.hashCode()) + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + (#pageable.sort == null ? 'null' : #pageable.sort.toString())"
+    )
     public Page<BookingDto> findAll(BookingSearchCriteria criteria, Pageable pageable) {
         Page<Booking> bookingPage = bookingRepository.findAll(criteria, pageable);
         return bookingPage.map(bookingMapper::toDto);
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "bookingById", key = "#id"),
+            @CacheEvict(cacheNames = {"bookingPage", "bookingsByRenterId", "bookingSearch"}, allEntries = true)
+    })
     public void deleteById(Long id) {
         if (bookingRepository.findById(id).isPresent()) {
             bookingRepository.deleteById(id);
@@ -93,11 +112,16 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "bookingsByRenterId", key = "#renterId")
     public List<BookingDto> findBookingsByRenterId(Long renterId) {
         return bookingRepository.findByRenterId(renterId).stream().map(bookingMapper::toDto).toList();
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "bookingById", key = "#bookingId"),
+            @CacheEvict(cacheNames = {"bookingPage", "bookingsByRenterId", "bookingSearch"}, allEntries = true)
+    })
     public BookingDto approveBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
         validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.PENDING), "Booking can only be approved from PENDING status");
@@ -110,6 +134,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "bookingById", key = "#bookingId"),
+            @CacheEvict(cacheNames = {"bookingPage", "bookingsByRenterId", "bookingSearch"}, allEntries = true)
+    })
     public BookingDto completeBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
         validateBookingStatus(booking.getStatus(), List.of(APPROVED), "Booking can only be completed from APPROVED status");
@@ -123,6 +151,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "bookingById", key = "#bookingId"),
+            @CacheEvict(cacheNames = {"bookingPage", "bookingsByRenterId", "bookingSearch"}, allEntries = true)
+    })
     public BookingDto cancelBooking(Long bookingId) {
         Booking booking = getBookingOrThrow(bookingId);
         boolean shouldReturnCar = booking.getStatus() == APPROVED;
@@ -148,6 +180,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "bookingSearch", key = "#criteria == null ? 'null' : #criteria.hashCode()")
     public List<BookingDto> searchBookings(BookingSearchCriteria criteria) {
         Filter<Booking> filter = BookingFilter.of(
                 criteria.getRenterId(),
