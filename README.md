@@ -291,7 +291,7 @@ This setup allows monitoring request flows, system health, and service performan
 
 The platform includes several performance optimizations:
 
-* Redis caching for frequently accessed data
+* Redis caching for frequently accessed data (including optional read-cache in `booking-service` via `application.redis.read-cache.enabled`)
 * Kafka-based asynchronous processing
 * Database indexing strategies
 * Connection pooling
