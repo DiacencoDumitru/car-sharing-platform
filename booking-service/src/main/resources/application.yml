@@ -29,6 +29,11 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  cache:
+    redis:
+      key-prefix: ${application.redis.key-prefix:booking}
+      time-to-live: 5m
+
 eureka:
   client:
     service-url:
@@ -84,3 +89,18 @@ application:
       enabled: false
     topics:
       booking-commands: booking.commands
+  redis:
+    key-prefix: booking
+    read-cache:
+      enabled: false
+    booking-guard:
+      enabled: false
+      lock-ttl-seconds: 10
+      wait-timeout-millis: 1500
+      retry-delay-millis: 50
+    idempotency:
+      enabled: false
+      response-ttl-seconds: 86400
+      lock-ttl-seconds: 15
+      wait-timeout-millis: 2500
+      poll-delay-millis: 30

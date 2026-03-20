@@ -7,6 +7,7 @@ import com.dynamiccarsharing.booking.mapper.BookingMapper;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
+import com.dynamiccarsharing.booking.service.interfaces.BookingCreationGuard;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
 import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
@@ -48,6 +49,8 @@ class BookingServiceImplTest {
     @Mock
     private PaymentService paymentService;
     @Mock
+    private BookingCreationGuard bookingCreationGuard;
+    @Mock
     private ApplicationEventPublisher applicationEventPublisher;
     @Mock
     private WebClient.Builder webClientBuilder;
@@ -64,9 +67,16 @@ class BookingServiceImplTest {
                 bookingRepository,
                 bookingMapper,
                 paymentService,
+                bookingCreationGuard,
                 applicationEventPublisher,
                 webClientBuilder
         );
+
+        // Только save() вызывает guard; lenient — чтобы не падать UnnecessaryStubbing в остальных тестах
+        lenient().when(bookingCreationGuard.executeWithCarLock(any(), any())).thenAnswer(invocation -> {
+            java.util.function.Supplier<?> supplier = invocation.getArgument(1);
+            return supplier.get();
+        });
 
         ReflectionTestUtils.setField(bookingService, "userWebClient", userWebClient);
         ReflectionTestUtils.setField(bookingService, "carWebClient", carWebClient);
