@@ -1,4 +1,4 @@
-gitpackage com.dynamiccarsharing.booking.service.interfaces;
+package com.dynamiccarsharing.booking.service.interfaces;
 
 import java.util.function.Supplier;
 
