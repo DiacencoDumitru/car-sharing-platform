@@ -30,7 +30,7 @@ The platform is composed of multiple microservices communicating via REST APIs a
 ### Data Layer
 
 * **PostgreSQL** – primary relational database
-* **Redis** – caching layer
+* **Redis** – caching layer (`car-service`); optional distributed guard, idempotency, and read-cache in `booking-service` (see [Booking service Redis](#booking-service-redis-optional))
 
 ### Observability Stack
 
@@ -121,7 +121,7 @@ Infrastructure
 * Centralized logging (ELK stack)
 * Distributed tracing (Zipkin)
 * Metrics monitoring (Prometheus + Grafana)
-* Redis caching
+* Redis caching (catalog in `car-service`; optional guard, idempotency, read-cache in `booking-service`)
 * Asynchronous messaging with Kafka
 * Containerized microservices deployment
 
@@ -291,11 +291,23 @@ This setup allows monitoring request flows, system health, and service performan
 
 The platform includes several performance optimizations:
 
-* Redis caching for frequently accessed data (including optional read-cache in `booking-service` via `application.redis.read-cache.enabled`)
+* Redis caching for frequently accessed data (`car-service` catalog; optional read-cache in `booking-service` — see below)
 * Kafka-based asynchronous processing
 * Database indexing strategies
 * Connection pooling
 * JVM profiling and GC tuning scripts
+
+### Booking service Redis (optional)
+
+`booking-service` can use Redis for concurrency, idempotency, and read caching. Each feature is **disabled by default** in `booking-service/src/main/resources/application.yml`; enable the flags you need and point `spring.data.redis.host` / `spring.data.redis.port` at your Redis instance.
+
+| Feature | Property | Notes |
+|--------|----------|--------|
+| Booking creation lock | `application.redis.booking-guard.enabled` | Per-car distributed lock while creating a booking (reduces race conditions). |
+| Idempotency | `application.redis.idempotency.enabled` | For duplicate-safe retries, send optional header `Idempotency-Key` on `POST /api/v1/bookings` and `POST /api/v1/bookings/{bookingId}/payment`. |
+| Read cache | `application.redis.read-cache.enabled` | Spring Cache on Redis for read-heavy booking queries; eviction on mutations and after booking lifecycle events (after commit). |
+
+Shared naming prefix: `application.redis.key-prefix` (default `booking`). Micrometer metrics are exposed for the guard and idempotency components (e.g. `booking.redis.guard.*`, `booking.redis.idempotency.*`).
 
 ---
 
