@@ -12,9 +12,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
 
-/**
- * Инвалидация read-кэша после успешного commit (согласовано с публикацией lifecycle в Kafka).
- */
 @Component
 @ConditionalOnProperty(name = "application.redis.read-cache.enabled", havingValue = "true")
 @RequiredArgsConstructor
