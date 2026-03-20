@@ -4,6 +4,7 @@ import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
+import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final IdempotencyService idempotencyService;
 
     @Value("${eureka.instance.instance-id}")
     private String instanceId;
@@ -41,8 +43,15 @@ public class BookingController {
     }
 
     @PostMapping
-    public ResponseEntity<BookingDto> createBooking(@Valid @RequestBody BookingCreateRequestDto createDto) {
-        BookingDto savedBooking = bookingService.save(createDto);
+    public ResponseEntity<BookingDto> createBooking(
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody BookingCreateRequestDto createDto) {
+        BookingDto savedBooking = idempotencyService.execute(
+                "bookings:create",
+                idempotencyKey,
+                BookingDto.class,
+                () -> bookingService.save(createDto)
+        );
         return new ResponseEntity<>(savedBooking, HttpStatus.CREATED);
     }
 

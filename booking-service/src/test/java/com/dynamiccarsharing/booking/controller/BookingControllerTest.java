@@ -5,6 +5,7 @@ import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
+import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.util.exception.ValidationException;
@@ -43,6 +44,8 @@ class BookingControllerTest {
 
     @MockBean
     private BookingService bookingService;
+    @MockBean
+    private IdempotencyService idempotencyService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -97,9 +100,10 @@ class BookingControllerTest {
 
         BookingDto savedDto = new BookingDto();
         savedDto.setId(1L);
-        when(bookingService.save(any(BookingCreateRequestDto.class))).thenReturn(savedDto);
+        when(idempotencyService.execute(any(), any(), any(), any())).thenReturn(savedDto);
 
         mockMvc.perform(post("/api/v1/bookings")
+                        .header("Idempotency-Key", "key-1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDto))
                         .with(csrf()))
