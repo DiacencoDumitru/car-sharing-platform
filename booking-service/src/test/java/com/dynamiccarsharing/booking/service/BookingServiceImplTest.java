@@ -72,7 +72,6 @@ class BookingServiceImplTest {
                 webClientBuilder
         );
 
-        // Только save() вызывает guard; lenient — чтобы не падать UnnecessaryStubbing в остальных тестах
         lenient().when(bookingCreationGuard.executeWithCarLock(any(), any())).thenAnswer(invocation -> {
             java.util.function.Supplier<?> supplier = invocation.getArgument(1);
             return supplier.get();
