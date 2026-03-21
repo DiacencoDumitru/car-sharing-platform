@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -99,7 +100,7 @@ class PaymentControllerTest {
         confirmedDto.setId(1L);
         confirmedDto.setStatus(TransactionStatus.COMPLETED);
 
-        when(paymentService.confirmPayment(1L)).thenReturn(confirmedDto);
+        when(paymentService.confirmPayment(eq(1L), isNull())).thenReturn(confirmedDto);
 
         mockMvc.perform(patch("/api/v1/admin/payments/{paymentId}/confirm", 1L).with(csrf()))
                 .andExpect(status().isOk())

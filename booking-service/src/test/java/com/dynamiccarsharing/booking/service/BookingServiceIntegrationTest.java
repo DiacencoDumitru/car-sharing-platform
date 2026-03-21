@@ -159,7 +159,7 @@ class BookingServiceIntegrationTest {
         payReq.setAmount(BigDecimal.valueOf(50));
         payReq.setPaymentMethod(PaymentType.CREDIT_CARD);
         com.dynamiccarsharing.booking.dto.PaymentDto createdPayment = paymentService.createPayment(booking.getId(), payReq);
-        paymentService.confirmPayment(createdPayment.getId());
+        paymentService.confirmPayment(createdPayment.getId(), null);
 
         var result = bookingService.completeBooking(booking.getId());
 

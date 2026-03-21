@@ -8,6 +8,7 @@ import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.repository.LoyaltyAccountRepository;
 import com.dynamiccarsharing.booking.repository.LoyaltyTransactionRepository;
 import com.dynamiccarsharing.booking.repository.PaymentRepository;
+import com.dynamiccarsharing.booking.repository.jpa.AdminAuditLogJpaRepository;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import com.dynamiccarsharing.contracts.enums.PaymentType;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
@@ -42,8 +43,12 @@ class LoyaltyIntegrationTest {
     @Autowired
     private LoyaltyTransactionRepository loyaltyTransactionRepository;
 
+    @Autowired
+    private AdminAuditLogJpaRepository adminAuditLogJpaRepository;
+
     @BeforeEach
     void setUp() {
+        adminAuditLogJpaRepository.deleteAll();
         paymentRepository.findAll()
                 .forEach(payment -> paymentRepository.deleteById(payment.getId()));
         loyaltyTransactionRepository.deleteAll();
@@ -60,7 +65,7 @@ class LoyaltyIntegrationTest {
         requestDto.setPaymentMethod(PaymentType.CREDIT_CARD);
 
         PaymentDto paymentDto = paymentService.createPayment(booking.getId(), requestDto);
-        PaymentDto confirmed = paymentService.confirmPayment(paymentDto.getId());
+        PaymentDto confirmed = paymentService.confirmPayment(paymentDto.getId(), null);
 
         assertThat(confirmed.getStatus()).isEqualTo(TransactionStatus.COMPLETED);
 
@@ -76,7 +81,7 @@ class LoyaltyIntegrationTest {
         PaymentRequestDto firstRequest = new PaymentRequestDto();
         firstRequest.setPaymentMethod(PaymentType.CREDIT_CARD);
         PaymentDto firstPayment = paymentService.createPayment(firstBooking.getId(), firstRequest);
-        paymentService.confirmPayment(firstPayment.getId());
+        paymentService.confirmPayment(firstPayment.getId(), null);
 
         LoyaltyAccount account = loyaltyAccountRepository.findByRenterId(firstBooking.getRenterId()).orElseThrow();
         BigDecimal initialBalance = account.getBalance();
