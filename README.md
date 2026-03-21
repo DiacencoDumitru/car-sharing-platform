@@ -177,8 +177,8 @@ After every lifecycle status change in `booking-service` (`APPROVED`, `COMPLETED
    * dynamic pricing rules (time-of-day and pickup location multipliers),
    * optional promo code discounts,
    * optional loyalty points redemption.
-2. **Confirm** — `PATCH /api/v1/admin/payments/{paymentId}/confirm` sets payment to `COMPLETED`. At this moment, the renter **earns loyalty points** based on the paid amount.
-3. **Refund** — `PATCH /api/v1/admin/payments/{paymentId}/refund` is allowed only for `COMPLETED` payments. (Loyalty adjustments for refunds can be extended in future iterations.)
+2. **Confirm** — `PATCH /api/v1/admin/payments/{paymentId}/confirm` sets payment to `COMPLETED`. At this moment, the renter **earns loyalty points** based on the paid amount. The action is **audited** in `admin_audit_log` (payment id, action `PAYMENT_CONFIRM`, optional actor from header `X-User-Id`).
+3. **Refund** — `PATCH /api/v1/admin/payments/{paymentId}/refund` is allowed only for `COMPLETED` payments. The action is **audited** in `admin_audit_log` (action `PAYMENT_REFUND`, optional `X-User-Id`). (Loyalty adjustments for refunds can be extended in future iterations.)
 
 ### Security and roles via API Gateway
 
