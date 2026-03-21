@@ -17,9 +17,9 @@ public interface PaymentService {
 
     void deleteById(Long id);
 
-    PaymentDto confirmPayment(Long paymentId);
+    PaymentDto confirmPayment(Long paymentId, Long actorUserId);
 
-    PaymentDto refundPayment(Long paymentId);
+    PaymentDto refundPayment(Long paymentId, Long actorUserId);
 
     Optional<PaymentDto> findByBookingId(Long bookingId);
 

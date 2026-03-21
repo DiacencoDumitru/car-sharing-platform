@@ -7,6 +7,7 @@ import com.dynamiccarsharing.booking.exception.BookingNotFoundException;
 import com.dynamiccarsharing.booking.exception.PaymentNotFoundException;
 import com.dynamiccarsharing.booking.filter.PaymentFilter;
 import com.dynamiccarsharing.booking.mapper.PaymentMapper;
+import com.dynamiccarsharing.booking.model.AdminAuditAction;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.model.Payment;
 import com.dynamiccarsharing.booking.loyalty.LoyaltyService;
@@ -37,6 +38,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final BookingRepository bookingRepository;
     private final PricingService pricingService;
     private final LoyaltyService loyaltyService;
+    private final AdminAuditService adminAuditService;
 
     @Override
     public PaymentDto createPayment(Long bookingId, PaymentRequestDto requestDto) {
@@ -93,7 +95,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentDto confirmPayment(Long paymentId) {
+    public PaymentDto confirmPayment(Long paymentId, Long actorUserId) {
         Payment payment = getPaymentOrThrow(paymentId);
         if (payment.getStatus() != TransactionStatus.PENDING) {
             throw new IllegalStateException("Payment must be PENDING to be confirmed.");
@@ -104,17 +106,22 @@ public class PaymentServiceImpl implements PaymentService {
         Long renterId = payment.getBooking().getRenterId();
         loyaltyService.earnPoints(renterId, payment.getId(), payment.getAmount());
 
+        adminAuditService.logPaymentAction(paymentId, AdminAuditAction.PAYMENT_CONFIRM, actorUserId);
+
         return paymentMapper.toDto(payment);
     }
 
     @Override
-    public PaymentDto refundPayment(Long paymentId) {
+    public PaymentDto refundPayment(Long paymentId, Long actorUserId) {
         Payment payment = getPaymentOrThrow(paymentId);
         if (payment.getStatus() != TransactionStatus.COMPLETED) {
             throw new IllegalStateException("Payment must be COMPLETED to be refunded.");
         }
         payment.setStatus(TransactionStatus.REFUNDED);
         Payment refundedPayment = paymentRepository.save(payment);
+
+        adminAuditService.logPaymentAction(paymentId, AdminAuditAction.PAYMENT_REFUND, actorUserId);
+
         return paymentMapper.toDto(refundedPayment);
     }
 

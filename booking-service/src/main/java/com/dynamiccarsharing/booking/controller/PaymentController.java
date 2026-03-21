@@ -49,14 +49,18 @@ public class PaymentController {
     }
 
     @PatchMapping("/admin/payments/{paymentId}/confirm")
-    public ResponseEntity<PaymentDto> confirmPayment(@PathVariable Long paymentId) {
-        PaymentDto confirmedDto = paymentService.confirmPayment(paymentId);
+    public ResponseEntity<PaymentDto> confirmPayment(
+            @PathVariable Long paymentId,
+            @RequestHeader(value = "X-User-Id", required = false) Long actorUserId) {
+        PaymentDto confirmedDto = paymentService.confirmPayment(paymentId, actorUserId);
         return ResponseEntity.ok(confirmedDto);
     }
 
     @PatchMapping("/admin/payments/{paymentId}/refund")
-    public ResponseEntity<PaymentDto> refundPayment(@PathVariable Long paymentId) {
-        PaymentDto refundedDto = paymentService.refundPayment(paymentId);
+    public ResponseEntity<PaymentDto> refundPayment(
+            @PathVariable Long paymentId,
+            @RequestHeader(value = "X-User-Id", required = false) Long actorUserId) {
+        PaymentDto refundedDto = paymentService.refundPayment(paymentId, actorUserId);
         return ResponseEntity.ok(refundedDto);
     }
 

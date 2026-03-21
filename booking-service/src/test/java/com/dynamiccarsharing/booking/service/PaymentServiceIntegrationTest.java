@@ -2,9 +2,11 @@ package com.dynamiccarsharing.booking.service;
 
 import com.dynamiccarsharing.booking.dto.PaymentDto;
 import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
+import com.dynamiccarsharing.booking.model.AdminAuditAction;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.repository.PaymentRepository;
+import com.dynamiccarsharing.booking.repository.jpa.AdminAuditLogJpaRepository;
 import com.dynamiccarsharing.contracts.enums.PaymentType;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,8 +34,12 @@ class PaymentServiceIntegrationTest {
     @Autowired
     private PaymentRepository paymentRepository;
 
+    @Autowired
+    private AdminAuditLogJpaRepository adminAuditLogJpaRepository;
+
     @BeforeEach
     void setUp() {
+        adminAuditLogJpaRepository.deleteAll();
         paymentRepository.findAll()
                 .forEach(payment -> paymentRepository.deleteById(payment.getId()));
         clearBookings();
@@ -63,9 +69,43 @@ class PaymentServiceIntegrationTest {
         requestDto.setPaymentMethod(PaymentType.CREDIT_CARD);
         PaymentDto created = paymentService.createPayment(booking.getId(), requestDto);
 
-        PaymentDto confirmed = paymentService.confirmPayment(created.getId());
+        PaymentDto confirmed = paymentService.confirmPayment(created.getId(), null);
 
         assertThat(confirmed.getStatus()).isEqualTo(TransactionStatus.COMPLETED);
+        assertThat(adminAuditLogJpaRepository.findAll()).hasSize(1);
+        assertThat(adminAuditLogJpaRepository.findAll().get(0).getAction()).isEqualTo(AdminAuditAction.PAYMENT_CONFIRM);
+        assertThat(adminAuditLogJpaRepository.findAll().get(0).getPaymentId()).isEqualTo(created.getId());
+    }
+
+    @Test
+    @DisplayName("confirmPayment stores actor user id from audit perspective")
+    void confirmPayment_persistsActorUserId() {
+        Booking booking = saveBooking();
+        PaymentRequestDto requestDto = new PaymentRequestDto();
+        requestDto.setPaymentMethod(PaymentType.CREDIT_CARD);
+        PaymentDto created = paymentService.createPayment(booking.getId(), requestDto);
+
+        paymentService.confirmPayment(created.getId(), 42L);
+
+        assertThat(adminAuditLogJpaRepository.findAll().get(0).getActorUserId()).isEqualTo(42L);
+    }
+
+    @Test
+    @DisplayName("refundPayment writes audit row")
+    void refundPayment_writesAuditLog() {
+        Booking booking = saveBooking();
+        PaymentRequestDto requestDto = new PaymentRequestDto();
+        requestDto.setPaymentMethod(PaymentType.CREDIT_CARD);
+        PaymentDto created = paymentService.createPayment(booking.getId(), requestDto);
+        paymentService.confirmPayment(created.getId(), 1L);
+
+        paymentService.refundPayment(created.getId(), 99L);
+
+        assertThat(adminAuditLogJpaRepository.findAll()).hasSize(2);
+        assertThat(adminAuditLogJpaRepository.findAll())
+                .filteredOn(a -> a.getAction() == AdminAuditAction.PAYMENT_REFUND)
+                .singleElement()
+                .satisfies(a -> assertThat(a.getActorUserId()).isEqualTo(99L));
     }
 
     private Booking saveBooking() {
