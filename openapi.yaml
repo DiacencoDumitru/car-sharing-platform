@@ -593,6 +593,64 @@ paths:
               schema:
                 $ref: '#/components/schemas/TransactionPage'
 
+  /admin/payments/{paymentId}/confirm:
+    patch:
+      tags:
+        - Admin
+      summary: Confirm a pending payment
+      description: Marks a payment as completed. An audit row is stored; optional acting admin user id may be sent via `X-User-Id` (typically forwarded by API Gateway).
+      operationId: adminConfirmPayment
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: X-User-Id
+          in: header
+          required: false
+          description: Acting admin user id.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Payment confirmed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+
+  /admin/payments/{paymentId}/refund:
+    patch:
+      tags:
+        - Admin
+      summary: Refund a completed payment
+      description: Marks a payment as refunded. An audit row is stored; optional acting admin user id may be sent via `X-User-Id`.
+      operationId: adminRefundPayment
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: X-User-Id
+          in: header
+          required: false
+          description: Acting admin user id.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Payment refunded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+
   /admin/cars/{carId}/verification:
     patch:
       tags:
