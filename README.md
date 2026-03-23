@@ -115,6 +115,7 @@ Infrastructure
 * Dynamic pricing for bookings based on time and pickup location rules
 * Promo codes and discounts applied on top of dynamic pricing
 * Loyalty points earning and redemption linked to payments
+* Admin filtering for payments and transactions via criteria-based search endpoints
 * User authentication and authorization
 * Dispute handling
 * Distributed service discovery
@@ -179,6 +180,21 @@ After every lifecycle status change in `booking-service` (`APPROVED`, `COMPLETED
    * optional loyalty points redemption.
 2. **Confirm** — `PATCH /api/v1/admin/payments/{paymentId}/confirm` sets payment to `COMPLETED`. At this moment, the renter **earns loyalty points** based on the paid amount. The action is **audited** in `admin_audit_log` (payment id, action `PAYMENT_CONFIRM`, optional actor from header `X-User-Id`).
 3. **Refund** — `PATCH /api/v1/admin/payments/{paymentId}/refund` is allowed only for `COMPLETED` payments. The action is **audited** in `admin_audit_log` (action `PAYMENT_REFUND`, optional `X-User-Id`). (Loyalty adjustments for refunds can be extended in future iterations.)
+
+### Admin search endpoints (criteria-based)
+
+Booking Service exposes criteria-based filtering for admin read APIs without introducing separate `/search` routes.
+
+* `GET /api/v1/admin/payments`
+  * Optional query params: `bookingId`, `amount`, `status`, `paymentMethod`
+* `GET /api/v1/admin/transactions`
+  * Optional query params: `bookingId`, `status`, `paymentMethod`
+
+Controller layer detects whether any filter is provided:
+* with filters -> delegates to `search*` service methods
+* without filters -> returns full list methods
+
+This keeps controllers thin and preserves a consistent API style for admin read endpoints.
 
 ### Security and roles via API Gateway
 
