@@ -593,6 +593,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/TransactionPage'
 
+  /admin/payments:
+    get:
+      tags:
+        - Admin
+      summary: List and filter payments
+      description: Returns all payments, optionally filtered by booking id, amount, status, and payment method.
+      operationId: adminSearchPayments
+      parameters:
+        - name: bookingId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: amount
+          in: query
+          required: false
+          schema:
+            type: number
+            format: double
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionStatus'
+        - name: paymentMethod
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/PaymentType'
+      responses:
+        '200':
+          description: A list of payments.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payment'
+
   /admin/payments/{paymentId}/confirm:
     patch:
       tags:
@@ -650,6 +690,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Payment'
+
+  /admin/transactions:
+    get:
+      tags:
+        - Admin
+      summary: List and filter transactions
+      description: Returns all transactions, optionally filtered by booking id, status, and payment method.
+      operationId: adminSearchTransactions
+      parameters:
+        - name: bookingId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionStatus'
+        - name: paymentMethod
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/PaymentType'
+      responses:
+        '200':
+          description: A list of transactions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
 
   /admin/cars/{carId}/verification:
     patch:
