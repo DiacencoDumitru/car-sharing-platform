@@ -1,5 +1,6 @@
 package com.dynamiccarsharing.booking.controller;
 
+import com.dynamiccarsharing.booking.criteria.PaymentSearchCriteria;
 import com.dynamiccarsharing.booking.dto.PaymentDto;
 import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
 import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
@@ -43,8 +44,10 @@ public class PaymentController {
 
 
     @GetMapping("/admin/payments")
-    public ResponseEntity<List<PaymentDto>> getAllPayments() {
-        List<PaymentDto> paymentDtos = paymentService.findAllPayments();
+    public ResponseEntity<List<PaymentDto>> getAllPayments(PaymentSearchCriteria criteria) {
+        List<PaymentDto> paymentDtos = criteria.hasAnyFilter()
+                ? paymentService.searchPayments(criteria)
+                : paymentService.findAllPayments();
         return ResponseEntity.ok(paymentDtos);
     }
 

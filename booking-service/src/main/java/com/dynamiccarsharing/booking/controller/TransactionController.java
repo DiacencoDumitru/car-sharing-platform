@@ -1,5 +1,6 @@
 package com.dynamiccarsharing.booking.controller;
 
+import com.dynamiccarsharing.booking.criteria.TransactionSearchCriteria;
 import com.dynamiccarsharing.booking.dto.TransactionDto;
 import com.dynamiccarsharing.booking.service.interfaces.TransactionService;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +27,10 @@ public class TransactionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TransactionDto>> getAllTransactions() {
-        List<TransactionDto> transactionDtos = transactionService.findAllTransactions();
+    public ResponseEntity<List<TransactionDto>> getAllTransactions(TransactionSearchCriteria criteria) {
+        List<TransactionDto> transactionDtos = criteria.hasAnyFilter()
+                ? transactionService.searchTransactions(criteria)
+                : transactionService.findAllTransactions();
         return ResponseEntity.ok(transactionDtos);
     }
 }
