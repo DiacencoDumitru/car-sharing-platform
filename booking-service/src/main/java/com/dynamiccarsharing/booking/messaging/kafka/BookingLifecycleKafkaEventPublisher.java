@@ -9,6 +9,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Component
 @ConditionalOnProperty(
@@ -25,6 +28,9 @@ public class BookingLifecycleKafkaEventPublisher implements BookingLifecyclePubl
     @Value("${application.messaging.topics.booking-commands:booking.commands}")
     private String bookingCommandsTopic;
 
+    @Value("${application.messaging.outbox.send-timeout-seconds:10}")
+    private int sendTimeoutSeconds;
+
     @Override
     public void publish(BookingLifecycleEventDto event) {
         if (event == null) {
@@ -34,17 +40,22 @@ public class BookingLifecycleKafkaEventPublisher implements BookingLifecyclePubl
         String key = event.getBookingId() != null ? String.valueOf(event.getBookingId()) : "booking";
         String correlationId = UUID.randomUUID().toString();
 
-        kafkaTemplate.send(bookingCommandsTopic, key, event)
-                .whenComplete((md, ex) -> {
-                    if (ex != null) {
-                        log.error("Failed to publish BookingLifecycleEventDto to {} (corrId={})",
-                                bookingCommandsTopic, correlationId, ex);
-                    } else if (md != null) {
-                        var recordMetadata = md.getRecordMetadata();
-                        log.info("Published BookingLifecycleEventDto {}@{}:{} (corrId={})",
-                                event.getBookingStatus(), recordMetadata.partition(), recordMetadata.offset(), correlationId);
-                    }
-                });
+        try {
+            var result = kafkaTemplate.send(bookingCommandsTopic, key, event)
+                    .get(sendTimeoutSeconds, TimeUnit.SECONDS);
+            if (log.isInfoEnabled() && result != null) {
+                var recordMetadata = result.getRecordMetadata();
+                log.info("Published BookingLifecycleEventDto {}@{}:{} (corrId={})",
+                        event.getBookingStatus(), recordMetadata.partition(), recordMetadata.offset(), correlationId);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Kafka publish interrupted for topic {} (corrId={})", bookingCommandsTopic, correlationId, e);
+            throw new IllegalStateException("Kafka publish interrupted", e);
+        } catch (ExecutionException | TimeoutException e) {
+            log.error("Failed to publish BookingLifecycleEventDto to {} (corrId={})",
+                    bookingCommandsTopic, correlationId, e);
+            throw new IllegalStateException("Kafka publish failed", e);
+        }
     }
 }
-

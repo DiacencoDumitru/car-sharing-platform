@@ -10,6 +10,7 @@ import com.dynamiccarsharing.booking.mapper.BookingMapper;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
+import com.dynamiccarsharing.booking.messaging.outbox.BookingLifecycleOutboxWriter;
 import com.dynamiccarsharing.booking.service.interfaces.BookingCreationGuard;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import com.dynamiccarsharing.contracts.dto.BookingLifecycleEventDto;
@@ -51,6 +52,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingMapper bookingMapper;
     private final PaymentService paymentService;
     private final BookingCreationGuard bookingCreationGuard;
+    private final BookingLifecycleOutboxWriter bookingLifecycleOutboxWriter;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final WebClient.Builder webClientBuilder;
 
@@ -129,7 +131,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(APPROVED);
         Booking updatedBooking = bookingRepository.save(booking);
 
-        publishAfterCommit(buildEvent(updatedBooking));
+        publishLifecycleSideEffects(buildEvent(updatedBooking));
         return bookingMapper.toDto(updatedBooking);
     }
 
@@ -146,7 +148,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(COMPLETED);
         Booking updatedBooking = bookingRepository.save(booking);
 
-        publishAfterCommit(buildEvent(updatedBooking));
+        publishLifecycleSideEffects(buildEvent(updatedBooking));
         return bookingMapper.toDto(updatedBooking);
     }
 
@@ -163,7 +165,7 @@ public class BookingServiceImpl implements BookingService {
         Booking updatedBooking = bookingRepository.save(booking);
 
         if (shouldReturnCar) {
-            publishAfterCommit(buildEvent(updatedBooking));
+            publishLifecycleSideEffects(buildEvent(updatedBooking));
         }
         return bookingMapper.toDto(updatedBooking);
     }
@@ -216,7 +218,8 @@ public class BookingServiceImpl implements BookingService {
                 .build();
     }
 
-    private void publishAfterCommit(BookingLifecycleEventDto event) {
+    private void publishLifecycleSideEffects(BookingLifecycleEventDto event) {
+        bookingLifecycleOutboxWriter.enqueueIfKafkaEnabled(event);
         applicationEventPublisher.publishEvent(event);
     }
 
