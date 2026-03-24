@@ -25,7 +25,9 @@ The platform is composed of multiple microservices communicating via REST APIs a
 
 ### Messaging
 
-* **Kafka** – asynchronous communication between services. In this project it is also used for lifecycle commands: `booking-service` publishes `booking.commands` and `car-service` consumes it to update the car state.
+* **Kafka** – asynchronous communication between services. In this project it is also used for lifecycle commands: `booking-service` publishes to topic `booking.commands` and `car-service` consumes it to update the car state.
+
+* **Transactional outbox (booking-service)** – when Kafka is enabled, lifecycle events are **written to table `booking_lifecycle_outbox` in the same database transaction** as the booking status change, then a **relay** publishes to Kafka and removes the row. This avoids losing events if the process crashes after commit but before a broker send (see [Transactional outbox](#transactional-outbox-booking-service)).
 
 ### Data Layer
 
@@ -124,7 +126,25 @@ Infrastructure
 * Metrics monitoring (Prometheus + Grafana)
 * Redis caching (catalog in `car-service`; optional guard, idempotency, read-cache in `booking-service`)
 * Asynchronous messaging with Kafka
+* **Transactional outbox** for reliable booking lifecycle events to Kafka (`booking-service`)
 * Containerized microservices deployment
+
+---
+
+## Transactional outbox (booking-service)
+
+When `application.messaging.kafka.enabled=true`, booking lifecycle events (`APPROVED`, `COMPLETED`, `CANCELED` when the car must be returned) are **stored in PostgreSQL** in table `booking_lifecycle_outbox` **in the same transaction** as the booking update. A **scheduled relay** polls pending rows, publishes to Kafka topic `booking.commands` (via `BookingLifecycleKafkaEventPublisher`), and **deletes** the row after a successful send. If Kafka is temporarily down, rows remain and are retried.
+
+**Related settings** in `booking-service/src/main/resources/application.yml`:
+
+| Property | Purpose |
+|----------|---------|
+| `application.messaging.kafka.enabled` | Turn Kafka + outbox + relay on (`false` by default in the file; Docker Compose sets it to `true` for the booking container). |
+| `application.messaging.outbox.relay-interval-ms` | How often the relay runs (default `1000`). |
+| `application.messaging.outbox.batch-size` | Max rows processed per scheduler tick (default `50`). |
+| `application.messaging.outbox.send-timeout-seconds` | Sync Kafka send timeout used by the publisher (default `10`). |
+
+Cache eviction for Redis read-cache still uses **after-commit** application events; only the **Kafka** path goes through the outbox.
 
 ---
 
@@ -152,11 +172,35 @@ cd car-sharing-platform
 mvn clean package
 ```
 
-### Start the infrastructure and services
+### Start the infrastructure and services (recommended)
+
+This is the **simplest way** to run the whole platform: all microservices, databases, Kafka, Redis, Eureka, observability, etc.
 
 ```bash
 docker-compose up --build
 ```
+
+Wait until health checks pass; then use the [Service Endpoints](#service-endpoints) (e.g. API Gateway on port **8085**).
+
+### Run microservices separately (optional, for local development)
+
+You **do not** have to start every service manually if you use Docker Compose above. If you prefer to run one or more Spring Boot apps from the IDE or `mvn spring-boot:run`:
+
+1. **Start shared infrastructure** (at minimum PostgreSQL, Redis, Kafka, Eureka). For example, only infra containers:
+
+   ```bash
+   docker compose up -d db redis kafka eureka-server
+   ```
+
+   Add other containers (Zipkin, Logstash, …) if your modules expect them.
+
+2. **Point services at `localhost`** – default `application.yml` files use Docker hostnames (e.g. `dynamiccarsharing_db`, `kafka`, `eureka-server`). When running a service on the host, override with environment variables or a local profile, for example:
+
+   * `SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/dynamic_car_sharing_db`
+   * `SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092`
+   * `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka/`
+
+3. **Startup order** – start **Eureka** first, then domain services (**user**, **car**, **booking**, **dispute**), then **API Gateway**. For booking lifecycle events to reach `car-service` via Kafka, enable **`APPLICATION_MESSAGING_KAFKA_ENABLED=true`** (or equivalent property) on `booking-service`.
 
 ---
 
@@ -169,7 +213,7 @@ docker-compose up --build
 3. **Complete** — Same endpoint with `{"status": "COMPLETED"}` moves from `APPROVED` to `COMPLETED`. **A completed payment is required** for the booking before it can be completed.
 4. **Cancel** — `{"status": "CANCELED"}` is allowed from `PENDING` or `APPROVED`; completed bookings cannot be canceled.
 
-After every lifecycle status change in `booking-service` (`APPROVED`, `COMPLETED`, `CANCELED`), the service publishes a command to Kafka topic `booking.commands`. The `car-service` consumes this command and updates the car state accordingly by calling `rentCar` / `returnCar`.
+After every lifecycle status change in `booking-service` (`APPROVED`, `COMPLETED`, `CANCELED` when applicable), the service **records an outbox row** (with Kafka enabled) and the **outbox relay** publishes to Kafka topic `booking.commands`. The `car-service` consumes this command and updates the car state accordingly by calling `rentCar` / `returnCar`. Consumers should treat messages as **at-least-once** and stay **idempotent** where needed.
 
 ### Payment flow
 
@@ -208,28 +252,35 @@ This keeps controllers thin and preserves a consistent API style for admin read 
 
 ## Tests and coverage
 
-All tests are integration-style: they use the Spring context, in-memory H2 where applicable, and mock external calls where needed.
+Most tests are **integration-style**: they load the Spring context, use in-memory H2 or Testcontainers where applicable, and mock external HTTP calls where needed.
 
-**Run all tests** (from project root; builds all modules and runs tests):
+**Run all tests** (from the **repository root**; runs every module in the reactor):
 
 ```bash
 mvn test
 ```
 
-**Run tests for a single module** (build dependencies first, or use `-am`):
+**Run tests for a single module** (build dependent modules first, or use `-am`):
 
 ```bash
 mvn test -pl booking-service -am
 mvn test -pl api-gateway -am
 ```
 
-If you already ran `mvn install` from the root, you can use `mvn test -pl booking-service` without `-am`.
+If you already ran `mvn install` from the root, you can usually run:
 
-**Run a specific test class:**
+```bash
+mvn test -pl booking-service
+```
+
+**Run one test class** (example: booking REST; example: transactional outbox + embedded Kafka):
 
 ```bash
 mvn test -pl booking-service -Dtest=BookingControllerIntegrationTest
+mvn test -pl booking-service -Dtest=BookingLifecycleOutboxIntegrationTest
 ```
+
+Some tests use **Testcontainers** (e.g. Redis) and are skipped or require Docker; see `@Testcontainers(disabledWithoutDocker = true)` in those classes.
 
 **Generate JaCoCo coverage report** (for modules that define the JaCoCo plugin):
 
@@ -238,6 +289,15 @@ mvn clean test jacoco:report
 ```
 
 Reports are written under `target/site/jacoco/index.html` in each module.
+
+### Quick checklist to “test the application”
+
+| Goal | Command / action |
+|------|------------------|
+| Verify all modules compile and tests pass | `mvn test` from the **root** |
+| Focus on **booking-service** | `mvn test -pl booking-service -am` |
+| Run the **full stack** and test via HTTP | `docker-compose up --build`, then call the API through the gateway (see [Service Endpoints](#service-endpoints)) |
+| Health | Open Eureka (`8761`) or each service’s `/actuator/health` |
 
 ---
 
