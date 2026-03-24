@@ -89,6 +89,10 @@ application:
       enabled: false
     topics:
       booking-commands: booking.commands
+    outbox:
+      relay-interval-ms: 1000
+      batch-size: 50
+      send-timeout-seconds: 10
   redis:
     key-prefix: booking
     read-cache:
