@@ -24,6 +24,7 @@
         <module>car-service</module>
         <module>dispute-service</module>
         <module>booking-service</module>
+        <module>notification-service</module>
         <module>api-contracts</module>
         <module>common-utils</module>
         <module>api-gateway</module>
@@ -120,9 +121,6 @@
                             <version>0.2.0</version>
                         </path>
                     </annotationProcessorPaths>
-                    <compilerArgs>
-                        <arg>-Amapstruct.unmappedTargetPolicy=IGNORE</arg>
-                    </compilerArgs>
                 </configuration>
             </plugin>
         </plugins>
