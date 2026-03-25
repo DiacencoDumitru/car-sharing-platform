@@ -1,0 +1,90 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: notification-service
+  profiles:
+    active: jpa
+
+  datasource:
+    url: jdbc:postgresql://dynamiccarsharing_db:5432/dynamic_car_sharing_db
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:password123}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    client-id: ${spring.application.name}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    consumer:
+      group-id: notification-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      listener:
+        ack-mode: record
+        missing-topics-fatal: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+    registry-fetch-interval-seconds: 10
+
+  instance:
+    instance-id: ${spring.application.name}:${server.port}:${random.uuid}
+    prefer-ip-address: false
+    hostname: notification-service
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus"
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+application:
+  messaging:
+    kafka:
+      enabled: false
+    topics:
+      booking-commands: booking.commands
+      booking-commands-dlt: booking.commands.dlt
+
+fraud:
+  approve-cancel-window-seconds: 3600
+
+notifications:
+  dispatch:
+    email-enabled: true
+    push-enabled: true
+
+  email:
+    http:
+      endpoint-url: ${NOTIFICATION_EMAIL_ENDPOINT_URL:}
+
+  push:
+    http:
+      endpoint-url: ${NOTIFICATION_PUSH_ENDPOINT_URL:}
+
