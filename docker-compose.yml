@@ -245,6 +245,42 @@ services:
       start_period: 120s
     restart: unless-stopped
 
+  notification-service:
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    image: notification-service
+    container_name: notification-service
+    ports:
+      - "8084:8084"
+    environment:
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - SPRING_PROFILES_ACTIVE=local-docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/dynamic_car_sharing_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password123
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      logstash:
+        condition: service_started
+      zipkin:
+        condition: service_started
+    networks:
+      - microservices-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8084/actuator/health/liveness || exit 1" ]
+      interval: 30s
+      timeout: 15s
+      retries: 10
+      start_period: 120s
+    restart: unless-stopped
+
   dispute-service:
     build:
       context: .
