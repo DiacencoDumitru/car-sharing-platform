@@ -17,6 +17,7 @@ The platform is composed of multiple microservices communicating via REST APIs a
 * **User Service** – user management and authentication
 * **Car Service** – car catalog management and search
 * **Booking Service** – reservation and booking logic
+* **Notification Service** – consumes booking lifecycle events from Kafka, stores analytics and fraud signals, and can dispatch email/push notifications when a case needs attention (integrates with **User Service** for contact data)
 * **Dispute Service** – dispute resolution between renters and owners
 
 ### Service Discovery
@@ -25,7 +26,7 @@ The platform is composed of multiple microservices communicating via REST APIs a
 
 ### Messaging
 
-* **Kafka** – asynchronous communication between services. In this project it is also used for lifecycle commands: `booking-service` publishes to topic `booking.commands` and `car-service` consumes it to update the car state.
+* **Kafka** – asynchronous communication between services. **Booking lifecycle** events are published to topic `booking.commands` (via transactional outbox in `booking-service`). **Consumers:** `car-service` updates vehicle availability; **`notification-service`** records analytics, runs a lightweight **anti-fraud** heuristic, and optionally sends notifications. Each consumer uses its **own consumer group**, so all subscribers receive the same event stream.
 
 * **Transactional outbox (booking-service)** – when Kafka is enabled, lifecycle events are **written to table `booking_lifecycle_outbox` in the same database transaction** as the booking status change, then a **relay** publishes to Kafka and removes the row. This avoids losing events if the process crashes after commit but before a broker send (see [Transactional outbox](#transactional-outbox-booking-service)).
 
@@ -57,6 +58,7 @@ API Gateway
 ├── User Service (2 instances)
 ├── Car Service
 ├── Booking Service
+├── Notification Service
 └── Dispute Service
 
 Infrastructure
@@ -127,6 +129,7 @@ Infrastructure
 * Redis caching (catalog in `car-service`; optional guard, idempotency, read-cache in `booking-service`)
 * Asynchronous messaging with Kafka
 * **Transactional outbox** for reliable booking lifecycle events to Kafka (`booking-service`)
+* **Notification pipeline** for booking lifecycle: idempotent analytics storage, fraud scoring, conditional email/push (`notification-service`)
 * Containerized microservices deployment
 
 ---
@@ -145,6 +148,29 @@ When `application.messaging.kafka.enabled=true`, booking lifecycle events (`APPR
 | `application.messaging.outbox.send-timeout-seconds` | Sync Kafka send timeout used by the publisher (default `10`). |
 
 Cache eviction for Redis read-cache still uses **after-commit** application events; only the **Kafka** path goes through the outbox.
+
+---
+
+## Notification service
+
+`notification-service` listens to **`booking.commands`** when `application.messaging.kafka.enabled=true` (enabled in the **`local-docker`** profile; default in `application.yml` is `false` for local runs without Kafka).
+
+**Processing pipeline**
+
+1. **Idempotency** – events are deduplicated using table `booking_lifecycle_analytics_events` with a unique constraint on `(booking_id, booking_status)` (at-least-once Kafka delivery).
+2. **Anti-fraud** – `SimpleAntiFraudService` assigns a risk score and `attentionRequired`; rules include heuristics on renter id and time between `APPROVED` and later `COMPLETED` / `CANCELED` (configurable window `fraud.approve-cancel-window-seconds`).
+3. **Notifications** – if `attentionRequired` is true, the service may send **email** and/or **push** via HTTP (`notifications.email.http.endpoint-url`, `notifications.push.http.endpoint-url`), resolving renter **email** and **phone** through **User Service** (`lb://user-service`, Eureka load-balanced WebClient).
+4. **Dead-letter topic** – repeated processing failures are sent to `booking.commands.dlt` (see `KafkaConfig`).
+
+**Related settings** in `notification-service/src/main/resources/application.yml` (and profile overrides):
+
+| Property | Purpose |
+|----------|---------|
+| `application.messaging.kafka.enabled` | Enable Kafka listener and `KafkaConfig` beans. |
+| `application.messaging.topics.booking-commands` | Topic name (default `booking.commands`). |
+| `application.messaging.topics.booking-commands-dlt` | DLT topic for failed records. |
+| `fraud.approve-cancel-window-seconds` | Window for “fast” approve→complete/cancel heuristics (default `3600`). |
+| `notifications.dispatch.email-enabled` / `push-enabled` | Toggle channels. |
 
 ---
 
@@ -200,7 +226,7 @@ You **do not** have to start every service manually if you use Docker Compose ab
    * `SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092`
    * `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka/`
 
-3. **Startup order** – start **Eureka** first, then domain services (**user**, **car**, **booking**, **dispute**), then **API Gateway**. For booking lifecycle events to reach `car-service` via Kafka, enable **`APPLICATION_MESSAGING_KAFKA_ENABLED=true`** (or equivalent property) on `booking-service`.
+3. **Startup order** – start **Eureka** first, then domain services (**user**, **car**, **booking**, **notification**, **dispute**), then **API Gateway**. For booking lifecycle events to reach Kafka consumers, enable **`APPLICATION_MESSAGING_KAFKA_ENABLED=true`** on `booking-service` and **`APPLICATION_MESSAGING_KAFKA_ENABLED=true`** on `notification-service` (or use the **`local-docker`** profile for the notification module, which enables it in `application-local-docker.yml`).
 
 ---
 
@@ -213,7 +239,7 @@ You **do not** have to start every service manually if you use Docker Compose ab
 3. **Complete** — Same endpoint with `{"status": "COMPLETED"}` moves from `APPROVED` to `COMPLETED`. **A completed payment is required** for the booking before it can be completed.
 4. **Cancel** — `{"status": "CANCELED"}` is allowed from `PENDING` or `APPROVED`; completed bookings cannot be canceled.
 
-After every lifecycle status change in `booking-service` (`APPROVED`, `COMPLETED`, `CANCELED` when applicable), the service **records an outbox row** (with Kafka enabled) and the **outbox relay** publishes to Kafka topic `booking.commands`. The `car-service` consumes this command and updates the car state accordingly by calling `rentCar` / `returnCar`. Consumers should treat messages as **at-least-once** and stay **idempotent** where needed.
+After every lifecycle status change in `booking-service` (`APPROVED`, `COMPLETED`, `CANCELED` when applicable), the service **records an outbox row** (with Kafka enabled) and the **outbox relay** publishes to Kafka topic `booking.commands`. The `car-service` consumes this command and updates the car state accordingly by calling `rentCar` / `returnCar`. **`notification-service`** consumes the same topic for analytics, fraud scoring, and optional notifications. Consumers should treat messages as **at-least-once** and stay **idempotent** where needed.
 
 ### Payment flow
 
@@ -278,6 +304,7 @@ mvn test -pl booking-service
 ```bash
 mvn test -pl booking-service -Dtest=BookingControllerIntegrationTest
 mvn test -pl booking-service -Dtest=BookingLifecycleOutboxIntegrationTest
+mvn test -pl notification-service -am -Dtest=BookingLifecycleCommandListenerIntegrationTest
 ```
 
 Some tests use **Testcontainers** (e.g. Redis) and are skipped or require Docker; see `@Testcontainers(disabledWithoutDocker = true)` in those classes.
@@ -305,6 +332,9 @@ Reports are written under `target/site/jacoco/index.html` in each module.
 
 API Gateway
 http://localhost:8085
+
+Notification Service (actuator)
+http://localhost:8084
 
 Eureka Dashboard
 http://localhost:8761
@@ -338,6 +368,7 @@ localhost:9092
 * **user-service** — users and auth
 * **car-service** — car catalog and availability
 * **booking-service** — bookings, payments, transactions
+* **notification-service** — booking lifecycle Kafka consumer, analytics, fraud heuristics, notification dispatch
 * **dispute-service** — disputes
 * **common-utils** — JWT and shared utilities
 * **api-contracts** — shared DTOs and enums
