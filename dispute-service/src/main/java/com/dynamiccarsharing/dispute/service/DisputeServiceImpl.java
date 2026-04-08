@@ -1,8 +1,6 @@
 package com.dynamiccarsharing.dispute.service;
 
-import com.dynamiccarsharing.contracts.dto.BookingDto;
 import com.dynamiccarsharing.contracts.dto.DisputeDto;
-import com.dynamiccarsharing.contracts.dto.UserDto;
 import com.dynamiccarsharing.contracts.enums.DisputeStatus;
 import com.dynamiccarsharing.dispute.criteria.DisputeSearchCriteria;
 import com.dynamiccarsharing.dispute.dto.DisputeCreateRequestDto;
@@ -12,15 +10,13 @@ import com.dynamiccarsharing.dispute.mapper.DisputeMapper;
 import com.dynamiccarsharing.dispute.model.Dispute;
 import com.dynamiccarsharing.dispute.repository.DisputeRepository;
 import com.dynamiccarsharing.dispute.service.interfaces.DisputeService;
+import com.dynamiccarsharing.dispute.integration.client.BookingIntegrationClient;
+import com.dynamiccarsharing.dispute.integration.client.UserIntegrationClient;
 import com.dynamiccarsharing.util.exception.ServiceException;
-import com.dynamiccarsharing.util.exception.ValidationException;
 import com.dynamiccarsharing.util.filter.Filter;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -30,21 +26,12 @@ import java.util.Optional;
 @Service("disputeService")
 @Transactional
 @RequiredArgsConstructor
-@Slf4j
 public class DisputeServiceImpl implements DisputeService {
 
     private final DisputeRepository disputeRepository;
     private final DisputeMapper disputeMapper;
-    private final WebClient.Builder webClientBuilder;
-
-    private WebClient userWebClient;
-    private WebClient bookingWebClient;
-
-    @PostConstruct
-    public void init() {
-        this.userWebClient = webClientBuilder.baseUrl("lb://user-service").build();
-        this.bookingWebClient = webClientBuilder.baseUrl("lb://booking-service").build();
-    }
+    private final UserIntegrationClient userIntegrationClient;
+    private final BookingIntegrationClient bookingIntegrationClient;
 
     @Override
     public DisputeDto createDispute(Long bookingId, DisputeCreateRequestDto createDto, Long creationUserId) {
@@ -112,34 +99,10 @@ public class DisputeServiceImpl implements DisputeService {
     }
 
     private void validateUserExists(Long userId) {
-        try {
-            UserDto user = userWebClient.get()
-                    .uri("/" + userId)
-                    .retrieve()
-                    .bodyToMono(UserDto.class)
-                    .block();
-
-            if (user != null) {
-                log.info("User validation handled by instance: {}", user.getInstanceId());
-            }
-        } catch (Exception e) {
-            throw new ValidationException("User with ID " + userId + " does not exist.");
-        }
+        userIntegrationClient.assertUserExists(userId);
     }
 
     private void validateBookingExists(Long bookingId) {
-        try {
-            BookingDto booking = bookingWebClient.get()
-                    .uri("/" + bookingId)
-                    .retrieve()
-                    .bodyToMono(BookingDto.class)
-                    .block();
-
-            if (booking != null) {
-                log.info("Booking validation handled by instance: {}", booking.getInstanceId());
-            }
-        } catch (Exception e) {
-            throw new ValidationException("Booking with ID " + bookingId + " does not exist.");
-        }
+        bookingIntegrationClient.assertBookingExists(bookingId);
     }
 }
