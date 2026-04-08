@@ -443,5 +443,51 @@ This project demonstrates practical experience with:
 
 ---
 
+## Architecture and Design Patterns
+
+This codebase applies practical microservice design patterns focused on reliability and maintainability.
+
+### Typed Integration Clients (Ports and Adapters)
+
+Inter-service validations are isolated behind typed integration ports instead of being embedded in domain services:
+
+- `booking-service` uses integration clients for `user-service` and `car-service`
+- `dispute-service` uses integration clients for `user-service` and `booking-service`
+
+Why it helps:
+
+- keeps business services focused on domain rules
+- centralizes HTTP details, error mapping, retries, and timeout policy
+- reduces accidental contract drift between services
+
+### Resilience Strategy for Inter-service Calls
+
+For outbound HTTP calls, integration clients apply:
+
+- bounded timeout (`application.http.clients.timeout-seconds`)
+- retry with backoff for retriable failures (`application.http.clients.retry-max-attempts`, `application.http.clients.retry-backoff-millis`)
+- consistent exception mapping:
+  - `404` -> validation-level business error
+  - `5xx` / transport failures -> service-level technical error
+
+### Interview Demo (5 minutes)
+
+1. Run tests proving integration client behavior:
+
+```bash
+mvn test -pl booking-service -Dtest=IntegrationClientsIntegrationTest
+mvn test -pl dispute-service -Dtest=IntegrationClientsIntegrationTest
+```
+
+2. Explain the before/after:
+   - before: `WebClient` + URI building + try/catch inside business services
+   - after: business services call typed integration ports, resilience is centralized
+
+3. Show that failure paths are deterministic:
+   - upstream `404` is mapped to business validation errors
+   - upstream `5xx` is mapped to technical service errors
+
+---
+
 ## Author
 Dumitru Diacenco, Java Backend Engineer
