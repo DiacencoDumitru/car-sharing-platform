@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -71,8 +72,9 @@ class BookingServiceIntegrationTest {
             var uriSpec = mock(RequestHeadersUriSpec.class);
             ResponseSpec responseSpec = mock(ResponseSpec.class);
             when(wc.get()).thenReturn(uriSpec);
-            when(uriSpec.uri(anyString())).thenReturn(uriSpec);
+            when(uriSpec.uri(anyString(), anyLong())).thenReturn(uriSpec);
             when(uriSpec.retrieve()).thenReturn(responseSpec);
+            when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
             when(responseSpec.bodyToMono(UserDto.class)).thenReturn(Mono.just(new UserDto()));
             return wc;
         }
@@ -84,8 +86,9 @@ class BookingServiceIntegrationTest {
             CarDto car = new CarDto();
             car.setStatus(CarStatus.AVAILABLE);
             when(wc.get()).thenReturn(uriSpec);
-            when(uriSpec.uri(anyString())).thenReturn(uriSpec);
+            when(uriSpec.uri(anyString(), anyLong())).thenReturn(uriSpec);
             when(uriSpec.retrieve()).thenReturn(responseSpec);
+            when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
             when(responseSpec.bodyToMono(any(Class.class))).thenReturn(Mono.just(car));
             return wc;
         }
