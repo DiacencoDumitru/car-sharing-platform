@@ -8,11 +8,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.validation.BindingResult;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
@@ -22,7 +23,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class GlobalExceptionHandlerTest {
@@ -66,13 +66,17 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleMethodArgumentNotValidException() {
-        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
-        BindingResult bindingResult = mock(BindingResult.class);
+    void handleMethodArgumentNotValidException() throws Exception {
         FieldError fieldError = new FieldError("user", "email", "must be a valid email");
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "user");
+        bindingResult.addError(fieldError);
 
-        when(ex.getBindingResult()).thenReturn(bindingResult);
-        when(bindingResult.getAllErrors()).thenReturn(List.of(fieldError));
+        MethodParameter parameter = new MethodParameter(
+                com.dynamiccarsharing.user.controller.UserController.class.getMethod(
+                        "registerUser",
+                        com.dynamiccarsharing.user.dto.UserCreateRequestDto.class),
+                0);
+        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(parameter, bindingResult);
 
         ProblemDetail problemDetail = exceptionHandler.handleMethodArgumentNotValidException(ex);
 

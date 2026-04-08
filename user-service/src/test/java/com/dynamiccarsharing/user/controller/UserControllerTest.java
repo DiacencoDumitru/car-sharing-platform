@@ -11,19 +11,26 @@ import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
 import com.dynamiccarsharing.user.dto.UserStatusUpdateRequestDto;
 import com.dynamiccarsharing.user.service.UserServiceImpl;
 import com.dynamiccarsharing.util.security.JwtAuthenticationFilter;
+import com.dynamiccarsharing.util.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.io.IOException;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(value = UserController.class, properties = "eureka.instance.instance-id=test-instance-1")
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, UserControllerTest.PassThroughJwtFilterConfig.class})
 class UserControllerTest {
 
     @Autowired
@@ -50,20 +57,28 @@ class UserControllerTest {
     @MockBean
     private UserServiceImpl userServiceImpl;
 
-    @MockBean
-    JwtAuthenticationFilter jwtAuthenticationFilter;
+    @TestConfiguration
+    static class PassThroughJwtFilterConfig {
+        @Bean
+        @Primary
+        JwtUtil jwtUtil() {
+            JwtUtil jwtUtil = new JwtUtil();
+            ReflectionTestUtils.setField(jwtUtil, "secretKey",
+                    "NDM0YjVmNjM1MTY0NWE3NDc3Mzg3YTMzNjE1MTQxNTg0NTUxNDg0ZjU0N2IzYjRmNmE1YjdhNmE0ZDQxNjM1Mg==");
+            return jwtUtil;
+        }
 
-    @BeforeEach
-    void passThroughFilter() throws Exception {
-        doAnswer(inv -> {
-            var filterChain = inv.getArgument(2, FilterChain.class);
-            filterChain.doFilter(inv.getArgument(0), inv.getArgument(1));
-            return null;
-        }).when(jwtAuthenticationFilter).doFilter(
-                any(ServletRequest.class),
-                any(ServletResponse.class),
-                any(FilterChain.class)
-        );
+        @Bean
+        @Primary
+        JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil) {
+            return new JwtAuthenticationFilter(jwtUtil) {
+                @Override
+                protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+                        throws ServletException, IOException {
+                    filterChain.doFilter(request, response);
+                }
+            };
+        }
     }
 
     @Test
