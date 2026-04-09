@@ -168,6 +168,20 @@ class QuoteControllerIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @DisplayName("POST /api/v1/bookings/quote with Idempotency-Key header returns 200 when Redis idempotency is disabled")
+    void calculateQuote_withIdempotencyKeyHeader_returnsOk() {
+        HttpHeaders headers = jsonHeaders();
+        headers.set("Idempotency-Key", "quote-itest-key-1");
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(quoteBody(10L, 205L, null, null), headers);
+
+        ResponseEntity<Map> response = restTemplate.postForEntity(url(), entity, Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(number(response.getBody().get("totalAmount"))).isEqualByComparingTo("20.00");
+    }
+
     private String url() {
         return "http://localhost:" + port + "/api/v1/bookings/quote";
     }
