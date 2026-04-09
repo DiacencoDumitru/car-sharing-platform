@@ -6,6 +6,7 @@ import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
 import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
+import com.dynamiccarsharing.booking.service.interfaces.QuoteService;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.util.exception.ValidationException;
@@ -46,6 +47,8 @@ class BookingControllerTest {
     private BookingService bookingService;
     @MockBean
     private IdempotencyService idempotencyService;
+    @MockBean
+    private QuoteService quoteService;
 
     @Autowired
     private ObjectMapper objectMapper;
