@@ -124,6 +124,23 @@ class IdempotencyIntegrationTest {
         assertThat(paymentRepository.findAll()).hasSize(1);
     }
 
+    @Test
+    @DisplayName("POST /bookings/quote with same idempotency key returns same quote")
+    void calculateQuote_sameIdempotencyKey_returnsSameResponse() {
+        String url = "http://localhost:" + port + "/api/v1/bookings/quote";
+        HttpEntity<Map<String, Object>> request = quoteRequest("idem-quote-1");
+
+        ResponseEntity<Map> first = restTemplate.postForEntity(url, request, Map.class);
+        ResponseEntity<Map> second = restTemplate.postForEntity(url, request, Map.class);
+
+        assertThat(first.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(first.getBody()).isNotNull();
+        assertThat(second.getBody()).isNotNull();
+        assertThat(second.getBody().get("totalAmount")).isEqualTo(first.getBody().get("totalAmount"));
+        assertThat(second.getBody().get("expiresAt")).isEqualTo(first.getBody().get("expiresAt"));
+    }
+
     private HttpEntity<Map<String, Object>> bookingRequest(String idempotencyKey) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -147,6 +164,20 @@ class IdempotencyIntegrationTest {
         body.put("bookingId", bookingId);
         body.put("amount", BigDecimal.valueOf(100));
         body.put("paymentMethod", "CREDIT_CARD");
+        return new HttpEntity<>(body, headers);
+    }
+
+    private HttpEntity<Map<String, Object>> quoteRequest(String idempotencyKey) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Idempotency-Key", idempotencyKey);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("renterId", 1);
+        body.put("carId", 101);
+        body.put("startTime", LocalDateTime.now().plusDays(3).withHour(10).withMinute(0).withSecond(0).withNano(0).toString());
+        body.put("endTime", LocalDateTime.now().plusDays(3).withHour(12).withMinute(0).withSecond(0).withNano(0).toString());
+        body.put("pickupLocationId", 5);
         return new HttpEntity<>(body, headers);
     }
 

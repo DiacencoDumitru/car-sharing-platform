@@ -255,6 +255,7 @@ After every lifecycle status change in `booking-service` (`APPROVED`, `COMPLETED
 ### Quote flow
 
 1. **Request quote** — `POST /api/v1/bookings/quote` returns a pre-booking estimate for a renter and car in a selected time window.
+   * Optional retry-safety header: `Idempotency-Key`. Repeated requests with the same key return the same quote response.
 2. **Availability check** — Booking Service verifies that the car is currently available through Car Service before pricing.
 3. **Pricing breakdown** — Quote includes:
    * base amount,
