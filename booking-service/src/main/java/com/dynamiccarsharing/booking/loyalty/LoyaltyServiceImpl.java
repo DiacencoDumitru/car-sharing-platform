@@ -23,18 +23,8 @@ public class LoyaltyServiceImpl implements LoyaltyService {
 
     @Override
     public BigDecimal redeemPoints(Long renterId, Long paymentId, BigDecimal requestedPoints, BigDecimal initialAmount) {
-        if (requestedPoints == null || requestedPoints.compareTo(BigDecimal.ZERO) <= 0) {
-            return BigDecimal.ZERO;
-        }
-
-        LoyaltyAccount account = accountRepository.findByRenterId(renterId)
-                .orElseThrow(() -> new ValidationException("Loyalty account not found for renter " + renterId));
-
-        if (account.getBalance().compareTo(requestedPoints) < 0) {
-            throw new ValidationException("Insufficient loyalty points for renter " + renterId);
-        }
-
-        BigDecimal discount = requestedPoints.min(initialAmount);
+        LoyaltyAccount account = findAccountForRedemption(renterId, requestedPoints);
+        BigDecimal discount = requestedPoints.min(initialAmount).max(BigDecimal.ZERO);
         account.setBalance(account.getBalance().subtract(discount));
         accountRepository.save(account);
 
@@ -47,6 +37,16 @@ public class LoyaltyServiceImpl implements LoyaltyService {
         transactionRepository.save(transaction);
 
         return discount;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal previewRedeemAmount(Long renterId, BigDecimal requestedPoints, BigDecimal initialAmount) {
+        if (requestedPoints == null || requestedPoints.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+        LoyaltyAccount account = findAccountForRedemption(renterId, requestedPoints);
+        return requestedPoints.min(initialAmount).max(BigDecimal.ZERO);
     }
 
     @Override
@@ -73,6 +73,15 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                 .paymentId(paymentId)
                 .build();
         transactionRepository.save(transaction);
+    }
+
+    private LoyaltyAccount findAccountForRedemption(Long renterId, BigDecimal requestedPoints) {
+        LoyaltyAccount account = accountRepository.findByRenterId(renterId)
+                .orElseThrow(() -> new ValidationException("Loyalty account not found for renter " + renterId));
+        if (account.getBalance().compareTo(requestedPoints) < 0) {
+            throw new ValidationException("Insufficient loyalty points for renter " + renterId);
+        }
+        return account;
     }
 }
 

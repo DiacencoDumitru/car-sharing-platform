@@ -29,6 +29,14 @@ public class WebClientCarIntegrationClient implements CarIntegrationClient {
 
     @Override
     public void assertCarAvailable(Long carId) {
+        CarDto car = getCarById(carId);
+        if (car.getStatus() != CarStatus.AVAILABLE) {
+            throw new ValidationException("Car with ID " + carId + " is not available for booking.");
+        }
+    }
+
+    @Override
+    public CarDto getCarById(Long carId) {
         try {
             CarDto car = carWebClient.get()
                     .uri("/api/v1/cars/{id}", carId)
@@ -44,18 +52,17 @@ public class WebClientCarIntegrationClient implements CarIntegrationClient {
                     )
                     .block();
 
-            if (car != null) {
-                log.info("Car validation handled by instance: {}", car.getInstanceId());
+            if (car == null) {
+                throw new ValidationException("Car with ID " + carId + " does not exist or is unavailable.");
             }
-            if (car == null || car.getStatus() != CarStatus.AVAILABLE) {
-                throw new ValidationException("Car with ID " + carId + " is not available for booking.");
-            }
+            log.info("Car lookup handled by instance: {}", car.getInstanceId());
+            return car;
         } catch (WebClientResponseException.NotFound e) {
             throw new ValidationException("Car with ID " + carId + " does not exist or is unavailable.");
         } catch (ValidationException e) {
             throw e;
         } catch (Exception e) {
-            throw new ServiceException("Failed to validate car with ID " + carId, e);
+            throw new ServiceException("Failed to get car with ID " + carId, e);
         }
     }
 
