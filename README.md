@@ -14,7 +14,7 @@ The platform is composed of multiple microservices communicating via REST APIs a
 ### Core Services
 
 * **API Gateway** – single entry point for client requests and routing
-* **User Service** – user management and authentication
+* **User Service** – user management, authentication, and renter favorite cars (saved car IDs)
 * **Car Service** – car catalog management and search
 * **Booking Service** – reservation and booking logic
 * **Notification Service** – consumes booking lifecycle events from Kafka, stores analytics and fraud signals, and can dispatch email/push notifications when a case needs attention (integrates with **User Service** for contact data)
@@ -122,6 +122,7 @@ Infrastructure
 * Loyalty points earning and redemption linked to payments
 * Admin filtering for payments and transactions via criteria-based search endpoints
 * User authentication and authorization
+* Renter favorite cars (`GET` / `PUT` / `DELETE` under `/api/v1/users/me/favorite-cars`, JWT required)
 * Dispute handling
 * Distributed service discovery
 * Centralized logging (ELK stack)
@@ -295,6 +296,14 @@ Example response:
 }
 ```
 
+### Favorite cars (user-service)
+
+Authenticated renters can persist car IDs for quick access in the UI (existence of the car is not validated here; booking and quote flows still enforce catalog rules).
+
+1. **List** — `GET /api/v1/users/me/favorite-cars` returns a JSON array of car IDs, most recently added first.
+2. **Add** — `PUT /api/v1/users/me/favorite-cars/{carId}` is idempotent (`204` when created or already present).
+3. **Remove** — `DELETE /api/v1/users/me/favorite-cars/{carId}` is idempotent (`204` whether or not the ID was listed).
+
 ### Admin search endpoints (criteria-based)
 
 Booking Service exposes criteria-based filtering for admin read APIs without introducing separate `/search` routes.
@@ -409,7 +418,7 @@ localhost:9092
 ## Project Structure
 
 * **api-gateway** — entry point, routing, JWT validation
-* **user-service** — users and auth
+* **user-service** — users, auth, favorite cars
 * **car-service** — car catalog and availability
 * **booking-service** — bookings, payments, transactions
 * **notification-service** — booking lifecycle Kafka consumer, analytics, fraud heuristics, notification dispatch
