@@ -60,8 +60,15 @@ public class BookingController {
     }
 
     @PostMapping("/quote")
-    public ResponseEntity<QuoteResponseDto> calculateQuote(@Valid @RequestBody QuoteRequestDto requestDto) {
-        QuoteResponseDto quote = quoteService.calculateQuote(requestDto);
+    public ResponseEntity<QuoteResponseDto> calculateQuote(
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody QuoteRequestDto requestDto) {
+        QuoteResponseDto quote = idempotencyService.execute(
+                "bookings:quote",
+                idempotencyKey,
+                QuoteResponseDto.class,
+                () -> quoteService.calculateQuote(requestDto)
+        );
         return ResponseEntity.ok(quote);
     }
 

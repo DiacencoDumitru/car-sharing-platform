@@ -191,6 +191,13 @@ paths:
       summary: Get booking quote
       description: Calculates estimated booking price before creating a booking.
       operationId: getBookingQuote
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Optional key to return the same quote response for repeated retries.
+          schema:
+            type: string
       requestBody:
         required: true
         content:
