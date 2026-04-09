@@ -19,14 +19,14 @@ import static com.dynamiccarsharing.booking.pricing.DynamicPricingRuleType.TIME_
 @RequiredArgsConstructor
 public class PricingServiceImpl implements PricingService {
 
-    private static final BigDecimal BASE_RATE_PER_HOUR = BigDecimal.TEN;
+    private static final BigDecimal DEFAULT_RATE_PER_HOUR = BigDecimal.TEN;
 
     private final DynamicPricingRuleRepository ruleRepository;
     private final PromoService promoService;
 
     @Override
     public BigDecimal calculateTotalPrice(PricingContext context) {
-        PriceComponents components = calculateComponents(context);
+        PriceComponents components = calculatePriceComponents(context);
         BigDecimal total = components.total();
         if (total.compareTo(BigDecimal.ZERO) < 0) {
             return BigDecimal.ZERO;
@@ -34,20 +34,33 @@ public class PricingServiceImpl implements PricingService {
         return total.setScale(2, RoundingMode.HALF_UP);
     }
 
-    private PriceComponents calculateComponents(PricingContext context) {
-        BigDecimal base = calculateBasePrice(context.startTime(), context.endTime());
+    @Override
+    public PriceComponents calculatePriceComponents(PricingContext context) {
+        BigDecimal base = calculateBasePrice(context);
         BigDecimal dynamicMarkup = calculateDynamicMarkup(context, base);
         BigDecimal priceBeforeDiscount = base.add(dynamicMarkup);
         BigDecimal discounts = promoService.calculateDiscount(context, priceBeforeDiscount);
-        return new PriceComponents(base, dynamicMarkup, discounts);
+        return new PriceComponents(
+                base.setScale(2, RoundingMode.HALF_UP),
+                dynamicMarkup.setScale(2, RoundingMode.HALF_UP),
+                discounts.setScale(2, RoundingMode.HALF_UP)
+        );
     }
 
-    private BigDecimal calculateBasePrice(LocalDateTime start, LocalDateTime end) {
-        Duration duration = Duration.between(start, end);
+    private BigDecimal calculateBasePrice(PricingContext context) {
+        Duration duration = Duration.between(context.startTime(), context.endTime());
         long minutes = Math.max(duration.toMinutes(), 0);
         BigDecimal hours = BigDecimal.valueOf(minutes)
                 .divide(BigDecimal.valueOf(60), 2, RoundingMode.CEILING);
-        return hours.multiply(BASE_RATE_PER_HOUR);
+        return hours.multiply(resolveHourlyRate(context.carPricePerDay()));
+    }
+
+    private BigDecimal resolveHourlyRate(BigDecimal carPricePerDay) {
+        if (carPricePerDay == null || carPricePerDay.compareTo(BigDecimal.ZERO) <= 0) {
+            return DEFAULT_RATE_PER_HOUR;
+        }
+        return carPricePerDay
+                .divide(BigDecimal.valueOf(24), 4, RoundingMode.HALF_UP);
     }
 
     private BigDecimal calculateDynamicMarkup(PricingContext context, BigDecimal base) {

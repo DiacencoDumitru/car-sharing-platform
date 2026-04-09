@@ -51,6 +51,7 @@ public class PaymentServiceImpl implements PaymentService {
                 booking.getId(),
                 booking.getRenterId(),
                 booking.getCarId(),
+                null,
                 booking.getPickupLocationId(),
                 booking.getStartTime(),
                 booking.getEndTime(),
