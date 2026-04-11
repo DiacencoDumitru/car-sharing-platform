@@ -184,6 +184,36 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /bookings/quote:
+    post:
+      tags:
+        - Bookings
+      summary: Get booking quote
+      description: Calculates estimated booking price before creating a booking.
+      operationId: getBookingQuote
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Optional key to return the same quote response for repeated retries.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteRequest'
+      responses:
+        '200':
+          description: Quote calculated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
   /bookings/{bookingId}:
     get:
       tags:
@@ -924,6 +954,63 @@ components:
       $ref: 'schemas/DisputeCreateRequest.yaml'
     PaymentRequest:
       $ref: 'schemas/PaymentRequest.yaml'
+    QuoteRequest:
+      type: object
+      required:
+        - renterId
+        - carId
+        - startTime
+        - endTime
+      properties:
+        renterId:
+          type: integer
+          format: int64
+        carId:
+          type: integer
+          format: int64
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        pickupLocationId:
+          type: integer
+          format: int64
+        promoCode:
+          type: string
+        loyaltyPointsToUse:
+          type: number
+          format: double
+    QuoteResponse:
+      type: object
+      properties:
+        renterId:
+          type: integer
+          format: int64
+        carId:
+          type: integer
+          format: int64
+        baseAmount:
+          type: number
+          format: double
+        dynamicMarkupAmount:
+          type: number
+          format: double
+        discountAmount:
+          type: number
+          format: double
+        loyaltyAmount:
+          type: number
+          format: double
+        totalAmount:
+          type: number
+          format: double
+        currency:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
 
     CarPage:
       type: object

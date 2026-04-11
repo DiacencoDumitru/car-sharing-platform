@@ -117,6 +117,7 @@ Infrastructure
 * Car catalog and vehicle listing
 * Booking and reservation management
 * Dynamic pricing for bookings based on time and pickup location rules
+* Price quote before booking with detailed cost breakdown (base, dynamic markup, discounts, loyalty)
 * Promo codes and discounts applied on top of dynamic pricing
 * Loyalty points earning and redemption linked to payments
 * Admin filtering for payments and transactions via criteria-based search endpoints
@@ -250,6 +251,49 @@ After every lifecycle status change in `booking-service` (`APPROVED`, `COMPLETED
    * optional loyalty points redemption.
 2. **Confirm** — `PATCH /api/v1/admin/payments/{paymentId}/confirm` sets payment to `COMPLETED`. At this moment, the renter **earns loyalty points** based on the paid amount. The action is **audited** in `admin_audit_log` (payment id, action `PAYMENT_CONFIRM`, optional actor from header `X-User-Id`).
 3. **Refund** — `PATCH /api/v1/admin/payments/{paymentId}/refund` is allowed only for `COMPLETED` payments. The action is **audited** in `admin_audit_log` (action `PAYMENT_REFUND`, optional `X-User-Id`). (Loyalty adjustments for refunds can be extended in future iterations.)
+
+### Quote flow
+
+1. **Request quote** — `POST /api/v1/bookings/quote` returns a pre-booking estimate for a renter and car in a selected time window.
+   * Optional retry-safety header: `Idempotency-Key`. Repeated requests with the same key return the same quote response.
+2. **Availability check** — Booking Service verifies that the car is currently available through Car Service before pricing.
+3. **Pricing breakdown** — Quote includes:
+   * base amount,
+   * dynamic markup amount,
+   * promo discount amount,
+   * loyalty preview amount,
+   * final total amount.
+4. **Use quote for booking/payment** — The response is intended for UI transparency before creating the booking and payment.
+
+Example request:
+
+```json
+{
+  "renterId": 10,
+  "carId": 303,
+  "startTime": "2026-04-10T10:00:00",
+  "endTime": "2026-04-10T12:00:00",
+  "pickupLocationId": 1,
+  "promoCode": "PROMO20",
+  "loyaltyPointsToUse": 3
+}
+```
+
+Example response:
+
+```json
+{
+  "renterId": 10,
+  "carId": 303,
+  "baseAmount": 20.00,
+  "dynamicMarkupAmount": 4.00,
+  "discountAmount": 4.80,
+  "loyaltyAmount": 3.00,
+  "totalAmount": 16.20,
+  "currency": "USD",
+  "expiresAt": "2026-04-10T09:15:00"
+}
+```
 
 ### Admin search endpoints (criteria-based)
 

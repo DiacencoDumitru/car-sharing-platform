@@ -3,8 +3,11 @@ package com.dynamiccarsharing.booking.controller;
 import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
+import com.dynamiccarsharing.booking.dto.QuoteRequestDto;
+import com.dynamiccarsharing.booking.dto.QuoteResponseDto;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
 import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
+import com.dynamiccarsharing.booking.service.interfaces.QuoteService;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ public class BookingController {
 
     private final BookingService bookingService;
     private final IdempotencyService idempotencyService;
+    private final QuoteService quoteService;
 
     @Value("${eureka.instance.instance-id}")
     private String instanceId;
@@ -53,6 +57,19 @@ public class BookingController {
                 () -> bookingService.save(createDto)
         );
         return new ResponseEntity<>(savedBooking, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/quote")
+    public ResponseEntity<QuoteResponseDto> calculateQuote(
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody QuoteRequestDto requestDto) {
+        QuoteResponseDto quote = idempotencyService.execute(
+                "bookings:quote",
+                idempotencyKey,
+                QuoteResponseDto.class,
+                () -> quoteService.calculateQuote(requestDto)
+        );
+        return ResponseEntity.ok(quote);
     }
 
     @PatchMapping("/{bookingId}")
