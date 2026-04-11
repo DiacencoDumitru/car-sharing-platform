@@ -14,7 +14,7 @@ The platform is composed of multiple microservices communicating via REST APIs a
 ### Core Services
 
 * **API Gateway** – single entry point for client requests and routing
-* **User Service** – user management and authentication; **favorite cars (wishlist)** for renters (stored in user DB, car existence validated via **car-service**)
+* **User Service** – user management and authentication; renter **favorite cars** at `/api/v1/users/me/favorite-cars` and `/api/v1/users/{userId}/favorite-cars` (table `favorite_cars`; **car-service** validates on add)
 * **Car Service** – car catalog management and search
 * **Booking Service** – reservation and booking logic
 * **Notification Service** – consumes booking lifecycle events from Kafka, stores analytics and fraud signals, and can dispatch email/push notifications when a case needs attention (integrates with **User Service** for contact data)
@@ -120,7 +120,7 @@ Infrastructure
 * Price quote before booking with detailed cost breakdown (base, dynamic markup, discounts, loyalty)
 * Promo codes and discounts applied on top of dynamic pricing
 * Loyalty points earning and redemption linked to payments
-* **Favorite cars (wishlist)** — authenticated users can save and list car IDs under their own profile (`/api/v1/users/{userId}/favorite-cars`); adding a favorite calls **car-service** to ensure the car exists
+* **Favorite cars (wishlist)** — `GET` / `PUT` / `DELETE` on `/api/v1/users/me/favorite-cars` (JWT) and the same on `/api/v1/users/{userId}/favorite-cars` when the token matches that user; **car-service** is used when adding a favorite
 * Admin filtering for payments and transactions via criteria-based search endpoints
 * User authentication and authorization
 * Dispute handling
@@ -311,11 +311,12 @@ Controller layer detects whether any filter is provided:
 
 This keeps controllers thin and preserves a consistent API style for admin read endpoints.
 
-### Favorite cars (wishlist)
+### Favorite cars (user-service)
 
-1. **List** — `GET /api/v1/users/{userId}/favorite-cars` with a JWT whose subject matches `userId` returns `{ "carIds": [ … ] }` sorted by car ID.
-2. **Add** — `PUT /api/v1/users/{userId}/favorite-cars/{carId}` is idempotent; **user-service** checks the car with **car-service** before persisting a row in `user_favorite_cars`.
-3. **Remove** — `DELETE /api/v1/users/{userId}/favorite-cars/{carId}` is idempotent.
+Persisted in `favorite_cars`. Every add checks **car-service** for a real car.
+
+1. **`/api/v1/users/me/favorite-cars`** — `GET` returns a JSON array of car IDs (most recently added first). `PUT` / `DELETE` `/{carId}` are idempotent (`204`).
+2. **`/api/v1/users/{userId}/favorite-cars`** — same when the JWT subject matches `userId`; `GET` returns `{ "carIds": [ … ] }` sorted by car ID.
 
 ### Security and roles via API Gateway
 

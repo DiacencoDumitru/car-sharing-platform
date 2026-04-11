@@ -682,6 +682,55 @@ paths:
               schema:
                 $ref: '#/components/schemas/TransactionPage'
 
+  /users/me/favorite-cars:
+    get:
+      tags:
+        - Users & Profiles
+      summary: List my favorite cars
+      description: Returns car IDs the authenticated user saved for quick access when booking. Most recently added first.
+      operationId: listMyFavoriteCars
+      responses:
+        '200':
+          description: List of favorited car IDs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteCarIds'
+        '403':
+          description: Unauthenticated (e.g. missing or invalid bearer token).
+
+  /users/me/favorite-cars/{carId}:
+    put:
+      tags:
+        - Users & Profiles
+      summary: Add car to favorites
+      description: Idempotent. Adds the car to the user's favorites if not already present. Verifies the car exists via car-service.
+      operationId: addFavoriteCar
+      parameters:
+        - $ref: '#/components/parameters/CarId'
+      responses:
+        '204':
+          description: Favorite saved (or already present).
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Unauthenticated (e.g. missing or invalid bearer token).
+        '503':
+          description: Car service unavailable.
+    delete:
+      tags:
+        - Users & Profiles
+      summary: Remove car from favorites
+      description: Idempotent. Removes the car from favorites if present.
+      operationId: removeFavoriteCar
+      parameters:
+        - $ref: '#/components/parameters/CarId'
+      responses:
+        '204':
+          description: Favorite removed (or was not in the list).
+        '403':
+          description: Unauthenticated (e.g. missing or invalid bearer token).
+
   /admin/payments:
     get:
       tags:
@@ -1115,6 +1164,12 @@ components:
           type: integer
         totalElements:
           type: integer
+    FavoriteCarIds:
+      type: array
+      description: Car IDs saved as favorites by the user; most recently added first.
+      items:
+        type: integer
+        format: int64
     DisputePage:
       type: object
       properties:
