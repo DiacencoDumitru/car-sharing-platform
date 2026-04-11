@@ -376,6 +376,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
 
+  /users/{userId}/favorite-cars:
+    get:
+      tags:
+        - Users & Profiles
+      summary: List favorite car IDs
+      description: Returns car IDs the user saved for quick access (wishlist). Only the authenticated user may read their own list.
+      operationId: listUserFavoriteCars
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Ordered list of favorite car identifiers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteCarsResponse'
+        '403':
+          description: Caller is not allowed to read this user's favorites.
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{userId}/favorite-cars/{carId}:
+    put:
+      tags:
+        - Users & Profiles
+      summary: Add car to favorites
+      description: Idempotent; verifies the car exists via car-service before saving.
+      operationId: addUserFavoriteCar
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/CarId'
+      responses:
+        '204':
+          description: Favorite saved (or already present).
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Caller is not allowed to modify this user's favorites.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          description: Car service unavailable.
+    delete:
+      tags:
+        - Users & Profiles
+      summary: Remove car from favorites
+      description: Idempotent; no error if the favorite was not present.
+      operationId: removeUserFavoriteCar
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/CarId'
+      responses:
+        '204':
+          description: Favorite removed if it existed.
+        '403':
+          description: Caller is not allowed to modify this user's favorites.
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /reviews/{reviewId}:
     get:
       tags:
@@ -1011,6 +1070,17 @@ components:
         expiresAt:
           type: string
           format: date-time
+
+    FavoriteCarsResponse:
+      type: object
+      required:
+        - carIds
+      properties:
+        carIds:
+          type: array
+          items:
+            type: integer
+            format: int64
 
     CarPage:
       type: object
