@@ -4,6 +4,8 @@ import com.dynamiccarsharing.user.exception.InvalidUserStatusException;
 import com.dynamiccarsharing.user.exception.UserNotFoundException;
 import com.dynamiccarsharing.util.exception.ConflictException;
 import com.dynamiccarsharing.util.exception.ResourceNotFoundException;
+import com.dynamiccarsharing.util.exception.ServiceException;
+import com.dynamiccarsharing.util.exception.ValidationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -78,6 +80,22 @@ public class GlobalExceptionHandler {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected internal error occurred.");
         problemDetail.setTitle("Internal Server Error");
         problemDetail.setType(URI.create("/errors/internal-server-error"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ProblemDetail handleValidationException(ValidationException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problemDetail.setTitle("Validation Failed");
+        problemDetail.setType(URI.create("/errors/validation-failed"));
+        return problemDetail;
+    }
+
+    @ExceptionHandler(ServiceException.class)
+    public ProblemDetail handleServiceException(ServiceException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+        problemDetail.setTitle("Upstream Service Error");
+        problemDetail.setType(URI.create("/errors/service-unavailable"));
         return problemDetail;
     }
 

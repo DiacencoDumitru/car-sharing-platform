@@ -376,6 +376,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
 
+  /users/{userId}/favorite-cars:
+    get:
+      tags:
+        - Users & Profiles
+      summary: List favorite car IDs
+      description: Returns car IDs the user saved for quick access (wishlist). Only the authenticated user may read their own list.
+      operationId: listUserFavoriteCars
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Ordered list of favorite car identifiers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteCarsResponse'
+        '403':
+          description: Caller is not allowed to read this user's favorites.
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{userId}/favorite-cars/{carId}:
+    put:
+      tags:
+        - Users & Profiles
+      summary: Add car to favorites
+      description: Idempotent; verifies the car exists via car-service before saving.
+      operationId: addUserFavoriteCar
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/CarId'
+      responses:
+        '204':
+          description: Favorite saved (or already present).
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Caller is not allowed to modify this user's favorites.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          description: Car service unavailable.
+    delete:
+      tags:
+        - Users & Profiles
+      summary: Remove car from favorites
+      description: Idempotent; no error if the favorite was not present.
+      operationId: removeUserFavoriteCar
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/CarId'
+      responses:
+        '204':
+          description: Favorite removed if it existed.
+        '403':
+          description: Caller is not allowed to modify this user's favorites.
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /reviews/{reviewId}:
     get:
       tags:
@@ -622,6 +681,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionPage'
+
+  /users/me/favorite-cars:
+    get:
+      tags:
+        - Users & Profiles
+      summary: List my favorite cars
+      description: Returns car IDs the authenticated user saved for quick access when booking. Most recently added first.
+      operationId: listMyFavoriteCars
+      responses:
+        '200':
+          description: List of favorited car IDs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteCarIds'
+        '403':
+          description: Unauthenticated (e.g. missing or invalid bearer token).
+
+  /users/me/favorite-cars/{carId}:
+    put:
+      tags:
+        - Users & Profiles
+      summary: Add car to favorites
+      description: Idempotent. Adds the car to the user's favorites if not already present. Verifies the car exists via car-service.
+      operationId: addFavoriteCar
+      parameters:
+        - $ref: '#/components/parameters/CarId'
+      responses:
+        '204':
+          description: Favorite saved (or already present).
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Unauthenticated (e.g. missing or invalid bearer token).
+        '503':
+          description: Car service unavailable.
+    delete:
+      tags:
+        - Users & Profiles
+      summary: Remove car from favorites
+      description: Idempotent. Removes the car from favorites if present.
+      operationId: removeFavoriteCar
+      parameters:
+        - $ref: '#/components/parameters/CarId'
+      responses:
+        '204':
+          description: Favorite removed (or was not in the list).
+        '403':
+          description: Unauthenticated (e.g. missing or invalid bearer token).
 
   /admin/payments:
     get:
@@ -1012,6 +1120,17 @@ components:
           type: string
           format: date-time
 
+    FavoriteCarsResponse:
+      type: object
+      required:
+        - carIds
+      properties:
+        carIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+
     CarPage:
       type: object
       properties:
@@ -1045,6 +1164,12 @@ components:
           type: integer
         totalElements:
           type: integer
+    FavoriteCarIds:
+      type: array
+      description: Car IDs saved as favorites by the user; most recently added first.
+      items:
+        type: integer
+        format: int64
     DisputePage:
       type: object
       properties:
