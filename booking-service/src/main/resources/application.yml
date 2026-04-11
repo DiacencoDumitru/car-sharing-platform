@@ -84,6 +84,11 @@ management:
     port: ${server.port}
 
 application:
+  http:
+    clients:
+      timeout-seconds: 3
+      retry-max-attempts: 2
+      retry-backoff-millis: 200
   messaging:
     kafka:
       enabled: false

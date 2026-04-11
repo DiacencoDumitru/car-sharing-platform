@@ -13,17 +13,15 @@ import com.dynamiccarsharing.booking.service.interfaces.BookingService;
 import com.dynamiccarsharing.booking.messaging.outbox.BookingLifecycleOutboxWriter;
 import com.dynamiccarsharing.booking.service.interfaces.BookingCreationGuard;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
+import com.dynamiccarsharing.booking.integration.client.CarIntegrationClient;
+import com.dynamiccarsharing.booking.integration.client.UserIntegrationClient;
 import com.dynamiccarsharing.contracts.dto.BookingLifecycleEventDto;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
-import com.dynamiccarsharing.contracts.dto.CarDto;
-import com.dynamiccarsharing.contracts.dto.UserDto;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.util.exception.ServiceException;
 import com.dynamiccarsharing.util.exception.ValidationException;
 import com.dynamiccarsharing.util.filter.Filter;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -32,7 +30,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -45,7 +42,6 @@ import static com.dynamiccarsharing.contracts.enums.TransactionStatus.*;
 @Service("bookingService")
 @Transactional
 @RequiredArgsConstructor
-@Slf4j
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
@@ -54,16 +50,8 @@ public class BookingServiceImpl implements BookingService {
     private final BookingCreationGuard bookingCreationGuard;
     private final BookingLifecycleOutboxWriter bookingLifecycleOutboxWriter;
     private final ApplicationEventPublisher applicationEventPublisher;
-    private final WebClient.Builder webClientBuilder;
-
-    private WebClient userWebClient;
-    private WebClient carWebClient;
-
-    @PostConstruct
-    public void init() {
-        this.userWebClient = webClientBuilder.baseUrl("lb://user-service").build();
-        this.carWebClient = webClientBuilder.baseUrl("lb://car-service").build();
-    }
+    private final UserIntegrationClient userIntegrationClient;
+    private final CarIntegrationClient carIntegrationClient;
 
     @Override
     @Caching(evict = {
@@ -224,39 +212,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void validateUserExists(Long userId) {
-        try {
-            UserDto user = userWebClient.get()
-                    .uri("/api/v1/users/" + userId)
-                    .retrieve()
-                    .bodyToMono(UserDto.class)
-                    .block();
-
-            if (user != null) {
-                log.info("User validation handled by instance: {}", user.getInstanceId());
-            }
-        } catch (Exception e) {
-            throw new ValidationException("User with ID " + userId + " does not exist.");
-        }
+        userIntegrationClient.assertUserExists(userId);
     }
 
     private void validateCarIsAvailable(Long carId) {
-        try {
-            CarDto car = carWebClient.get()
-                    .uri("/api/v1/cars/" + carId)
-                    .retrieve()
-                    .bodyToMono(CarDto.class)
-                    .block();
-
-            if (car != null) {
-                log.info("Car validation handled by instance: {}", car.getInstanceId());
-            }
-
-            if (car == null || !"AVAILABLE".equalsIgnoreCase(String.valueOf(car.getStatus()))) {
-                throw new ValidationException("Car with ID " + carId + " is not available for booking.");
-            }
-        } catch (Exception e) {
-            throw new ValidationException("Car with ID " + carId + " does not exist or is unavailable.");
-        }
+        carIntegrationClient.assertCarAvailable(carId);
     }
 
     private void validateNoOverlappingBooking(Long carId, LocalDateTime startTime, LocalDateTime endTime) {

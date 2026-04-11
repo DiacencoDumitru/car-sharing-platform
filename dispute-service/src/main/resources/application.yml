@@ -77,3 +77,10 @@ logging:
     com.netflix.eureka: DEBUG
     com.netflix.discovery: DEBUG
     org.springframework.cloud.client.discovery: DEBUG
+
+application:
+  http:
+    clients:
+      timeout-seconds: 3
+      retry-max-attempts: 2
+      retry-backoff-millis: 200

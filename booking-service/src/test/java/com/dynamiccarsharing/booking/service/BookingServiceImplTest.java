@@ -7,14 +7,12 @@ import com.dynamiccarsharing.booking.mapper.BookingMapper;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.messaging.outbox.BookingLifecycleOutboxWriter;
+import com.dynamiccarsharing.booking.integration.client.CarIntegrationClient;
+import com.dynamiccarsharing.booking.integration.client.UserIntegrationClient;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import com.dynamiccarsharing.booking.service.interfaces.BookingCreationGuard;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
-import com.dynamiccarsharing.contracts.dto.CarDto;
-import com.dynamiccarsharing.contracts.dto.UserDto;
-import com.dynamiccarsharing.contracts.enums.CarStatus;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
-import com.dynamiccarsharing.util.exception.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,11 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClient.RequestHeadersUriSpec;
 import org.springframework.context.ApplicationEventPublisher;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -56,11 +50,9 @@ class BookingServiceImplTest {
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
     @Mock
-    private WebClient.Builder webClientBuilder;
+    private UserIntegrationClient userIntegrationClient;
     @Mock
-    private WebClient userWebClient;
-    @Mock
-    private WebClient carWebClient;
+    private CarIntegrationClient carIntegrationClient;
 
     private BookingServiceImpl bookingService;
 
@@ -73,7 +65,8 @@ class BookingServiceImplTest {
                 bookingCreationGuard,
                 bookingLifecycleOutboxWriter,
                 applicationEventPublisher,
-                webClientBuilder
+                userIntegrationClient,
+                carIntegrationClient
         );
 
         lenient().when(bookingCreationGuard.executeWithCarLock(any(), any())).thenAnswer(invocation -> {
@@ -81,8 +74,6 @@ class BookingServiceImplTest {
             return supplier.get();
         });
 
-        ReflectionTestUtils.setField(bookingService, "userWebClient", userWebClient);
-        ReflectionTestUtils.setField(bookingService, "carWebClient", carWebClient);
     }
 
     private BookingCreateRequestDto createTestBookingDto() {
@@ -113,11 +104,8 @@ class BookingServiceImplTest {
         BookingDto expectedDto = new BookingDto();
         expectedDto.setId(1L);
 
-        mockUserWebClient(createDto.getRenterId(), new UserDto());
-
-        CarDto availableCar = new CarDto();
-        availableCar.setStatus(CarStatus.AVAILABLE);
-        mockCarWebClient(createDto.getCarId(), availableCar);
+        doNothing().when(userIntegrationClient).assertUserExists(createDto.getRenterId());
+        doNothing().when(carIntegrationClient).assertCarAvailable(createDto.getCarId());
 
         when(bookingMapper.toEntity(createDto)).thenReturn(bookingEntity);
         when(bookingRepository.hasOverlappingBooking(any(), any(), any())).thenReturn(false);
@@ -129,31 +117,25 @@ class BookingServiceImplTest {
         assertNotNull(resultDto);
         assertEquals(1L, resultDto.getId());
 
-        verify(userWebClient.get()).uri("/api/v1/users/" + createDto.getRenterId());
-
-        verify(carWebClient.get()).uri("/api/v1/cars/" + createDto.getCarId());
+        verify(userIntegrationClient).assertUserExists(createDto.getRenterId());
+        verify(carIntegrationClient).assertCarAvailable(createDto.getCarId());
     }
 
     @Test
     @DisplayName("save() should throw exception when user does not exist")
     void save_whenUserNotFound_shouldThrowException() {
         BookingCreateRequestDto createDto = createTestBookingDto();
-        mockUserWebClient(createDto.getRenterId(), null);
-
-        assertThrows(ValidationException.class, () -> bookingService.save(createDto));
+        doThrow(new RuntimeException("user not found")).when(userIntegrationClient).assertUserExists(createDto.getRenterId());
+        assertThrows(RuntimeException.class, () -> bookingService.save(createDto));
     }
 
     @Test
     @DisplayName("save() should throw exception when car is not available")
     void save_whenCarNotAvailable_shouldThrowException() {
         BookingCreateRequestDto createDto = createTestBookingDto();
-        mockUserWebClient(createDto.getRenterId(), new UserDto());
-
-        CarDto rentedCar = new CarDto();
-        rentedCar.setStatus(CarStatus.RENTED);
-        mockCarWebClient(createDto.getCarId(), rentedCar);
-
-        assertThrows(ValidationException.class, () -> bookingService.save(createDto));
+        doNothing().when(userIntegrationClient).assertUserExists(createDto.getRenterId());
+        doThrow(new RuntimeException("car unavailable")).when(carIntegrationClient).assertCarAvailable(createDto.getCarId());
+        assertThrows(RuntimeException.class, () -> bookingService.save(createDto));
     }
 
     @Test
@@ -213,39 +195,4 @@ class BookingServiceImplTest {
         assertDoesNotThrow(() -> bookingService.cancelBooking(bookingId));
     }
 
-    private void mockUserWebClient(Long userId, UserDto responseDto) {
-        var requestHeadersUriSpec = mock(RequestHeadersUriSpec.class);
-        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
-        Mono<UserDto> mono = mock(Mono.class);
-
-        String expectedUri = "/api/v1/users/" + userId;
-
-        when(userWebClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri(expectedUri)).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.bodyToMono(any(Class.class))).thenReturn(mono);
-
-        if (responseDto != null) {
-            when(mono.block()).thenReturn(responseDto);
-        } else {
-            when(mono.block()).thenThrow(new RuntimeException("Simulated 404 Not Found"));
-        }
-    }
-
-    private void mockCarWebClient(Long carId, CarDto responseDto) {
-        var requestHeadersUriSpec = mock(RequestHeadersUriSpec.class);
-        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
-        Mono<CarDto> mono = mock(Mono.class);
-
-        when(carWebClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri("/api/v1/cars/" + carId)).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.bodyToMono(any(Class.class))).thenReturn(mono);
-
-        if (responseDto != null) {
-            when(mono.block()).thenReturn(responseDto);
-        } else {
-            when(mono.block()).thenThrow(new RuntimeException("Simulated 404 Not Found"));
-        }
-    }
 }
