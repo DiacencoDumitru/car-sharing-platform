@@ -214,6 +214,42 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /bookings/availability:
+    get:
+      tags:
+        - Bookings
+      summary: Check car availability for a time range
+      description: Returns whether the car can be booked for the given interval without creating a reservation. Uses the same rules as booking creation for car status and overlapping PENDING or APPROVED bookings.
+      operationId: checkCarAvailability
+      parameters:
+        - name: carId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: startTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Availability result; HTTP 400 if the time range is invalid or the car cannot be resolved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarAvailabilityResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
   /bookings/{bookingId}:
     get:
       tags:
@@ -1119,6 +1155,20 @@ components:
         expiresAt:
           type: string
           format: date-time
+
+    CarAvailabilityResponse:
+      type: object
+      required:
+        - available
+      properties:
+        available:
+          type: boolean
+        reason:
+          type: string
+          enum:
+            - CAR_NOT_AVAILABLE
+            - SLOT_TAKEN
+          description: Present when available is false.
 
     FavoriteCarsResponse:
       type: object

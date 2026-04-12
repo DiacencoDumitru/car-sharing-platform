@@ -3,9 +3,11 @@ package com.dynamiccarsharing.booking.controller;
 import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
+import com.dynamiccarsharing.booking.dto.CarAvailabilityResponseDto;
 import com.dynamiccarsharing.booking.dto.QuoteRequestDto;
 import com.dynamiccarsharing.booking.dto.QuoteResponseDto;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
+import com.dynamiccarsharing.booking.service.interfaces.CarAvailabilityService;
 import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
 import com.dynamiccarsharing.booking.service.interfaces.QuoteService;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
@@ -14,9 +16,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/v1/bookings")
@@ -26,6 +31,7 @@ public class BookingController {
     private final BookingService bookingService;
     private final IdempotencyService idempotencyService;
     private final QuoteService quoteService;
+    private final CarAvailabilityService carAvailabilityService;
 
     @Value("${eureka.instance.instance-id}")
     private String instanceId;
@@ -70,6 +76,14 @@ public class BookingController {
                 () -> quoteService.calculateQuote(requestDto)
         );
         return ResponseEntity.ok(quote);
+    }
+
+    @GetMapping("/availability")
+    public ResponseEntity<CarAvailabilityResponseDto> checkCarAvailability(
+            @RequestParam Long carId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+        return ResponseEntity.ok(carAvailabilityService.check(carId, startTime, endTime));
     }
 
     @PatchMapping("/{bookingId}")
