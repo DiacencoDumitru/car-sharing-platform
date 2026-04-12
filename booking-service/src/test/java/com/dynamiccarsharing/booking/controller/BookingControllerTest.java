@@ -5,6 +5,7 @@ import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
+import com.dynamiccarsharing.booking.service.interfaces.CarAvailabilityService;
 import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
 import com.dynamiccarsharing.booking.service.interfaces.QuoteService;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
@@ -49,6 +50,8 @@ class BookingControllerTest {
     private IdempotencyService idempotencyService;
     @MockBean
     private QuoteService quoteService;
+    @MockBean
+    private CarAvailabilityService carAvailabilityService;
 
     @Autowired
     private ObjectMapper objectMapper;
