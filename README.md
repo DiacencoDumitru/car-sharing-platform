@@ -129,6 +129,7 @@ Infrastructure
 * Distributed tracing (Zipkin)
 * Metrics monitoring (Prometheus + Grafana)
 * Redis caching (catalog in `car-service`; optional guard, idempotency, read-cache in `booking-service`)
+* Redis-backed response caching in `api-gateway` for read-heavy GET endpoints with TTL and mutation-driven invalidation
 * Asynchronous messaging with Kafka
 * **Transactional outbox** for reliable booking lifecycle events to Kafka (`booking-service`)
 * **Notification pipeline** for booking lifecycle: idempotent analytics storage, fraud scoring, conditional email/push (`notification-service`)
@@ -451,6 +452,7 @@ This setup allows monitoring request flows, system health, and service performan
 The platform includes several performance optimizations:
 
 * Redis caching for frequently accessed data (`car-service` catalog; optional read-cache in `booking-service` — see below)
+* Redis response cache in `api-gateway` for selected GET endpoints with identity-aware keys
 * Kafka-based asynchronous processing
 * Database indexing strategies
 * Connection pooling
@@ -467,6 +469,32 @@ The platform includes several performance optimizations:
 | Read cache | `application.redis.read-cache.enabled` | Spring Cache on Redis for read-heavy booking queries; eviction on mutations and after booking lifecycle events (after commit). |
 
 Shared naming prefix: `application.redis.key-prefix` (default `booking`). Micrometer metrics are exposed for the guard and idempotency components (e.g. `booking.redis.guard.*`, `booking.redis.idempotency.*`).
+
+### API Gateway Redis response cache
+
+`api-gateway` caches selected `GET` responses in Redis (`application.cache.response.enabled=true`) and reuses them until TTL expires.
+
+Default cache settings in `api-gateway/src/main/resources/application.yml`:
+
+| Property | Purpose |
+|----------|---------|
+| `application.cache.response.default-ttl` | TTL for cached gateway responses. |
+| `application.cache.response.max-body-size-bytes` | Upper size bound for a cacheable response body. |
+| `application.cache.response.cacheable-paths` | GET endpoint patterns that can be cached. |
+| `application.cache.response.invalidation` | Path-group map used to invalidate cached GET data after successful write operations. |
+
+Behavior:
+
+* only `GET` and only `200 OK` responses are cached
+* responses with `Cache-Control: no-store` or `private` are not cached
+* secured endpoints are isolated by `Authorization` header hash in the cache key
+* successful `POST`/`PUT`/`PATCH`/`DELETE` requests trigger group-based invalidation for related cached GET keys
+
+Run integration tests for this feature:
+
+```bash
+mvn test -pl api-gateway -Dtest=ResponseCacheIntegrationTest
+```
 
 ---
 

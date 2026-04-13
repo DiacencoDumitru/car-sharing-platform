@@ -6,6 +6,11 @@ spring:
     web-application-type: reactive
   application:
     name: api-gateway
+  data:
+    redis:
+      host: redis
+      port: 6379
+      timeout: 2s
   cloud:
     gateway:
       discovery:
@@ -37,6 +42,31 @@ application:
     jwt:
       secret-key: NDM0YjVmNjM1MTY0NWE3NDc3Mzg3YTMzNjE1MTQxNTg0NTUxNDg0ZjU0N2IzYjRmNmE1YjdhNmE0ZDQxNjM1Mg==
       expiration: 3600000
+  cache:
+    response:
+      enabled: true
+      default-ttl: 30s
+      max-body-size-bytes: 262144
+      cacheable-paths:
+        - /api/v1/cars/**
+        - /api/v1/bookings/**
+        - /api/v1/users/me
+        - /api/v1/users/*/favorite-cars
+        - /api/v1/users/me/favorite-cars
+      invalidation:
+        cars:
+          - /api/v1/cars/**
+        bookings:
+          - /api/v1/bookings/**
+        favorite-cars:
+          - /api/v1/users/*/favorite-cars/**
+          - /api/v1/users/me/favorite-cars/**
+        profile:
+          - /api/v1/profile/me
+          - /api/v1/users/me
+        transactions:
+          - /api/v1/bookings/*/payment
+          - /api/v1/admin/payments/**
 
 eureka:
   client:
