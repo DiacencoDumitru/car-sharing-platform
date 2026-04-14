@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -73,6 +74,43 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                 .paymentId(paymentId)
                 .build();
         transactionRepository.save(transaction);
+    }
+
+    @Override
+    public void reverseLoyaltyForPayment(Long renterId, Long paymentId) {
+        List<LoyaltyTransaction> transactions = transactionRepository.findByPaymentId(paymentId);
+        if (transactions.isEmpty()) {
+            return;
+        }
+
+        LoyaltyAccount account = null;
+        BigDecimal balanceDelta = BigDecimal.ZERO;
+
+        for (LoyaltyTransaction transaction : transactions) {
+            LoyaltyAccount txAccount = transaction.getAccount();
+            if (!txAccount.getRenterId().equals(renterId)) {
+                throw new ValidationException("Loyalty transaction does not belong to renter " + renterId);
+            }
+            if (account == null) {
+                account = txAccount;
+            } else if (!account.getId().equals(txAccount.getId())) {
+                throw new ValidationException("Loyalty transactions for payment " + paymentId + " span multiple accounts");
+            }
+
+            if (Boolean.TRUE.equals(transaction.getEarn())) {
+                balanceDelta = balanceDelta.subtract(transaction.getAmount());
+            } else {
+                balanceDelta = balanceDelta.add(transaction.getAmount());
+            }
+        }
+
+        BigDecimal newBalance = account.getBalance().add(balanceDelta);
+        if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new ValidationException("Insufficient loyalty balance to reverse transactions for payment " + paymentId);
+        }
+
+        account.setBalance(newBalance);
+        accountRepository.save(account);
     }
 
     private LoyaltyAccount findAccountForRedemption(Long renterId, BigDecimal requestedPoints) {

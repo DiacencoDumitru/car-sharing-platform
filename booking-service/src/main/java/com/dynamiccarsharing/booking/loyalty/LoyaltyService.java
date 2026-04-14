@@ -9,5 +9,7 @@ public interface LoyaltyService {
     BigDecimal previewRedeemAmount(Long renterId, BigDecimal requestedPoints, BigDecimal initialAmount);
 
     void earnPoints(Long renterId, Long paymentId, BigDecimal paidAmount);
+
+    void reverseLoyaltyForPayment(Long renterId, Long paymentId);
 }
 

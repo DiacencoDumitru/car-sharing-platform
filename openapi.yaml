@@ -877,7 +877,7 @@ paths:
       tags:
         - Admin
       summary: Refund a completed payment
-      description: Marks a payment as refunded. An audit row is stored; optional acting admin user id may be sent via `X-User-Id`.
+      description: Marks a payment as refunded. Loyalty effects for this payment are reversed (earned points removed, redeemed points restored to the renter’s balance). The operation fails with a client error if the loyalty balance cannot be adjusted. An audit row is stored; optional acting admin user id may be sent via `X-User-Id`.
       operationId: adminRefundPayment
       parameters:
         - name: paymentId
