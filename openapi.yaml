@@ -250,6 +250,42 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /bookings/availability/calendar:
+    get:
+      tags:
+        - Bookings
+      summary: Get daily car availability calendar
+      description: Returns per-day availability for a single car in the provided time range. Each day is marked as available or unavailable with a reason.
+      operationId: getCarAvailabilityCalendar
+      parameters:
+        - name: carId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: startTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Daily availability calendar for the requested car and interval.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarAvailabilityCalendarResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
   /bookings/{bookingId}:
     get:
       tags:
@@ -1169,6 +1205,37 @@ components:
             - CAR_NOT_AVAILABLE
             - SLOT_TAKEN
           description: Present when available is false.
+
+    CarAvailabilityCalendarDay:
+      type: object
+      required:
+        - date
+        - available
+      properties:
+        date:
+          type: string
+          format: date
+        available:
+          type: boolean
+        reason:
+          type: string
+          enum:
+            - CAR_NOT_AVAILABLE
+            - SLOT_TAKEN
+
+    CarAvailabilityCalendarResponse:
+      type: object
+      required:
+        - carId
+        - days
+      properties:
+        carId:
+          type: integer
+          format: int64
+        days:
+          type: array
+          items:
+            $ref: '#/components/schemas/CarAvailabilityCalendarDay'
 
     FavoriteCarsResponse:
       type: object

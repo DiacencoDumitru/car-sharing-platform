@@ -16,4 +16,6 @@ public interface BookingRepository extends Repository<Booking, Long> {
     Page<Booking> findAll(BookingSearchCriteria criteria, Pageable pageable);
 
     boolean hasOverlappingBooking(Long carId, LocalDateTime startTime, LocalDateTime endTime);
+
+    List<Booking> findOverlappingBookings(Long carId, LocalDateTime startTime, LocalDateTime endTime);
 }

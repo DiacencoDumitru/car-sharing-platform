@@ -34,12 +34,9 @@ public class BookingLifecycleEventProcessor {
         TransactionStatus status = event.getBookingStatus();
 
         if (repository.findByBookingIdAndBookingStatus(bookingId, status).isPresent()) {
-            // At-least-once delivery: avoid duplicates.
             return;
         }
 
-        // Anti-fraud needs occurredAt for sequence window checks.
-        // Processor already uses Instant.now() when persisting analytics, so keep decision logic consistent.
         Instant occurredAtForDecision = event.getOccurredAt() != null ? event.getOccurredAt() : Instant.now();
         BookingLifecycleEventDto eventForDecision = event;
         if (event.getOccurredAt() == null) {

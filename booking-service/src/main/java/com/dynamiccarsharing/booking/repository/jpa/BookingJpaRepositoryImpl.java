@@ -79,4 +79,10 @@ public class BookingJpaRepositoryImpl implements BookingRepository {
         List<TransactionStatus> active = List.of(TransactionStatus.PENDING, TransactionStatus.APPROVED);
         return !bookingJpaRepository.findOverlapping(carId, active, startTime, endTime).isEmpty();
     }
+
+    @Override
+    public List<Booking> findOverlappingBookings(Long carId, LocalDateTime startTime, LocalDateTime endTime) {
+        List<TransactionStatus> active = List.of(TransactionStatus.PENDING, TransactionStatus.APPROVED);
+        return bookingJpaRepository.findOverlapping(carId, active, startTime, endTime);
+    }
 }
