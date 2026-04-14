@@ -35,8 +35,6 @@ management:
   health:
     kafka:
       enabled: false
-
-# Same topic as booking-service outbox → car-service; consumer group is separate from car-service.
 application:
   messaging:
     kafka:

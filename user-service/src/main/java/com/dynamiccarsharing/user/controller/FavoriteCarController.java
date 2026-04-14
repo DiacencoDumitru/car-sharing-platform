@@ -67,7 +67,6 @@ public class FavoriteCarController {
             try {
                 return Long.parseLong(s);
             } catch (NumberFormatException ignored) {
-                // fall through
             }
         }
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid authentication principal");

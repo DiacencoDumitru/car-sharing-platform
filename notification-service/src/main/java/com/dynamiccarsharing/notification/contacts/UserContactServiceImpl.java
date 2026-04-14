@@ -19,7 +19,6 @@ public class UserContactServiceImpl implements UserContactService {
 
     @Override
     public Optional<String> getRenterEmail(Long renterId) {
-        // user-service endpoints are accessible without ROLE_ADMIN for internal GET /users/{id}.
         UserDto user = webClientBuilder.baseUrl("lb://user-service")
                 .build()
                 .get()

@@ -34,8 +34,6 @@ public class BookingLifecycleCommandListener {
             BookingLifecycleEventDto event = objectMapper.readValue(payload, BookingLifecycleEventDto.class);
             processor.process(event);
         } catch (Exception ex) {
-            // Skip malformed messages (DLT error handler will handle thrown exceptions if we rethrow).
-            // Here we just ignore to keep listener resilient.
         }
     }
 }

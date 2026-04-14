@@ -46,7 +46,6 @@ public class KafkaConfig {
             props.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaProperties.getConsumer().getGroupId());
         }
 
-        // В тестах выставляется earliest, и для корректного прочтения требуется.
         if (kafkaProperties.getConsumer().getAutoOffsetReset() != null) {
             props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, kafkaProperties.getConsumer().getAutoOffsetReset());
         }
