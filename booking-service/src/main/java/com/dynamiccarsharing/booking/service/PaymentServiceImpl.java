@@ -118,6 +118,8 @@ public class PaymentServiceImpl implements PaymentService {
         if (payment.getStatus() != TransactionStatus.COMPLETED) {
             throw new IllegalStateException("Payment must be COMPLETED to be refunded.");
         }
+        Long renterId = payment.getBooking().getRenterId();
+        loyaltyService.reverseLoyaltyForPayment(renterId, paymentId);
         payment.setStatus(TransactionStatus.REFUNDED);
         Payment refundedPayment = paymentRepository.save(payment);
 

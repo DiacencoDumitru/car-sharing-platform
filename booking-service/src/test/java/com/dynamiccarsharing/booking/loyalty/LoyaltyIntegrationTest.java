@@ -101,6 +101,54 @@ class LoyaltyIntegrationTest {
         assertThat(updatedAccount.getBalance()).isLessThan(initialBalance);
     }
 
+    @Test
+    @DisplayName("Refund reverses loyalty points earned on confirmed payment")
+    void refundPayment_reversesEarnOnEarnOnlyPayment() {
+        Booking booking = saveBooking();
+
+        PaymentRequestDto requestDto = new PaymentRequestDto();
+        requestDto.setPaymentMethod(PaymentType.CREDIT_CARD);
+        PaymentDto payment = paymentService.createPayment(booking.getId(), requestDto);
+        paymentService.confirmPayment(payment.getId(), null);
+
+        BigDecimal afterEarn = loyaltyAccountRepository.findByRenterId(booking.getRenterId()).orElseThrow().getBalance();
+        assertThat(afterEarn).isGreaterThan(BigDecimal.ZERO);
+
+        paymentService.refundPayment(payment.getId(), null);
+
+        assertThat(loyaltyAccountRepository.findByRenterId(booking.getRenterId()).orElseThrow().getBalance())
+                .isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    @DisplayName("Refund restores balance after redeem and earn on same payment")
+    void refundPayment_restoresBalanceAfterRedeemAndEarn() {
+        Booking firstBooking = saveBooking();
+
+        PaymentRequestDto firstRequest = new PaymentRequestDto();
+        firstRequest.setPaymentMethod(PaymentType.CREDIT_CARD);
+        PaymentDto firstPayment = paymentService.createPayment(firstBooking.getId(), firstRequest);
+        paymentService.confirmPayment(firstPayment.getId(), null);
+
+        BigDecimal balanceAfterFirst = loyaltyAccountRepository.findByRenterId(firstBooking.getRenterId())
+                .orElseThrow()
+                .getBalance();
+
+        Booking secondBooking = saveBooking();
+
+        PaymentRequestDto secondRequest = new PaymentRequestDto();
+        secondRequest.setPaymentMethod(PaymentType.CREDIT_CARD);
+        secondRequest.setLoyaltyPointsToUse(balanceAfterFirst);
+
+        PaymentDto secondPayment = paymentService.createPayment(secondBooking.getId(), secondRequest);
+        paymentService.confirmPayment(secondPayment.getId(), null);
+
+        paymentService.refundPayment(secondPayment.getId(), null);
+
+        assertThat(loyaltyAccountRepository.findByRenterId(firstBooking.getRenterId()).orElseThrow().getBalance())
+                .isEqualByComparingTo(balanceAfterFirst);
+    }
+
     private Booking saveBooking() {
         LocalDateTime start = LocalDateTime.now()
                 .withHour(10)
