@@ -148,4 +148,10 @@ public class BookingDao implements BookingRepository {
         Long count = databaseUtil.findOne(query, rs -> 1L, carId, Timestamp.valueOf(endTime), Timestamp.valueOf(startTime));
         return count != null;
     }
+
+    @Override
+    public List<Booking> findOverlappingBookings(Long carId, LocalDateTime startTime, LocalDateTime endTime) {
+        String query = "SELECT * FROM bookings WHERE car_id = ? AND status IN ('PENDING', 'APPROVED') AND start_time < ? AND end_time > ?";
+        return databaseUtil.findMany(query, this::mapToBooking, carId, Timestamp.valueOf(endTime), Timestamp.valueOf(startTime));
+    }
 }

@@ -3,6 +3,7 @@ package com.dynamiccarsharing.booking.controller;
 import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
+import com.dynamiccarsharing.booking.dto.CarAvailabilityCalendarResponseDto;
 import com.dynamiccarsharing.booking.dto.CarAvailabilityResponseDto;
 import com.dynamiccarsharing.booking.dto.QuoteRequestDto;
 import com.dynamiccarsharing.booking.dto.QuoteResponseDto;
@@ -84,6 +85,14 @@ public class BookingController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
         return ResponseEntity.ok(carAvailabilityService.check(carId, startTime, endTime));
+    }
+
+    @GetMapping("/availability/calendar")
+    public ResponseEntity<CarAvailabilityCalendarResponseDto> getCarAvailabilityCalendar(
+            @RequestParam Long carId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+        return ResponseEntity.ok(carAvailabilityService.getDailyCalendar(carId, startTime, endTime));
     }
 
     @PatchMapping("/{bookingId}")

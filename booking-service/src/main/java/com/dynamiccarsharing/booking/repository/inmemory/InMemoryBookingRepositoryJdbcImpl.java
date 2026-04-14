@@ -68,4 +68,12 @@ public class InMemoryBookingRepositoryJdbcImpl implements BookingRepository {
                 .filter(b -> carId.equals(b.getCarId()) && (b.getStatus() == TransactionStatus.PENDING || b.getStatus() == TransactionStatus.APPROVED))
                 .anyMatch(b -> b.getStartTime().isBefore(endTime) && b.getEndTime().isAfter(startTime));
     }
+
+    @Override
+    public List<Booking> findOverlappingBookings(Long carId, LocalDateTime startTime, LocalDateTime endTime) {
+        return bookingMap.values().stream()
+                .filter(b -> carId.equals(b.getCarId()) && (b.getStatus() == TransactionStatus.PENDING || b.getStatus() == TransactionStatus.APPROVED))
+                .filter(b -> b.getStartTime().isBefore(endTime) && b.getEndTime().isAfter(startTime))
+                .toList();
+    }
 }
