@@ -88,6 +88,11 @@ public class CarDao implements CarRepository {
                     criteria.getType(), criteria.getVerificationStatus());
 
             List<Car> filteredCars = findByFilter(filter);
+            if (criteria.getOwnerId() != null) {
+                filteredCars = filteredCars.stream()
+                        .filter(c -> criteria.getOwnerId().equals(c.getOwnerId()))
+                        .toList();
+            }
 
             int start = (int) pageable.getOffset();
             int end = Math.min(start + pageable.getPageSize(), filteredCars.size());

@@ -18,6 +18,7 @@ import java.util.List;
 public class CarSearchCriteria {
     private String make;
     private String model;
+    private Long ownerId;
     private Long locationId;
     private CarType type;
     private VerificationStatus verificationStatus;

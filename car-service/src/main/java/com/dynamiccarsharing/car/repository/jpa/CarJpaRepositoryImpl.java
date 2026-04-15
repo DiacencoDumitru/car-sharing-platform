@@ -39,7 +39,8 @@ public class CarJpaRepositoryImpl implements CarRepository {
                 carFilter.getType(),
                 null,
                 null,
-                carFilter.getVerificationStatus()
+                carFilter.getVerificationStatus(),
+                null
         ));
     }
 
@@ -68,7 +69,8 @@ public class CarJpaRepositoryImpl implements CarRepository {
                 criteria.getType(),
                 criteria.getPriceGreaterThan(),
                 criteria.getPriceLessThan(),
-                criteria.getVerificationStatus()
+                criteria.getVerificationStatus(),
+                criteria.getOwnerId()
         );
         return internalCarJpaRepository.findAll(spec, pageable);
     }

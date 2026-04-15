@@ -45,6 +45,7 @@ public class InMemoryCarRepositoryJdbcImpl implements CarRepository {
         List<Car> filteredCars = carMap.values().stream()
                 .filter(car -> criteria.getMake() == null || car.getMake().equals(criteria.getMake()))
                 .filter(car -> criteria.getModel() == null || car.getModel().equals(criteria.getModel()))
+                .filter(car -> criteria.getOwnerId() == null || car.getOwnerId().equals(criteria.getOwnerId()))
                 .filter(car -> criteria.getStatusIn() == null || criteria.getStatusIn().isEmpty() || criteria.getStatusIn().contains(car.getStatus()))
                 .filter(car -> criteria.getLocationId() == null || car.getLocation().getId().equals(criteria.getLocationId()))
                 .filter(car -> criteria.getType() == null || car.getType().equals(criteria.getType()))

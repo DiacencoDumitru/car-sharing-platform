@@ -60,6 +60,12 @@ paths:
           in: query
           schema:
             $ref: '#/components/schemas/VerificationStatus'
+        - name: ownerId
+          in: query
+          description: When set, returns only cars listed by this owner user id.
+          schema:
+            type: integer
+            format: int64
       responses:
         '200':
           description: A paginated list of available cars.
