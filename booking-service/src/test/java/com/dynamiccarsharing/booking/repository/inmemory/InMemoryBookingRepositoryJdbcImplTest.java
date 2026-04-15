@@ -138,7 +138,7 @@ class InMemoryBookingRepositoryJdbcImplTest {
             repository.save(createTestBooking(3L, TransactionStatus.PENDING, 102L, 202L, 300L));
             repository.save(createTestBooking(4L, TransactionStatus.COMPLETED, 103L, 203L, 300L));
 
-            BookingSearchCriteria criteria = new BookingSearchCriteria(null, null, TransactionStatus.PENDING, null, null);
+            BookingSearchCriteria criteria = new BookingSearchCriteria(null, null, null, TransactionStatus.PENDING, null, null);
             Pageable pageable = PageRequest.of(0, 2);
 
             Page<Booking> resultPage = repository.findAll(criteria, pageable);

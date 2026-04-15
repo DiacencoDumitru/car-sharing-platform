@@ -91,7 +91,7 @@ public class BookingDao implements BookingRepository {
 
     @Override
     public Page<Booking> findAll(BookingSearchCriteria criteria, Pageable pageable) {
-        BookingFilter filter = BookingFilter.of(criteria.getRenterId(), criteria.getCarId(), criteria.getStatus());
+        BookingFilter filter = BookingFilter.of(criteria.getRenterId(), criteria.getCarId(), criteria.getCarIds(), criteria.getStatus());
         SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(filter);
 
         String countQuery = "SELECT count(*) FROM bookings WHERE 1=1" + sqlFilter.filterQuery();

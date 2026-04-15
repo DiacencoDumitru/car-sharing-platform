@@ -38,7 +38,7 @@ class BookingJpaRepositoryImplTest {
                 .build();
         bookingRepository.save(newBooking);
 
-        BookingSearchCriteria criteria = new BookingSearchCriteria(100L, 300L, TransactionStatus.PENDING, null, null);
+        BookingSearchCriteria criteria = new BookingSearchCriteria(100L, 300L, null, TransactionStatus.PENDING, null, null);
         Page<Booking> results = bookingRepository.findAll(criteria, PageRequest.of(0, 10));
 
         assertFalse(results.isEmpty());

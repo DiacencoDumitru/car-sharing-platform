@@ -35,6 +35,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import static com.dynamiccarsharing.contracts.enums.TransactionStatus.*;
@@ -175,6 +176,7 @@ public class BookingServiceImpl implements BookingService {
         Filter<Booking> filter = BookingFilter.of(
                 criteria.getRenterId(),
                 criteria.getCarId(),
+                criteria.getCarIds(),
                 criteria.getStatus()
         );
         try {
@@ -184,6 +186,22 @@ public class BookingServiceImpl implements BookingService {
         } catch (SQLException e) {
             throw new ServiceException("Search failed due to a database error", e);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BookingDto> findPageForUser(Long userId, String asRole, Pageable pageable) {
+        String role = (asRole == null || asRole.isBlank()) ? "renter" : asRole.toLowerCase(Locale.ROOT);
+        if ("owner".equals(role)) {
+            List<Long> carIds = carIntegrationClient.findCarIdsByOwner(userId);
+            if (carIds.isEmpty()) {
+                return Page.empty(pageable);
+            }
+            BookingSearchCriteria criteria = BookingSearchCriteria.builder().carIds(carIds).build();
+            return findAll(criteria, pageable);
+        }
+        BookingSearchCriteria criteria = BookingSearchCriteria.builder().renterId(userId).build();
+        return findAll(criteria, pageable);
     }
 
     private Booking getBookingOrThrow(Long bookingId) {

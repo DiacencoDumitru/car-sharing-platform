@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 public class BookingSearchCriteria {
     private Long renterId;
     private Long carId;
+    private List<Long> carIds;
 
     private TransactionStatus status;
 

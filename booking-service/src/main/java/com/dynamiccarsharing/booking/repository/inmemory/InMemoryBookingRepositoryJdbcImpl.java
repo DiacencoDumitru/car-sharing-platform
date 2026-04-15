@@ -44,7 +44,7 @@ public class InMemoryBookingRepositoryJdbcImpl implements BookingRepository {
 
     @Override
     public Page<Booking> findAll(BookingSearchCriteria criteria, Pageable pageable) {
-        Filter<Booking> filter = BookingFilter.of(criteria.getRenterId(), criteria.getCarId(), criteria.getStatus());
+        Filter<Booking> filter = BookingFilter.of(criteria.getRenterId(), criteria.getCarId(), criteria.getCarIds(), criteria.getStatus());
         List<Booking> filteredBookings = bookingMap.values().stream().filter(filter::test).toList();
 
         int start = (int) pageable.getOffset();

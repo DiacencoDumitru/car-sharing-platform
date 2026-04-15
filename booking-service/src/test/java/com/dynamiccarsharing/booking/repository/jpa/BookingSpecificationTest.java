@@ -59,7 +59,7 @@ class BookingSpecificationTest {
 
     @Test
     void withCriteria_withAllFields_returnsMatchingBooking() {
-        Specification<Booking> spec = BookingSpecification.withCriteria(101L, 300L, TransactionStatus.PENDING);
+        Specification<Booking> spec = BookingSpecification.withCriteria(101L, 300L, null, TransactionStatus.PENDING);
         List<Booking> results = bookingRepository.findAll(spec);
         assertEquals(1, results.size());
         assertEquals(101L, results.get(0).getRenterId());
