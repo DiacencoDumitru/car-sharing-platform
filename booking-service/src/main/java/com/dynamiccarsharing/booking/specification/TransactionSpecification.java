@@ -5,6 +5,8 @@ import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.booking.model.Transaction;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.List;
+
 public class TransactionSpecification {
 
     private TransactionSpecification() {
@@ -26,5 +28,16 @@ public class TransactionSpecification {
         return Specification.where(hasBookingId(bookingId))
                 .and(hasStatus(status))
                 .and(hasPaymentMethod(paymentMethod));
+    }
+
+    public static Specification<Transaction> forUser(Long userId, List<Long> ownerCarIds) {
+        return (root, query, cb) -> {
+            var renterMatch = cb.equal(root.get("booking").get("renterId"), userId);
+            if (ownerCarIds == null || ownerCarIds.isEmpty()) {
+                return renterMatch;
+            }
+            var ownerMatch = root.get("booking").get("carId").in(ownerCarIds);
+            return cb.or(renterMatch, ownerMatch);
+        };
     }
 }

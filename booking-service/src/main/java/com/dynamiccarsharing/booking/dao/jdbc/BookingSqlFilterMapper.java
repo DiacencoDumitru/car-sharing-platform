@@ -7,9 +7,8 @@ import com.dynamiccarsharing.util.dao.jdbc.SqlFilter;
 import com.dynamiccarsharing.util.dao.jdbc.SqlFilterMapper;
 import com.dynamiccarsharing.util.filter.Filter;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 public class BookingSqlFilterMapper implements SqlFilterMapper<Booking, Filter<Booking>> {
 
@@ -32,7 +31,11 @@ public class BookingSqlFilterMapper implements SqlFilterMapper<Booking, Filter<B
             sb.append(" AND ").append("renter_id = ?");
         }
 
-        if (filter.getCarId() != null) {
+        if (filter.getCarIds() != null && !filter.getCarIds().isEmpty()) {
+            sb.append(" AND car_id IN (");
+            sb.append(String.join(",", java.util.Collections.nCopies(filter.getCarIds().size(), "?")));
+            sb.append(")");
+        } else if (filter.getCarId() != null) {
             sb.append(" AND ").append("car_id = ?");
         }
 
@@ -44,8 +47,18 @@ public class BookingSqlFilterMapper implements SqlFilterMapper<Booking, Filter<B
     }
 
     List<Object> getParameters(BookingFilter filter) {
-        return Stream.<Object>of(filter.getRenterId(), filter.getCarId(), filter.getStatus() != null ? filter.getStatus().name() : null)
-                .filter(Objects::nonNull)
-                .toList();
+        List<Object> params = new ArrayList<>();
+        if (filter.getRenterId() != null) {
+            params.add(filter.getRenterId());
+        }
+        if (filter.getCarIds() != null && !filter.getCarIds().isEmpty()) {
+            params.addAll(filter.getCarIds());
+        } else if (filter.getCarId() != null) {
+            params.add(filter.getCarId());
+        }
+        if (filter.getStatus() != null) {
+            params.add(filter.getStatus().name());
+        }
+        return params;
     }
 }

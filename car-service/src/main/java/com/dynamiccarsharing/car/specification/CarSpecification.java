@@ -46,7 +46,11 @@ public class CarSpecification {
         return (root, query, cb) -> status != null ? cb.equal(root.get("verificationStatus"), status) : null;
     }
 
-    public static Specification<Car> withCriteria(String make, String model, List<CarStatus> statusIn, Long locationId, CarType type, BigDecimal priceGreaterThan, BigDecimal priceLessThan, VerificationStatus verificationStatus) {
+    public static Specification<Car> hasOwnerId(Long ownerId) {
+        return (root, query, cb) -> ownerId != null ? cb.equal(root.get("ownerId"), ownerId) : null;
+    }
+
+    public static Specification<Car> withCriteria(String make, String model, List<CarStatus> statusIn, Long locationId, CarType type, BigDecimal priceGreaterThan, BigDecimal priceLessThan, VerificationStatus verificationStatus, Long ownerId) {
         return Specification
                 .where(hasMake(make))
                 .and(hasModel(model))
@@ -55,6 +59,7 @@ public class CarSpecification {
                 .and(hasType(type))
                 .and(priceGreaterThan(priceGreaterThan))
                 .and(priceLessThan(priceLessThan))
-                .and(hasVerificationStatus(verificationStatus));
+                .and(hasVerificationStatus(verificationStatus))
+                .and(hasOwnerId(ownerId));
     }
 }

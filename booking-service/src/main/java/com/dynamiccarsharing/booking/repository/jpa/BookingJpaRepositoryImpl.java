@@ -60,6 +60,7 @@ public class BookingJpaRepositoryImpl implements BookingRepository {
         return bookingJpaRepository.findAll(BookingSpecification.withCriteria(
                 bookingFilter.getRenterId(),
                 bookingFilter.getCarId(),
+                bookingFilter.getCarIds(),
                 bookingFilter.getStatus()
         ));
     }
@@ -69,6 +70,7 @@ public class BookingJpaRepositoryImpl implements BookingRepository {
         Specification<Booking> spec = BookingSpecification.withCriteria(
                 criteria.getRenterId(),
                 criteria.getCarId(),
+                criteria.getCarIds(),
                 criteria.getStatus()
         );
         return bookingJpaRepository.findAll(spec, pageable);

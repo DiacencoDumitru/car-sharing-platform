@@ -5,6 +5,7 @@ import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.enums.CarStatus;
 import com.dynamiccarsharing.util.exception.ServiceException;
 import com.dynamiccarsharing.util.exception.ValidationException;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,9 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @Component
 @Slf4j
@@ -66,8 +70,45 @@ public class WebClientCarIntegrationClient implements CarIntegrationClient {
         }
     }
 
+    @Override
+    public List<Long> findCarIdsByOwner(Long ownerId) {
+        List<Long> ids = new ArrayList<>();
+        int pageIndex = 0;
+        Integer totalPages = null;
+        do {
+            final int p = pageIndex;
+            CarPageResponse body = carWebClient.get()
+                    .uri(uriBuilder -> uriBuilder.path("/api/v1/cars")
+                            .queryParam("ownerId", ownerId)
+                            .queryParam("size", 100)
+                            .queryParam("page", p)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(CarPageResponse.class)
+                    .timeout(Duration.ofSeconds(properties.getTimeoutSeconds()))
+                    .retryWhen(
+                            Retry.backoff(properties.getRetryMaxAttempts(), Duration.ofMillis(properties.getRetryBackoffMillis()))
+                                    .filter(this::isRetriable)
+                    )
+                    .block();
+            if (body == null || body.getContent() == null || body.getContent().isEmpty()) {
+                break;
+            }
+            ids.addAll(body.getContent().stream().map(CarDto::getId).filter(Objects::nonNull).toList());
+            totalPages = body.getTotalPages();
+            pageIndex++;
+        } while (totalPages != null && pageIndex < totalPages);
+        return ids;
+    }
+
     private boolean isRetriable(Throwable throwable) {
         return throwable instanceof WebClientRequestException
                 || throwable instanceof ServiceException;
+    }
+
+    @Data
+    private static class CarPageResponse {
+        private List<CarDto> content;
+        private int totalPages;
     }
 }

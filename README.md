@@ -14,8 +14,8 @@ The platform is composed of multiple microservices communicating via REST APIs a
 ### Core Services
 
 * **API Gateway** – single entry point for client requests and routing
-* **User Service** – user management and authentication; renter **favorite cars** at `/api/v1/users/me/favorite-cars` and `/api/v1/users/{userId}/favorite-cars` (table `favorite_cars`; **car-service** validates on add)
-* **Car Service** – car catalog management and search
+* **User Service** – user management and authentication; renter **favorite cars** at `/api/v1/users/me/favorite-cars` and `/api/v1/users/{userId}/favorite-cars` (table `favorite_cars`; **car-service** validates on add); **my bookings** at `GET /api/v1/users/me/bookings` (optional `asRole=renter|owner`, JWT) proxied to **booking-service** internal APIs; **my transactions** at `GET /api/v1/users/me/transactions` (paginated union of renter and owner-side activity via **car-service** car ids)
+* **Car Service** – car catalog management and search; optional `ownerId` on `GET /api/v1/cars` to list a user’s listed vehicles (used when resolving owner-scoped bookings and transactions)
 * **Booking Service** – reservation and booking logic; **availability check** at `GET /api/v1/bookings/availability?carId=&startTime=&endTime=` (ISO-8601 query parameters) returns whether the car is listed as available and has no overlapping PENDING or APPROVED booking; **daily availability calendar** at `GET /api/v1/bookings/availability/calendar?carId=&startTime=&endTime=` returns per-day availability for the selected interval
 * **Notification Service** – consumes booking lifecycle events from Kafka, stores analytics and fraud signals, and can dispatch email/push notifications when a case needs attention (integrates with **User Service** for contact data)
 * **Dispute Service** – dispute resolution between renters and owners
@@ -122,6 +122,7 @@ Infrastructure
 * Promo codes and discounts applied on top of dynamic pricing
 * Loyalty points earning and redemption linked to payments
 * **Favorite cars (wishlist)** — `GET` / `PUT` / `DELETE` on `/api/v1/users/me/favorite-cars` (JWT) and the same on `/api/v1/users/{userId}/favorite-cars` when the token matches that user; **car-service** is used when adding a favorite
+* **My bookings and transactions (user-service)** — `GET /api/v1/users/me/bookings?asRole=renter|owner` and `GET /api/v1/users/me/transactions` (JWT); **booking-service** exposes internal routes `/api/v1/internal/users/{userId}/bookings` and `/api/v1/internal/users/{userId}/transactions` for service-to-service use after JWT validation in **user-service**
 * Admin filtering for payments and transactions via criteria-based search endpoints
 * User authentication and authorization
 * Dispute handling

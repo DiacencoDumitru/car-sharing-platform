@@ -4,7 +4,9 @@ import com.dynamiccarsharing.booking.dto.TransactionDto;
 import com.dynamiccarsharing.booking.mapper.TransactionMapper;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.model.Transaction;
+import com.dynamiccarsharing.booking.integration.client.CarIntegrationClient;
 import com.dynamiccarsharing.booking.repository.TransactionRepository;
+import com.dynamiccarsharing.booking.repository.jpa.TransactionJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,11 +29,17 @@ class TransactionServiceImplTest {
     @Mock
     private TransactionMapper transactionMapper;
 
+    @Mock
+    private TransactionJpaRepository transactionJpaRepository;
+
+    @Mock
+    private CarIntegrationClient carIntegrationClient;
+
     private TransactionServiceImpl transactionService;
 
     @BeforeEach
     void setUp() {
-        transactionService = new TransactionServiceImpl(transactionRepository, transactionMapper);
+        transactionService = new TransactionServiceImpl(transactionRepository, transactionJpaRepository, carIntegrationClient, transactionMapper);
     }
 
     @Test

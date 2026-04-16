@@ -21,9 +21,11 @@ class CarSearchCriteriaTest {
         CarType type = CarType.SEDAN;
         VerificationStatus verificationStatus = VerificationStatus.VERIFIED;
 
+        Long ownerId = 77L;
         CarSearchCriteria criteria = CarSearchCriteria.builder()
                 .make(make)
                 .model(model)
+                .ownerId(ownerId)
                 .statusIn(List.of(status))
                 .locationId(locationId)
                 .type(type)
@@ -33,6 +35,7 @@ class CarSearchCriteriaTest {
         assertNotNull(criteria);
         assertEquals(make, criteria.getMake());
         assertEquals(model, criteria.getModel());
+        assertEquals(ownerId, criteria.getOwnerId());
         assertEquals(List.of(status), criteria.getStatusIn());
         assertEquals(locationId, criteria.getLocationId());
         assertEquals(type, criteria.getType());

@@ -228,7 +228,7 @@ class BookingDaoTest extends BookingBaseDaoTest {
             createBooking(user1, 40L, 100L, TransactionStatus.PENDING);
             createBooking(user1, 50L, 100L, TransactionStatus.COMPLETED);
 
-            BookingSearchCriteria criteria = new BookingSearchCriteria(user1, null, TransactionStatus.COMPLETED, null, null);
+            BookingSearchCriteria criteria = new BookingSearchCriteria(user1, null, null, TransactionStatus.COMPLETED, null, null);
             Pageable pageable = PageRequest.of(0, 2);
             Page<Booking> results = bookingDao.findAll(criteria, pageable);
 

@@ -51,7 +51,7 @@ class BookingSearchCriteriaTest {
     @Test
     void allArgsConstructor_createsPopulatedObject() {
         BookingSearchCriteria criteria = new BookingSearchCriteria(
-                renterId, carId, status, startTime, endTime
+                renterId, carId, null, status, startTime, endTime
         );
 
         assertNotNull(criteria);
@@ -82,10 +82,10 @@ class BookingSearchCriteriaTest {
     @Test
     void equalsAndHashCode_workAsExpected() {
         BookingSearchCriteria criteria1 = new BookingSearchCriteria(
-                renterId, carId, status, startTime, endTime
+                renterId, carId, null, status, startTime, endTime
         );
         BookingSearchCriteria criteria2 = new BookingSearchCriteria(
-                renterId, carId, status, startTime, endTime
+                renterId, carId, null, status, startTime, endTime
         );
 
         assertEquals(criteria1, criteria2);
@@ -95,7 +95,7 @@ class BookingSearchCriteriaTest {
     @Test
     void toString_containsAllFieldValues() {
         BookingSearchCriteria criteria = new BookingSearchCriteria(
-                renterId, carId, status, startTime, endTime
+                renterId, carId, null, status, startTime, endTime
         );
         
         String criteriaString = criteria.toString();

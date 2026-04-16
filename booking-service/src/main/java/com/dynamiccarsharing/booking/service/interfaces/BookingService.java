@@ -30,4 +30,6 @@ public interface BookingService {
     List<BookingDto> findBookingsByRenterId(Long renterId);
 
     List<BookingDto> searchBookings(BookingSearchCriteria criteria);
+
+    Page<BookingDto> findPageForUser(Long userId, String asRole, Pageable pageable);
 }
