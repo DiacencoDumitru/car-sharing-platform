@@ -1,0 +1,33 @@
+type: object
+properties:
+  id:
+    type: integer
+    format: int64
+  registrationNumber:
+    type: string
+  make:
+    type: string
+  model:
+    type: string
+  status:
+    type: string
+  locationId:
+    type: integer
+    format: int64
+  ownerId:
+    type: integer
+    format: int64
+  price:
+    type: number
+  type:
+    type: string
+  verificationStatus:
+    type: string
+  instanceId:
+    type: string
+  averageRating:
+    type: number
+    nullable: true
+  reviewCount:
+    type: integer
+    nullable: true
