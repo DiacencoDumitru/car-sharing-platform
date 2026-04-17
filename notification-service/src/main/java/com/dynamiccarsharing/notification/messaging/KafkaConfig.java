@@ -33,9 +33,25 @@ public class KafkaConfig {
     @Value("${application.messaging.topics.booking-commands-dlt:booking.commands.dlt}")
     private String bookingCommandsDltTopic;
 
+    @Value("${application.messaging.topics.booking-reminders:booking.reminders}")
+    private String bookingRemindersTopic;
+
+    @Value("${application.messaging.topics.booking-reminders-dlt:booking.reminders.dlt}")
+    private String bookingRemindersDltTopic;
+
     @Bean
     public NewTopic bookingCommandsDltTopic() {
         return new NewTopic(bookingCommandsDltTopic, 1, (short) 1);
+    }
+
+    @Bean
+    public NewTopic bookingRemindersTopic() {
+        return new NewTopic(bookingRemindersTopic, 1, (short) 1);
+    }
+
+    @Bean
+    public NewTopic bookingRemindersDltTopic() {
+        return new NewTopic(bookingRemindersDltTopic, 1, (short) 1);
     }
 
     @Bean
