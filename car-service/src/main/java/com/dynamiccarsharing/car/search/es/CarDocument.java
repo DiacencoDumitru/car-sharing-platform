@@ -56,4 +56,10 @@ public class CarDocument {
 
     @Field(type = FieldType.Long)
     private Long ownerId;
+
+    @Field(type = FieldType.Double)
+    private Double averageRating;
+
+    @Field(type = FieldType.Integer)
+    private Integer reviewCount;
 }

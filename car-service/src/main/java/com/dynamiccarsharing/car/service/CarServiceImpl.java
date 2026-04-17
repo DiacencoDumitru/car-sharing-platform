@@ -98,6 +98,8 @@ public class CarServiceImpl implements CarService {
         Car car = carMapper.toEntity(carDto, ownerId);
         car.setOwnerId(ownerId);
         car.setLocation(location);
+        car.setReviewCount(0);
+        car.setAverageRating(null);
 
         Car savedCar = carRepository.save(car);
         CarDto dto = carMapper.toDto(savedCar);

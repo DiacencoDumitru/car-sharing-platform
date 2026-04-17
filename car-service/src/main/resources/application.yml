@@ -125,6 +125,11 @@ logging:
     org.springframework.cloud.client.discovery: DEBUG
 
 application:
+  http:
+    clients:
+      timeout-seconds: 3
+      retry-max-attempts: 2
+      retry-backoff-millis: 200
   security:
     jwt:
       secret-key: ${JWT_SECRET:E0nD6k7s3yq0s5jD8L3Qw3N8jH2rVg7w1vYJ3p6xKf0U=}

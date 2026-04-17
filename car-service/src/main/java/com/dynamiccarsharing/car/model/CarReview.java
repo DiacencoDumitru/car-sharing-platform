@@ -29,6 +29,12 @@ public class CarReview {
     @Column(name = "reviewer_id", nullable = false)
     private Long reviewerId;
 
+    @Column(name = "booking_id", unique = true)
+    private Long bookingId;
+
+    @Column(name = "rating")
+    private Integer rating;
+
     @NotNull(message = "Comment must be not null.")
     @Column(nullable = false)
     private String comment;

@@ -31,12 +31,22 @@ public class CarReviewDao implements CarReviewRepository {
     @Override
     public CarReview save(CarReview carReview) {
         if (carReview.getId() == null) {
-            String insertSql = "INSERT INTO car_reviews (car_id, reviewer_id, comment) VALUES (?, ?, ?)";
+            String insertSql = "INSERT INTO car_reviews (car_id, reviewer_id, booking_id, rating, comment) VALUES (?, ?, ?, ?, ?)";
             Long newId = databaseUtil.executeUpdateWithGeneratedKeys(insertSql, statement -> {
                 try {
                     statement.setLong(1, carReview.getCar().getId());
                     statement.setLong(2, carReview.getReviewerId());
-                    statement.setString(3, carReview.getComment());
+                    if (carReview.getBookingId() != null) {
+                        statement.setLong(3, carReview.getBookingId());
+                    } else {
+                        statement.setObject(3, null);
+                    }
+                    if (carReview.getRating() != null) {
+                        statement.setInt(4, carReview.getRating());
+                    } else {
+                        statement.setObject(4, null);
+                    }
+                    statement.setString(5, carReview.getComment());
                 } catch (SQLException e) {
                     throw new RepositoryException("Failed to set parameters for car review save", e);
                 }
@@ -44,8 +54,9 @@ public class CarReviewDao implements CarReviewRepository {
             carReview.setId(newId);
             return carReview;
         } else {
-            String updateSql = "UPDATE car_reviews SET car_id = ?, reviewer_id = ?, comment = ? WHERE id = ?";
-            databaseUtil.execute(updateSql, carReview.getCar().getId(), carReview.getReviewerId(), carReview.getComment(), carReview.getId());
+            String updateSql = "UPDATE car_reviews SET car_id = ?, reviewer_id = ?, booking_id = ?, rating = ?, comment = ? WHERE id = ?";
+            databaseUtil.execute(updateSql, carReview.getCar().getId(), carReview.getReviewerId(), carReview.getBookingId(),
+                    carReview.getRating(), carReview.getComment(), carReview.getId());
             return carReview;
         }
     }
@@ -93,12 +104,40 @@ public class CarReviewDao implements CarReviewRepository {
 
     private CarReview mapToCarReview(ResultSet rs) throws SQLException {
         Car car = Car.builder().id(rs.getLong("car_id")).build();
-
-        return CarReview.builder()
+        CarReview.CarReviewBuilder b = CarReview.builder()
                 .id(rs.getLong("id"))
                 .car(car)
                 .reviewerId(rs.getLong("reviewer_id"))
-                .comment(rs.getString("comment"))
-                .build();
+                .comment(rs.getString("comment"));
+        Long bookingId = rs.getObject("booking_id", Long.class);
+        if (bookingId != null) {
+            b.bookingId(bookingId);
+        }
+        Integer rating = rs.getObject("rating", Integer.class);
+        if (rating != null) {
+            b.rating(rating);
+        }
+        return b.build();
+    }
+
+    @Override
+    public Optional<CarReview> findByBookingId(Long bookingId) {
+        String query = "SELECT * FROM car_reviews WHERE booking_id = ?";
+        CarReview review = databaseUtil.findOne(query, this::mapToCarReview, bookingId);
+        return Optional.ofNullable(review);
+    }
+
+    @Override
+    public Double averageRatingForCar(Long carId) {
+        String query = "SELECT COALESCE(AVG(rating), 0) FROM car_reviews WHERE car_id = ? AND rating IS NOT NULL";
+        Double v = databaseUtil.findOne(query, rs -> rs.getDouble(1), carId);
+        return v != null ? v : 0.0;
+    }
+
+    @Override
+    public long countRatedByCarId(Long carId) {
+        String query = "SELECT COUNT(*) FROM car_reviews WHERE car_id = ? AND rating IS NOT NULL";
+        Long c = databaseUtil.findOne(query, rs -> rs.getLong(1), carId);
+        return c != null ? c : 0L;
     }
 }

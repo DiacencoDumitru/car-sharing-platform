@@ -154,4 +154,14 @@ public class BookingDao implements BookingRepository {
         String query = "SELECT * FROM bookings WHERE car_id = ? AND status IN ('PENDING', 'APPROVED') AND start_time < ? AND end_time > ?";
         return databaseUtil.findMany(query, this::mapToBooking, carId, Timestamp.valueOf(endTime), Timestamp.valueOf(startTime));
     }
+
+    @Override
+    public List<Booking> findStartReminderCandidates(LocalDateTime now, LocalDateTime startLower, LocalDateTime startUpper) {
+        return List.of();
+    }
+
+    @Override
+    public List<Booking> findEndReminderCandidates(LocalDateTime now, LocalDateTime endLower, LocalDateTime endUpper) {
+        return List.of();
+    }
 }

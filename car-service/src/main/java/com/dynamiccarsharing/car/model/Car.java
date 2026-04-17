@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,6 +67,12 @@ public class Car {
     @Enumerated(EnumType.STRING)
     @Column(name = "verification_status", nullable = false)
     private VerificationStatus verificationStatus;
+
+    @Column(name = "average_rating", precision = 4, scale = 2)
+    private BigDecimal averageRating;
+
+    @Column(name = "review_count")
+    private Integer reviewCount;
 
     @Builder.Default
     @OneToMany(mappedBy = "car")

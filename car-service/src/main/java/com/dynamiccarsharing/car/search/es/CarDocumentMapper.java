@@ -24,12 +24,16 @@ public interface CarDocumentMapper {
     @Mapping(target = "locationState", source = "location.state")
     @Mapping(target = "locationZip", source = "location.zipCode")
     @Mapping(target = "ownerId", source = "ownerId")
+    @Mapping(target = "averageRating", expression = "java(toDouble(car.getAverageRating()))")
+    @Mapping(target = "reviewCount", source = "reviewCount")
     CarDocument toDocument(Car car);
 
     @InheritInverseConfiguration(name = "toDocument")
     @Mapping(target = "price", expression = "java(toBigDecimal(doc.getPricePerDay()))")
     @Mapping(target = "locationId", source = "locationId")
     @Mapping(target = "instanceId", ignore = true)
+    @Mapping(target = "averageRating", expression = "java(toBigDecimal(doc.getAverageRating()))")
+    @Mapping(target = "reviewCount", source = "reviewCount")
     CarDto toDto(CarDocument doc);
 
     default Double toDouble(BigDecimal price) {

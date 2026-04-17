@@ -89,11 +89,18 @@ application:
       timeout-seconds: 3
       retry-max-attempts: 2
       retry-backoff-millis: 200
+  reminders:
+    enabled: false
+    hours-before-start: 24
+    hours-before-end: 2
+    scan-window-minutes: 15
+    scan-interval-ms: 900000
   messaging:
     kafka:
       enabled: false
     topics:
       booking-commands: booking.commands
+      booking-reminders: booking.reminders
     outbox:
       relay-interval-ms: 1000
       batch-size: 50

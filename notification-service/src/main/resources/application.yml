@@ -71,6 +71,8 @@ application:
     topics:
       booking-commands: booking.commands
       booking-commands-dlt: booking.commands.dlt
+      booking-reminders: booking.reminders
+      booking-reminders-dlt: booking.reminders.dlt
 
 fraud:
   approve-cancel-window-seconds: 3600

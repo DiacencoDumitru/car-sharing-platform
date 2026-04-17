@@ -20,4 +20,6 @@ public class CarDto {
     private CarType type;
     private VerificationStatus verificationStatus;
     private String instanceId;
+    private BigDecimal averageRating;
+    private Integer reviewCount;
 }
