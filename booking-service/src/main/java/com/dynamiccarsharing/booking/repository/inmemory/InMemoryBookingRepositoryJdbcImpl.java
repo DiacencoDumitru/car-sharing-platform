@@ -76,4 +76,22 @@ public class InMemoryBookingRepositoryJdbcImpl implements BookingRepository {
                 .filter(b -> b.getStartTime().isBefore(endTime) && b.getEndTime().isAfter(startTime))
                 .toList();
     }
+
+    @Override
+    public List<Booking> findStartReminderCandidates(LocalDateTime now, LocalDateTime startLower, LocalDateTime startUpper) {
+        return bookingMap.values().stream()
+                .filter(b -> b.getStatus() == TransactionStatus.APPROVED)
+                .filter(b -> b.getStartTime().isAfter(now))
+                .filter(b -> b.getStartTime().isAfter(startLower) && !b.getStartTime().isAfter(startUpper))
+                .toList();
+    }
+
+    @Override
+    public List<Booking> findEndReminderCandidates(LocalDateTime now, LocalDateTime endLower, LocalDateTime endUpper) {
+        return bookingMap.values().stream()
+                .filter(b -> b.getStatus() == TransactionStatus.APPROVED)
+                .filter(b -> b.getEndTime().isAfter(now))
+                .filter(b -> b.getEndTime().isAfter(endLower) && !b.getEndTime().isAfter(endUpper))
+                .toList();
+    }
 }

@@ -87,4 +87,14 @@ public class BookingJpaRepositoryImpl implements BookingRepository {
         List<TransactionStatus> active = List.of(TransactionStatus.PENDING, TransactionStatus.APPROVED);
         return bookingJpaRepository.findOverlapping(carId, active, startTime, endTime);
     }
+
+    @Override
+    public List<Booking> findStartReminderCandidates(LocalDateTime now, LocalDateTime startLower, LocalDateTime startUpper) {
+        return bookingJpaRepository.findStartReminderCandidates(TransactionStatus.APPROVED, now, startLower, startUpper);
+    }
+
+    @Override
+    public List<Booking> findEndReminderCandidates(LocalDateTime now, LocalDateTime endLower, LocalDateTime endUpper) {
+        return bookingJpaRepository.findEndReminderCandidates(TransactionStatus.APPROVED, now, endLower, endUpper);
+    }
 }

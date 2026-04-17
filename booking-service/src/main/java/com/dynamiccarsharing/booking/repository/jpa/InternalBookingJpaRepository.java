@@ -20,4 +20,20 @@ interface InternalBookingJpaRepository extends JpaRepository<Booking, Long>, Jpa
 
     @Query("SELECT b FROM Booking b WHERE b.carId = :carId AND b.status IN :statuses AND b.startTime < :endTime AND b.endTime > :startTime")
     List<Booking> findOverlapping(@Param("carId") Long carId, @Param("statuses") List<TransactionStatus> statuses, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+
+    @Query("SELECT b FROM Booking b WHERE b.status = :approved "
+            + "AND b.startTime > :now AND b.startTime > :startLower AND b.startTime <= :startUpper")
+    List<Booking> findStartReminderCandidates(
+            @Param("approved") TransactionStatus approved,
+            @Param("now") LocalDateTime now,
+            @Param("startLower") LocalDateTime startLower,
+            @Param("startUpper") LocalDateTime startUpper);
+
+    @Query("SELECT b FROM Booking b WHERE b.status = :approved "
+            + "AND b.endTime > :now AND b.endTime > :endLower AND b.endTime <= :endUpper")
+    List<Booking> findEndReminderCandidates(
+            @Param("approved") TransactionStatus approved,
+            @Param("now") LocalDateTime now,
+            @Param("endLower") LocalDateTime endLower,
+            @Param("endUpper") LocalDateTime endUpper);
 }

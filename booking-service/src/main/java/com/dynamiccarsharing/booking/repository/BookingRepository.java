@@ -18,4 +18,8 @@ public interface BookingRepository extends Repository<Booking, Long> {
     boolean hasOverlappingBooking(Long carId, LocalDateTime startTime, LocalDateTime endTime);
 
     List<Booking> findOverlappingBookings(Long carId, LocalDateTime startTime, LocalDateTime endTime);
+
+    List<Booking> findStartReminderCandidates(LocalDateTime now, LocalDateTime startLower, LocalDateTime startUpper);
+
+    List<Booking> findEndReminderCandidates(LocalDateTime now, LocalDateTime endLower, LocalDateTime endUpper);
 }
