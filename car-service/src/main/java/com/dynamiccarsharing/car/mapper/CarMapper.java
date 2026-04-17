@@ -21,12 +21,16 @@ public interface CarMapper {
     @Mapping(target = "status", constant = "AVAILABLE")
     @Mapping(target = "verificationStatus", constant = "PENDING")
     @Mapping(target = "reviews", ignore = true)
+    @Mapping(target = "averageRating", ignore = true)
+    @Mapping(target = "reviewCount", ignore = true)
     @Mapping(source = "ownerId", target = "ownerId")
     Car toEntity(CarCreateRequestDto dto, Long ownerId);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "ownerId", ignore = true)
     @Mapping(target = "reviews", ignore = true)
+    @Mapping(target = "averageRating", ignore = true)
+    @Mapping(target = "reviewCount", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "verificationStatus", ignore = true)
     @Mapping(target = "type", ignore = true)

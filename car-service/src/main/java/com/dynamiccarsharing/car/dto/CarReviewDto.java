@@ -7,5 +7,7 @@ public class CarReviewDto {
     private Long id;
     private Long carId;
     private Long reviewerId;
+    private Long bookingId;
+    private Integer rating;
     private String comment;
 }

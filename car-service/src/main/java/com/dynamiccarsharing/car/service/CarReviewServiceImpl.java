@@ -6,12 +6,17 @@ import com.dynamiccarsharing.car.dto.CarReviewDto;
 import com.dynamiccarsharing.car.dto.CarReviewUpdateRequestDto;
 import com.dynamiccarsharing.car.exception.CarReviewNotFoundException;
 import com.dynamiccarsharing.car.filter.CarReviewFilter;
+import com.dynamiccarsharing.car.integration.booking.BookingIntegrationClient;
 import com.dynamiccarsharing.car.mapper.CarReviewMapper;
+import com.dynamiccarsharing.car.model.Car;
 import com.dynamiccarsharing.car.model.CarReview;
 import com.dynamiccarsharing.car.repository.CarRepository;
 import com.dynamiccarsharing.car.repository.CarReviewRepository;
+import com.dynamiccarsharing.car.search.es.CarSearchService;
 import com.dynamiccarsharing.car.service.interfaces.CarReviewService;
+import com.dynamiccarsharing.contracts.dto.BookingForReviewDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
+import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.util.exception.ServiceException;
 import com.dynamiccarsharing.util.exception.ValidationException;
 import com.dynamiccarsharing.util.filter.Filter;
@@ -26,6 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +48,8 @@ public class CarReviewServiceImpl implements CarReviewService {
     private final CarReviewMapper carReviewMapper;
     private final WebClient.Builder webClientBuilder;
     private final CacheManager cacheManager;
+    private final BookingIntegrationClient bookingIntegrationClient;
+    private final CarSearchService carSearchService;
 
     private WebClient userWebClient;
 
@@ -55,10 +64,12 @@ public class CarReviewServiceImpl implements CarReviewService {
         log.info("Creating review for carId: {}", carId);
         validateCarExists(carId);
         validateUserExists(createDto.getReviewerId());
+        validateBookingForReview(carId, createDto);
 
         createDto.setCarId(carId);
         CarReview review = carReviewMapper.toEntity(createDto);
         CarReview savedReview = carReviewRepository.save(review);
+        refreshCarReviewAggregates(carId);
         log.info("Successfully created review {} for carId: {}", savedReview.getId(), carId);
         return carReviewMapper.toDto(savedReview);
     }
@@ -91,6 +102,7 @@ public class CarReviewServiceImpl implements CarReviewService {
             log.info("Programmatically evicted cache 'carReviewsByCarId' for carId: {}", carId);
         }
 
+        refreshCarReviewAggregates(carId);
         log.info("Deleted review with id {} for carId {}", id, carId);
     }
 
@@ -120,11 +132,49 @@ public class CarReviewServiceImpl implements CarReviewService {
         CarReview reviewToUpdate = carReviewRepository.findById(reviewId)
                 .orElseThrow(() -> new CarReviewNotFoundException("CarReview with ID " + reviewId + " not found."));
 
+        Long carIdBefore = reviewToUpdate.getCar().getId();
         carReviewMapper.updateFromDto(updateDto, reviewToUpdate);
         CarReview updatedReview = carReviewRepository.save(reviewToUpdate);
+        refreshCarReviewAggregates(carIdBefore);
         log.info("Updated review {} for carId {}. Evicting cache via annotation.", reviewId, updatedReview.getCar().getId());
 
         return carReviewMapper.toDto(updatedReview);
+    }
+
+    private void validateBookingForReview(Long carId, CarReviewCreateRequestDto createDto) {
+        BookingForReviewDto booking = bookingIntegrationClient.getBookingForReview(createDto.getBookingId())
+                .orElseThrow(() -> new ValidationException("Booking not found."));
+        if (!TransactionStatus.COMPLETED.equals(booking.getStatus())) {
+            throw new ValidationException("Reviews are allowed only after the trip is completed.");
+        }
+        if (!createDto.getReviewerId().equals(booking.getRenterId())) {
+            throw new ValidationException("Only the renter who completed the booking can leave a review.");
+        }
+        if (!carId.equals(booking.getCarId())) {
+            throw new ValidationException("Review does not match car and booking.");
+        }
+        if (carReviewRepository.findByBookingId(createDto.getBookingId()).isPresent()) {
+            throw new ValidationException("A review for this booking already exists.");
+        }
+    }
+
+    private void refreshCarReviewAggregates(Long carId) {
+        Car car = carRepository.findById(carId).orElseThrow();
+        long cnt = carReviewRepository.countRatedByCarId(carId);
+        if (cnt == 0) {
+            car.setAverageRating(null);
+            car.setReviewCount(0);
+        } else {
+            Double avg = carReviewRepository.averageRatingForCar(carId);
+            car.setAverageRating(BigDecimal.valueOf(avg).setScale(2, RoundingMode.HALF_UP));
+            car.setReviewCount((int) cnt);
+        }
+        carRepository.save(car);
+        Cache carById = cacheManager.getCache("carById");
+        if (carById != null) {
+            carById.evict(carId);
+        }
+        carSearchService.indexCar(carId);
     }
 
     private void validateUserExists(Long userId) {

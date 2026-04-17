@@ -10,6 +10,8 @@ class CarReviewCreateRequestDtoTest {
         CarReviewCreateRequestDto dto = new CarReviewCreateRequestDto();
         dto.setCarId(1L);
         dto.setReviewerId(2L);
+        dto.setBookingId(9L);
+        dto.setRating(5);
         dto.setComment("This is a great car, 10/10.");
         return dto;
     }

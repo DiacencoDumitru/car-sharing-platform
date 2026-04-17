@@ -44,7 +44,8 @@ class CarDocumentTest {
     void testAllArgsConstructor() {
         CarDocument doc = new CarDocument(
                 "1", "Honda", "Civic", CarStatus.MAINTENANCE, null,
-                null, 120.0, "ABC-456", 1L, "City", "State", "Zip", 2L
+                null, 120.0, "ABC-456", 1L, "City", "State", "Zip", 2L,
+                4.5, 3
         );
         
         assertEquals("1", doc.getId());

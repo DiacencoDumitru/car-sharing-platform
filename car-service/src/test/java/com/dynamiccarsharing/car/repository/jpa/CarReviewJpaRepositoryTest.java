@@ -51,7 +51,7 @@ class CarReviewJpaRepositoryTest {
         );
 
         carReviewRepository.save(
-                CarReview.builder().car(car1).reviewerId(reviewerId1).comment("Good").build()
+                CarReview.builder().car(car1).reviewerId(reviewerId1).bookingId(77L).rating(4).comment("Good").build()
         );
 
         carReviewRepository.flush();
@@ -66,5 +66,11 @@ class CarReviewJpaRepositoryTest {
 
         assertEquals(1, results.size());
         assertEquals(reviewerId1, results.get(0).getReviewerId());
+    }
+
+    @Test
+    void averageRatingForCar_returnsAverageForRatedReviews() {
+        assertEquals(4.0, carReviewRepository.averageRatingForCar(car1.getId()));
+        assertEquals(1L, carReviewRepository.countRatedByCarId(car1.getId()));
     }
 }

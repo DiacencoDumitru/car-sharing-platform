@@ -46,13 +46,17 @@ class CarReviewControllerTest {
         Long carId = 1L;
         CarReviewCreateRequestDto createDto = new CarReviewCreateRequestDto();
         createDto.setReviewerId(2L);
-        createDto.setComment("Great car!");
+        createDto.setBookingId(500L);
+        createDto.setRating(5);
+        createDto.setComment("Great car!!");
 
         CarReviewDto savedDto = new CarReviewDto();
         savedDto.setId(101L);
         savedDto.setCarId(carId);
         savedDto.setReviewerId(2L);
-        savedDto.setComment("Great car!");
+        savedDto.setBookingId(500L);
+        savedDto.setRating(5);
+        savedDto.setComment("Great car!!");
 
         when(carReviewService.createReview(eq(carId), any(CarReviewCreateRequestDto.class))).thenReturn(savedDto);
 
@@ -64,7 +68,7 @@ class CarReviewControllerTest {
                 .andExpect(jsonPath("$.id").value(101L))
                 .andExpect(jsonPath("$.carId").value(carId))
                 .andExpect(jsonPath("$.reviewerId").value(2L))
-                .andExpect(jsonPath("$.comment").value("Great car!"));
+                .andExpect(jsonPath("$.comment").value("Great car!!"));
     }
 
     @Test

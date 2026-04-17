@@ -6,6 +6,7 @@ import com.dynamiccarsharing.util.repository.Repository;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 public interface CarReviewRepository extends Repository<CarReview, Long> {
 
@@ -14,4 +15,10 @@ public interface CarReviewRepository extends Repository<CarReview, Long> {
     List<CarReview> findByCarId(Long carId);
 
     List<CarReview> findByReviewerId(Long reviewerId);
+
+    Optional<CarReview> findByBookingId(Long bookingId);
+
+    Double averageRatingForCar(Long carId);
+
+    long countRatedByCarId(Long carId);
 }
