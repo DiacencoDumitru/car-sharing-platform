@@ -19,15 +19,15 @@
     <name>DynamicCarSharing</name>
 
     <modules>
-        <module>eureka-server</module>
-        <module>user-service</module>
-        <module>car-service</module>
-        <module>dispute-service</module>
-        <module>booking-service</module>
-        <module>notification-service</module>
-        <module>api-contracts</module>
-        <module>common-utils</module>
-        <module>api-gateway</module>
+        <module>shared/api-contracts</module>
+        <module>shared/common-utils</module>
+        <module>services/eureka-server</module>
+        <module>services/user-service</module>
+        <module>services/car-service</module>
+        <module>services/dispute-service</module>
+        <module>services/booking-service</module>
+        <module>services/notification-service</module>
+        <module>services/api-gateway</module>
     </modules>
 
     <properties>
