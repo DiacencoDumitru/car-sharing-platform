@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +46,7 @@ public class BookingReminderScheduler {
     private int scanWindowMinutes;
 
     @Scheduled(fixedDelayString = "${application.reminders.scan-interval-ms:900000}")
-    @Transactional
+    @Transactional(noRollbackFor = DataIntegrityViolationException.class)
     public void dispatchDueReminders() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startLower = now.plusHours(hoursBeforeStart);
@@ -81,9 +82,13 @@ public class BookingReminderScheduler {
                 .occurredAt(Instant.now())
                 .build();
         bookingReminderPublisher.publish(event);
-        bookingReminderSentRepository.save(BookingReminderSent.builder()
-                .bookingId(booking.getId())
-                .reminderType(type)
-                .build());
+        try {
+            bookingReminderSentRepository.save(BookingReminderSent.builder()
+                    .bookingId(booking.getId())
+                    .reminderType(type)
+                    .build());
+        } catch (DataIntegrityViolationException ex) {
+            log.debug("booking_reminder_sent already present for bookingId={} type={}", booking.getId(), type);
+        }
     }
 }

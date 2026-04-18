@@ -350,6 +350,25 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /bookings/{bookingId}/summary:
+    get:
+      tags:
+        - Bookings
+      summary: Get booking summary with payment and transactions
+      description: Returns booking details together with the linked payment (if any) and all transactions for that booking in one response.
+      operationId: getBookingSummary
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+      responses:
+        '200':
+          description: Aggregated booking, optional payment, and transactions for the booking.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingSummary'
+        '204':
+          description: No booking exists for the given identifier.
+
   /users:
     get:
       tags:
@@ -1119,6 +1138,22 @@ components:
       $ref: 'schemas/Payment.yaml'
     Transaction:
       $ref: 'schemas/Transaction.yaml'
+    BookingSummary:
+      type: object
+      required:
+        - booking
+        - transactions
+      properties:
+        booking:
+          $ref: '#/components/schemas/Booking'
+        payment:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Payment'
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
     Dispute:
       $ref: 'schemas/Dispute.yaml'
     ContactInfo:

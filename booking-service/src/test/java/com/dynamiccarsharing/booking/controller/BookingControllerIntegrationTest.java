@@ -42,6 +42,29 @@ class BookingControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/bookings/{id}/summary returns 204 when booking does not exist")
+    void getBookingSummary_whenNotExists_returnsNoContent() {
+        ResponseEntity<Map> response = restTemplate.getForEntity(baseUrl + "/999/summary", Map.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/bookings/{id}/summary returns 200 with booking and transactions array")
+    void getBookingSummary_whenExists_returnsAggregate() {
+        Booking booking = savePendingBooking(1L, 100L, 200L);
+        Long id = booking.getId();
+
+        ResponseEntity<Map> response = restTemplate.getForEntity(baseUrl + "/" + id + "/summary", Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        Map<?, ?> body = response.getBody();
+        assertThat(body.get("booking")).isNotNull();
+        assertThat(((Map<?, ?>) body.get("booking")).get("id")).isNotNull();
+        assertThat(body.get("transactions")).asList().isNotNull();
+    }
+
+    @Test
     @DisplayName("GET /api/v1/bookings/{id} returns 204 when booking does not exist")
     void getBookingById_whenNotExists_returnsNoContent() {
         ResponseEntity<Map> response = restTemplate.getForEntity(baseUrl + "/999", Map.class);
