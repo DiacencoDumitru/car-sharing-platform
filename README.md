@@ -146,7 +146,7 @@ Infrastructure
 
 When `application.messaging.kafka.enabled=true`, booking lifecycle events (`APPROVED`, `COMPLETED`, `CANCELED` when the car must be returned) are **stored in PostgreSQL** in table `booking_lifecycle_outbox` **in the same transaction** as the booking update. A **scheduled relay** polls pending rows, publishes to Kafka topic `booking.commands` (via `BookingLifecycleKafkaEventPublisher`), and **deletes** the row after a successful send. If Kafka is temporarily down, rows remain and are retried.
 
-**Related settings** in `booking-service/src/main/resources/application.yml`:
+**Related settings** in `services/booking-service/src/main/resources/application.yml`:
 
 | Property | Purpose |
 |----------|---------|
@@ -170,7 +170,7 @@ Cache eviction for Redis read-cache still uses **after-commit** application even
 3. **Notifications** – if `attentionRequired` is true, the service may send **email** and/or **push** via HTTP (`notifications.email.http.endpoint-url`, `notifications.push.http.endpoint-url`), resolving renter **email** and **phone** through **User Service** (`lb://user-service`, Eureka load-balanced WebClient).
 4. **Dead-letter topic** – repeated processing failures are sent to `booking.commands.dlt` (see `KafkaConfig`).
 
-**Related settings** in `notification-service/src/main/resources/application.yml` (and profile overrides):
+**Related settings** in `services/notification-service/src/main/resources/application.yml` (and profile overrides):
 
 | Property | Purpose |
 |----------|---------|
@@ -422,18 +422,24 @@ localhost:9092
 
 ## Project Structure
 
-* **api-gateway** — entry point, routing, JWT validation
-* **user-service** — users and auth
-* **car-service** — car catalog and availability
-* **booking-service** — bookings, payments, transactions
-* **notification-service** — booking lifecycle Kafka consumer, analytics, fraud heuristics, notification dispatch
-* **dispute-service** — disputes
-* **common-utils** — JWT and shared utilities
-* **api-contracts** — shared DTOs and enums
-* **eureka-server** — service discovery
+* **`services/`** — runnable Spring Boot applications (microservices and edge)
 
-* **infrastructure** — Docker and config for Prometheus, Grafana, Logstash, scripts  
-* **docker-compose.yml** — full stack run
+  * **api-gateway** — entry point, routing, JWT validation
+  * **user-service** — users and auth
+  * **car-service** — car catalog and availability
+  * **booking-service** — bookings, payments, transactions
+  * **notification-service** — booking lifecycle Kafka consumer, analytics, fraud heuristics, notification dispatch
+  * **dispute-service** — disputes
+  * **eureka-server** — service discovery
+
+* **`shared/`** — libraries consumed by services
+
+  * **api-contracts** — shared DTOs and enums
+  * **common-utils** — JWT and shared utilities
+
+* **`infrastructure/`** — Prometheus, Grafana, and Logstash configs used by Docker Compose  
+* **`infra/`** — Terraform (GitLab validate/plan)  
+* **`docker-compose.yml`** — full stack run
 
 ---
 
@@ -465,7 +471,7 @@ The platform includes several performance optimizations:
 
 ### Booking service Redis (optional)
 
-`booking-service` can use Redis for concurrency, idempotency, and read caching. Each feature is **disabled by default** in `booking-service/src/main/resources/application.yml`; enable the flags you need and point `spring.data.redis.host` / `spring.data.redis.port` at your Redis instance.
+`booking-service` can use Redis for concurrency, idempotency, and read caching. Each feature is **disabled by default** in `services/booking-service/src/main/resources/application.yml`; enable the flags you need and point `spring.data.redis.host` / `spring.data.redis.port` at your Redis instance.
 
 | Feature | Property | Notes |
 |--------|----------|--------|
@@ -479,7 +485,7 @@ Shared naming prefix: `application.redis.key-prefix` (default `booking`). Microm
 
 `api-gateway` caches selected `GET` responses in Redis (`application.cache.response.enabled=true`) and reuses them until TTL expires.
 
-Default cache settings in `api-gateway/src/main/resources/application.yml`:
+Default cache settings in `services/api-gateway/src/main/resources/application.yml`:
 
 | Property | Purpose |
 |----------|---------|
