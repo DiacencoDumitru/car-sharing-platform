@@ -206,6 +206,18 @@ cd car-sharing-platform
 mvn clean package
 ```
 
+### JVM / GC profiling (optional)
+
+Scripts under `scripts/jvm/` run a **locally built** Spring Boot JAR with G1 GC and GC logging to files such as `gc-baseline-*.log` in the current working directory. They are templates for tuning and profiling, not part of the default Docker workflow.
+
+By default they look for `services/booking-service/target/booking-service-*-SNAPSHOT.jar` after `mvn package` (or `mvn -pl services/booking-service -am package`). To run another service, set **`JAR_PATH`** to the JAR file or pass its path as the first argument, for example:
+
+```bash
+./scripts/jvm/run-server-gc-default.sh
+JAR_PATH=services/car-service/target/car-service-1.0-SNAPSHOT.jar ./scripts/jvm/run-server-gc-default.sh
+./scripts/jvm/run-server-gc-fewer-pauses.sh services/user-service/target/user-service-1.0-SNAPSHOT.jar
+```
+
 ### Start the infrastructure and services (recommended)
 
 This is the **simplest way** to run the whole platform: all microservices, databases, Kafka, Redis, Eureka, observability, etc.
