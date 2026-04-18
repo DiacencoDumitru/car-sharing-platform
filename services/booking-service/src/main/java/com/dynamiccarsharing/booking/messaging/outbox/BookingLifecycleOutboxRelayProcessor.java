@@ -2,6 +2,7 @@ package com.dynamiccarsharing.booking.messaging.outbox;
 
 import com.dynamiccarsharing.contracts.dto.BookingLifecycleEventDto;
 import com.dynamiccarsharing.booking.messaging.kafka.BookingLifecyclePublisher;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +36,9 @@ public class BookingLifecycleOutboxRelayProcessor {
             if (log.isDebugEnabled()) {
                 log.debug("Relayed outbox id={}", row.getId());
             }
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
+            log.error("Outbox relay failed (invalid payload) for id={}, row will be retried", row.getId(), e);
+        } catch (RuntimeException e) {
             log.error("Outbox relay failed for id={}, row will be retried", row.getId(), e);
         }
     }

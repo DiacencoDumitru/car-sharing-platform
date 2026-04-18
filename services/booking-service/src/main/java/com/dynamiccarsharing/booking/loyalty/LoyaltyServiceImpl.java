@@ -46,7 +46,7 @@ public class LoyaltyServiceImpl implements LoyaltyService {
         if (requestedPoints == null || requestedPoints.compareTo(BigDecimal.ZERO) <= 0) {
             return BigDecimal.ZERO;
         }
-        LoyaltyAccount account = findAccountForRedemption(renterId, requestedPoints);
+        findAccountForRedemption(renterId, requestedPoints);
         return requestedPoints.min(initialAmount).max(BigDecimal.ZERO);
     }
 

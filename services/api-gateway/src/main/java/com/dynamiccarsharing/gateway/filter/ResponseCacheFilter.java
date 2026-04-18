@@ -24,6 +24,7 @@ import reactor.core.publisher.Mono;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Component
@@ -96,12 +97,13 @@ public class ResponseCacheFilter implements GlobalFilter, Ordered {
                             dataBuffer.read(content);
                             DataBufferUtils.release(dataBuffer);
 
-                            if (!isResponseCacheable(getStatusCode(), getHeaders(), content.length) || groups.isEmpty()) {
+                            HttpStatusCode statusCode = getStatusCode();
+                            if (!isResponseCacheable(statusCode, getHeaders(), content.length) || groups.isEmpty()) {
                                 return super.writeWith(Mono.just(bufferFactory.wrap(content)));
                             }
-
+                            int statusValue = Objects.requireNonNull(statusCode).value();
                             CachedHttpResponse cached = new CachedHttpResponse(
-                                    getStatusCode().value(),
+                                    statusValue,
                                     copyHeaders(getHeaders()),
                                     content
                             );

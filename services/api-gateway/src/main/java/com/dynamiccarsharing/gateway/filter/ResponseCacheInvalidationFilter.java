@@ -8,6 +8,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -46,7 +47,8 @@ public class ResponseCacheInvalidationFilter implements GlobalFilter, Ordered {
 
         return chain.filter(exchange)
                 .then(Mono.defer(() -> {
-                    if (exchange.getResponse().getStatusCode() == null || !exchange.getResponse().getStatusCode().is2xxSuccessful()) {
+                    HttpStatusCode status = exchange.getResponse().getStatusCode();
+                    if (status == null || !status.is2xxSuccessful()) {
                         return Mono.empty();
                     }
                     return cacheService.evictByGroups(groups)

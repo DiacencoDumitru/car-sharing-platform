@@ -51,11 +51,11 @@ class SqlFilterTest {
     }
 
     @Test
-    @DisplayName("parametersArray() returns empty array for null parameters (though constructor requires non-null)")
-    void parametersArray_nullList_returnsEmptyArray() {
-        SqlFilter filterWithNull = new SqlFilter("query", null);
-        assertNull(filterWithNull.parameters());
-        assertThrows(NullPointerException.class, filterWithNull::parametersArray, "toArray should throw NPE on null list");
+    @DisplayName("null parameters list is normalized to an empty list")
+    void nullParameters_normalizedToEmptyList() {
+        SqlFilter filter = new SqlFilter("query", null);
+        assertEquals(Collections.emptyList(), filter.parameters());
+        assertArrayEquals(new Object[0], filter.parametersArray());
     }
 
      @Test

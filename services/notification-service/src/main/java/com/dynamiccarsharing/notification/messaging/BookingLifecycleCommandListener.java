@@ -2,13 +2,16 @@ package com.dynamiccarsharing.notification.messaging;
 
 import com.dynamiccarsharing.contracts.dto.BookingLifecycleEventDto;
 import com.dynamiccarsharing.notification.application.BookingLifecycleEventProcessor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 @ConditionalOnProperty(
         name = "application.messaging.kafka.enabled",
@@ -33,7 +36,10 @@ public class BookingLifecycleCommandListener {
         try {
             BookingLifecycleEventDto event = objectMapper.readValue(payload, BookingLifecycleEventDto.class);
             processor.process(event);
-        } catch (Exception ex) {
+        } catch (JsonProcessingException ex) {
+            log.warn("Invalid booking lifecycle JSON payload", ex);
+        } catch (RuntimeException ex) {
+            log.error("Failed to process booking lifecycle event", ex);
         }
     }
 }
