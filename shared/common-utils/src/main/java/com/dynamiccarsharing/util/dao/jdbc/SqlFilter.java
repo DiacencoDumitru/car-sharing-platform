@@ -4,6 +4,9 @@ import java.util.Collections;
 import java.util.List;
 
 public record SqlFilter(String filterQuery, List<Object> parameters) {
+    public SqlFilter {
+        parameters = parameters == null ? List.of() : List.copyOf(parameters);
+    }
 
     public static SqlFilter empty() {
         return new SqlFilter("", Collections.emptyList());

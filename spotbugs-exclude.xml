@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter xmlns="https://github.com/spotbugs/filter/3.0.0"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/4.8.0/spotbugs/etc/findbugsfilter.xsd">
+    <!-- Spring DI, Lombok DTOs/entities: mutable object graphs -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Class name="~com\.dynamiccarsharing\..*"/>
+    </Match>
+    <!-- Dynamic SQL built with filters (still uses PreparedStatement) -->
+    <Match>
+        <Bug pattern="SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING"/>
+        <Class name="~com\.dynamiccarsharing\..*"/>
+    </Match>
+    <!-- ASCII-only identifiers for URLs/JPA criteria (not user-facing locale text) -->
+    <Match>
+        <Bug pattern="DM_CONVERT_CASE"/>
+        <Class name="~com\.dynamiccarsharing\..*"/>
+    </Match>
+    <!-- JPA entities vs Serializable heuristics -->
+    <Match>
+        <Bug pattern="SE_BAD_FIELD,SE_NO_SERIALVERSIONID"/>
+        <Class name="~com\.dynamiccarsharing\..*"/>
+    </Match>
+</FindBugsFilter>

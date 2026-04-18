@@ -27,8 +27,8 @@ public class DatabaseUtil {
     }
 
     public void execute(String query, Object... args) {
-        try (Connection connection = getConnection()) {
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             setParameters(preparedStatement, args);
             preparedStatement.execute();
         } catch (SQLException e) {
@@ -37,8 +37,8 @@ public class DatabaseUtil {
     }
 
     public void execute(String query, Consumer<PreparedStatement> consumer) {
-        try (Connection connection = getConnection()) {
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             consumer.accept(preparedStatement);
             preparedStatement.execute();
         } catch (SQLException e) {

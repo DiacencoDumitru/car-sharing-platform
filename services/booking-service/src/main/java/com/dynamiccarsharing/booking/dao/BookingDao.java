@@ -116,8 +116,11 @@ public class BookingDao implements BookingRepository {
 
     @Override
     public List<Booking> findByFilter(Filter<Booking> filter) throws SQLException {
+        if (!(filter instanceof BookingFilter bookingFilter)) {
+            throw new IllegalArgumentException("filter must be BookingFilter");
+        }
         String baseQuery = "SELECT * FROM bookings WHERE 1=1";
-        SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter((BookingFilter) filter);
+        SqlFilter sqlFilter = sqlFilterMapper.toSqlFilter(bookingFilter);
 
         String fullQuery = baseQuery + sqlFilter.filterQuery();
 
