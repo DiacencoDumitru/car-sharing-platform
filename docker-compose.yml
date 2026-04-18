@@ -3,9 +3,9 @@ services:
     image: postgres:15-alpine
     container_name: dynamiccarsharing_db
     environment:
-      - POSTGRES_DB=dynamic_car_sharing_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password123
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -13,7 +13,7 @@ services:
     networks:
       - microservices-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d dynamic_car_sharing_db" ]
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -194,16 +194,16 @@ services:
         condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=local-docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/dynamic_car_sharing_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=password123
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
       - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - APPLICATION_MESSAGING_KAFKA_ENABLED=true
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=E0nD6k7s3yq0s5jD8L3Qw3N8jH2rVg7w1vYJ3p6xKf0U=
+      - JWT_SECRET=${JWT_SECRET}
     networks:
       - microservices-network
     healthcheck:
@@ -256,9 +256,9 @@ services:
     environment:
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
       - SPRING_PROFILES_ACTIVE=local-docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/dynamic_car_sharing_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=password123
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       db:
@@ -379,8 +379,8 @@ services:
       - grafana_data:/var/lib/grafana
       - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
     depends_on:
       - prometheus

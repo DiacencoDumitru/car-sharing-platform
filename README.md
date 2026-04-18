@@ -222,8 +222,16 @@ JAR_PATH=services/car-service/target/car-service-1.0-SNAPSHOT.jar ./scripts/jvm/
 
 This is the **simplest way** to run the whole platform: all microservices, databases, Kafka, Redis, Eureka, observability, etc.
 
+Create a local env file from the template and set secrets (database password, `JWT_SECRET`, Grafana admin password):
+
 ```bash
-docker-compose up --build
+cp .env.example .env
+```
+
+Edit `.env` and fill required values (empty passwords will not work for PostgreSQL). Then start the stack:
+
+```bash
+docker compose up --build
 ```
 
 Wait until health checks pass; then use the [Service Endpoints](#service-endpoints) (e.g. API Gateway on port **8085**).
