@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -46,7 +45,6 @@ public class BookingReminderScheduler {
     private int scanWindowMinutes;
 
     @Scheduled(fixedDelayString = "${application.reminders.scan-interval-ms:900000}")
-    @Transactional(noRollbackFor = DataIntegrityViolationException.class)
     public void dispatchDueReminders() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startLower = now.plusHours(hoursBeforeStart);
