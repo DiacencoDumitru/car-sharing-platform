@@ -4,7 +4,9 @@ import com.dynamiccarsharing.booking.config.SecurityConfig;
 import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
+import com.dynamiccarsharing.booking.dto.BookingSummaryResponseDto;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
+import com.dynamiccarsharing.booking.service.interfaces.BookingSummaryService;
 import com.dynamiccarsharing.booking.service.interfaces.CarAvailabilityService;
 import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
 import com.dynamiccarsharing.booking.service.interfaces.QuoteService;
@@ -47,6 +49,8 @@ class BookingControllerTest {
     @MockBean
     private BookingService bookingService;
     @MockBean
+    private BookingSummaryService bookingSummaryService;
+    @MockBean
     private IdempotencyService idempotencyService;
     @MockBean
     private QuoteService quoteService;
@@ -73,6 +77,27 @@ class BookingControllerTest {
         mockMvc.perform(get("/api/v1/bookings/{bookingId}", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1L));
+    }
+
+    @Test
+    @WithMockUser
+    void getBookingSummary_whenNotExists_shouldReturnNoContent() throws Exception {
+        when(bookingSummaryService.findByBookingId(999L)).thenReturn(Optional.empty());
+        mockMvc.perform(get("/api/v1/bookings/{bookingId}/summary", 999L))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser
+    void getBookingSummary_whenExists_shouldReturnOk() throws Exception {
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setId(1L);
+        BookingSummaryResponseDto summary = new BookingSummaryResponseDto();
+        summary.setBooking(bookingDto);
+        when(bookingSummaryService.findByBookingId(1L)).thenReturn(Optional.of(summary));
+        mockMvc.perform(get("/api/v1/bookings/{bookingId}/summary", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.booking.id").value(1L));
     }
 
     @Test
