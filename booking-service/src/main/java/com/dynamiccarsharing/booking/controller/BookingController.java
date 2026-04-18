@@ -5,9 +5,11 @@ import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.booking.dto.CarAvailabilityCalendarResponseDto;
 import com.dynamiccarsharing.booking.dto.CarAvailabilityResponseDto;
+import com.dynamiccarsharing.booking.dto.BookingSummaryResponseDto;
 import com.dynamiccarsharing.booking.dto.QuoteRequestDto;
 import com.dynamiccarsharing.booking.dto.QuoteResponseDto;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
+import com.dynamiccarsharing.booking.service.interfaces.BookingSummaryService;
 import com.dynamiccarsharing.booking.service.interfaces.CarAvailabilityService;
 import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
 import com.dynamiccarsharing.booking.service.interfaces.QuoteService;
@@ -30,6 +32,7 @@ import java.time.LocalDateTime;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final BookingSummaryService bookingSummaryService;
     private final IdempotencyService idempotencyService;
     private final QuoteService quoteService;
     private final CarAvailabilityService carAvailabilityService;
@@ -43,6 +46,18 @@ public class BookingController {
                 .map(booking -> {
                     booking.setInstanceId(instanceId);
                     return ResponseEntity.ok(booking);
+                })
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    @GetMapping("/{bookingId}/summary")
+    public ResponseEntity<BookingSummaryResponseDto> getBookingSummary(@PathVariable("bookingId") Long bookingId) {
+        return bookingSummaryService.findByBookingId(bookingId)
+                .map(summary -> {
+                    if (summary.getBooking() != null) {
+                        summary.getBooking().setInstanceId(instanceId);
+                    }
+                    return ResponseEntity.ok(summary);
                 })
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
