@@ -222,7 +222,7 @@ JAR_PATH=services/car-service/target/car-service-1.0-SNAPSHOT.jar ./scripts/jvm/
 
 This is the **simplest way** to run the whole platform: all microservices, databases, Kafka, Redis, Eureka, observability, etc.
 
-Create a local env file from the template and set secrets (database password, `JWT_SECRET`, Grafana admin password):
+Create a local env file from the template and set secrets (database password, `JWT_SECRET`, `USER_SERVICE_INTERNAL_API_KEY`, Grafana admin password):
 
 ```bash
 cp .env.example .env
@@ -235,6 +235,8 @@ docker compose up --build
 ```
 
 Wait until health checks pass; then use the [Service Endpoints](#service-endpoints) (e.g. API Gateway on port **8085**).
+
+**Internal user-service APIs** — `GET /api/v1/internal/users/**` is intended for trusted service-to-service calls only. The caller must send header **`X-Internal-Api-Key`** with the same secret that **user-service** validates. Set **`USER_SERVICE_INTERNAL_API_KEY`** to one shared value on **user-service**, **booking-service**, and **car-service** (Docker Compose wires it from `.env`; see `.env.example`). Do not commit the real secret.
 
 ### Run microservices separately (optional, for local development)
 

@@ -41,6 +41,7 @@ application:
       retry-max-attempts: 2
       retry-backoff-millis: 200
   security:
+    internal-api-key: ${USER_SERVICE_INTERNAL_API_KEY:}
     jwt:
       secret-key: NDM0YjVmNjM1MTY0NWE3NDc3Mzg3YTMzNjE1MTQxNTg0NTUxNDg0ZjU0N2IzYjRmNmE1YjdhNmE0ZDQxNjM1Mg==
       expiration: 3600000

@@ -5,6 +5,7 @@ import com.dynamiccarsharing.contracts.dto.UserDto;
 import com.dynamiccarsharing.contracts.enums.UserRole;
 import com.dynamiccarsharing.contracts.enums.UserStatus;
 import com.dynamiccarsharing.user.config.SecurityConfig;
+import com.dynamiccarsharing.user.security.InternalApiKeyAuthenticationFilter;
 import com.dynamiccarsharing.user.dto.ContactInfoCreateRequestDto;
 import com.dynamiccarsharing.user.dto.ContactInfoUpdateRequestDto;
 import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
@@ -27,6 +28,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -44,9 +46,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(value = UserController.class, properties = "eureka.instance.instance-id=test-instance-1")
-@Import({SecurityConfig.class, UserControllerTest.PassThroughJwtFilterConfig.class})
+@WebMvcTest(value = UserController.class, properties = {
+        "eureka.instance.instance-id=test-instance-1",
+        "application.security.internal-api-key=test-internal-api-key-for-integration"
+})
+@Import({SecurityConfig.class, InternalApiKeyAuthenticationFilter.class, UserControllerTest.PassThroughJwtFilterConfig.class})
+@ActiveProfiles("test")
 class UserControllerTest {
+
+    private static final String VALID_INTERNAL_API_KEY = "test-internal-api-key-for-integration";
 
     @Autowired
     MockMvc mockMvc;
@@ -155,7 +163,6 @@ class UserControllerTest {
     }
 
     @Test
-    @WithMockUser
     void getUserByEmailForService_whenUserExists_shouldReturnUser() throws Exception {
         String email = "internal@example.com";
         ContactInfoDto contactDto = new ContactInfoDto();
@@ -166,19 +173,51 @@ class UserControllerTest {
 
         when(userServiceImpl.findByEmail(email)).thenReturn(Optional.of(userDto));
 
-        mockMvc.perform(get("/api/v1/internal/users/by-email/{email}", email))
+        mockMvc.perform(get("/api/v1/internal/users/by-email/{email}", email)
+                        .header(InternalApiKeyAuthenticationFilter.INTERNAL_API_KEY_HEADER, VALID_INTERNAL_API_KEY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.contactInfo.email").value(email));
     }
 
     @Test
-    @WithMockUser
     void getUserByEmailForService_whenUserNotExists_shouldReturnNotFound() throws Exception {
         String email = "notfound@example.com";
         when(userServiceImpl.findByEmail(email)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/v1/internal/users/by-email/{email}", email))
+        mockMvc.perform(get("/api/v1/internal/users/by-email/{email}", email)
+                        .header(InternalApiKeyAuthenticationFilter.INTERNAL_API_KEY_HEADER, VALID_INTERNAL_API_KEY))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getUserByEmailForService_whenApiKeyMissing_shouldReturnUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/internal/users/by-email/{email}", "any@example.com"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getUserByEmailForService_whenApiKeyInvalid_shouldReturnUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/internal/users/by-email/{email}", "any@example.com")
+                        .header(InternalApiKeyAuthenticationFilter.INTERNAL_API_KEY_HEADER, "wrong-key"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void getUserByIdForService_whenUserExists_shouldReturnUser() throws Exception {
+        ContactInfoDto contactDto = new ContactInfoDto();
+        contactDto.setEmail("svc@example.com");
+        UserDto userDto = new UserDto();
+        userDto.setId(2L);
+        userDto.setContactInfo(contactDto);
+
+        when(userServiceImpl.findUserById(2L)).thenReturn(Optional.of(userDto));
+
+        mockMvc.perform(get("/api/v1/internal/users/{userId}", 2L)
+                        .header(InternalApiKeyAuthenticationFilter.INTERNAL_API_KEY_HEADER, VALID_INTERNAL_API_KEY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(2L))
+                .andExpect(jsonPath("$.contactInfo.email").value("svc@example.com"))
+                .andExpect(jsonPath("$.instanceId").value("test-instance-1"));
     }
 
     @Test
