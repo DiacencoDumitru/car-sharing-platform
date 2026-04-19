@@ -41,9 +41,9 @@ class CarJpaRepositoryImplTest {
         savedLocation = locationRepository.save(
                 Location.builder().city("Test").state("TS").zipCode("123").build()
         );
-        carRepository.save(Car.builder().ownerId(300L).make("Honda").model("Civic").status(CarStatus.AVAILABLE).verificationStatus(VERIFIED).registrationNumber("CAR1").price(new BigDecimal("20.00")).type(SEDAN).location(savedLocation).build());
-        carRepository.save(Car.builder().ownerId(301L).make("Toyota").model("Camry").status(CarStatus.RENTED).verificationStatus(VERIFIED).registrationNumber("CAR2").price(new BigDecimal("25.00")).type(SEDAN).location(savedLocation).build());
-        carRepository.save(Car.builder().ownerId(302L).make("Honda").model("Accord").status(CarStatus.MAINTENANCE).verificationStatus(VERIFIED).registrationNumber("CAR3").price(new BigDecimal("30.00")).type(SEDAN).location(savedLocation).build());
+        carRepository.save(Car.builder().ownerId(300L).make("Honda").model("Civic").status(CarStatus.AVAILABLE).verificationStatus(VERIFIED).registrationNumber("CAR1").price(new BigDecimal("20.00")).type(SEDAN).location(savedLocation).averageRating(new BigDecimal("4.50")).reviewCount(2).build());
+        carRepository.save(Car.builder().ownerId(301L).make("Toyota").model("Camry").status(CarStatus.RENTED).verificationStatus(VERIFIED).registrationNumber("CAR2").price(new BigDecimal("25.00")).type(SEDAN).location(savedLocation).averageRating(new BigDecimal("3.00")).reviewCount(1).build());
+        carRepository.save(Car.builder().ownerId(302L).make("Honda").model("Accord").status(CarStatus.MAINTENANCE).verificationStatus(VERIFIED).registrationNumber("CAR3").price(new BigDecimal("30.00")).type(SEDAN).location(savedLocation).reviewCount(0).build());
     }
 
 
@@ -73,5 +73,30 @@ class CarJpaRepositoryImplTest {
         assertTrue(results.getContent().stream().allMatch(c -> c.getMake().equals("Honda")));
         assertTrue(results.getContent().stream().anyMatch(c -> c.getModel().equals("Civic")));
         assertTrue(results.getContent().stream().anyMatch(c -> c.getModel().equals("Accord")));
+    }
+
+    @Test
+    void findAll_withMinAverageRating_excludesNullAndBelowThreshold() {
+        CarSearchCriteria criteria = CarSearchCriteria.builder()
+                .minAverageRating(new BigDecimal("4.00"))
+                .build();
+
+        Page<Car> results = carRepository.findAll(criteria, PageRequest.of(0, 10));
+
+        assertEquals(1, results.getTotalElements());
+        assertEquals("Civic", results.getContent().get(0).getModel());
+    }
+
+    @Test
+    void findAll_withMinAverageRating_includesAllRatedCarsMeetingThreshold() {
+        CarSearchCriteria criteria = CarSearchCriteria.builder()
+                .minAverageRating(new BigDecimal("3.00"))
+                .build();
+
+        Page<Car> results = carRepository.findAll(criteria, PageRequest.of(0, 10));
+
+        assertEquals(2, results.getTotalElements());
+        assertTrue(results.getContent().stream().anyMatch(c -> c.getModel().equals("Civic")));
+        assertTrue(results.getContent().stream().anyMatch(c -> c.getModel().equals("Camry")));
     }
 }

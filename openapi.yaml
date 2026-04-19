@@ -66,6 +66,12 @@ paths:
           schema:
             type: integer
             format: int64
+        - name: minAverageRating
+          in: query
+          description: When set, returns only cars that have a non-null average review rating greater than or equal to this value.
+          schema:
+            type: number
+            format: double
       responses:
         '200':
           description: A paginated list of available cars.
