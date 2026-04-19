@@ -72,6 +72,12 @@ paths:
           schema:
             type: number
             format: double
+        - name: minReviewCount
+          in: query
+          description: When set, returns only cars whose stored review count is greater than or equal to this integer (cars with no count are treated as zero).
+          schema:
+            type: integer
+            format: int32
       responses:
         '200':
           description: A paginated list of available cars.
