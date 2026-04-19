@@ -3,14 +3,20 @@ package com.dynamiccarsharing.car.search.es;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.json.JsonData;
 import com.dynamiccarsharing.car.criteria.CarSearchCriteria;
+import com.dynamiccarsharing.car.exception.CarNotFoundException;
+import com.dynamiccarsharing.car.model.Car;
 import com.dynamiccarsharing.car.repository.CarRepository;
 import com.dynamiccarsharing.contracts.dto.CarDto;
+import com.dynamiccarsharing.contracts.enums.CarStatus;
+import com.dynamiccarsharing.contracts.enums.VerificationStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHits;
@@ -18,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,6 +42,9 @@ public class CarSearchServiceImpl implements CarSearchService {
 
     @Value("${application.search.indexing-enabled:true}")
     private boolean indexingEnabled;
+
+    @Value("${application.search.similar-price-band-fraction:0.25}")
+    private double similarPriceBandFraction;
 
     @Override
     public Page<CarDto> search(String q, CarSearchCriteria criteria, Pageable pageable) {
@@ -109,6 +119,52 @@ public class CarSearchServiceImpl implements CarSearchService {
                 .toList();
 
         return new PageImpl<>(content, pageable, hits.getTotalHits());
+    }
+
+    @Override
+    public Page<CarDto> findSimilar(Long carId, Pageable pageable) {
+        Car anchor = carRepository.findById(carId)
+                .orElseThrow(() -> new CarNotFoundException("Car not found with id: " + carId));
+
+        BigDecimal price = anchor.getPrice();
+        double anchorAmount = price.doubleValue();
+        double band = Math.max(0.0, Math.min(1.0, similarPriceBandFraction));
+        double low = BigDecimal.valueOf(anchorAmount * (1.0 - band)).setScale(4, RoundingMode.HALF_UP).doubleValue();
+        double high = BigDecimal.valueOf(anchorAmount * (1.0 + band)).setScale(4, RoundingMode.HALF_UP).doubleValue();
+
+        String anchorId = String.valueOf(carId);
+        String makeKeyword = anchor.getMake();
+        String typeName = anchor.getType().name();
+
+        Pageable sortedPageable = pageable.getSort().isSorted()
+                ? pageable
+                : PageRequest.of(
+                        pageable.getPageNumber(),
+                        pageable.getPageSize(),
+                        Sort.by(Sort.Order.desc("averageRating"), Sort.Order.asc("id"))
+                );
+
+        NativeQuery query = NativeQuery.builder()
+                .withQuery(qb -> qb.bool(b -> {
+                    b.mustNot(mn -> mn.term(t -> t.field("id").value(FieldValue.of(anchorId))));
+                    b.filter(f -> f.term(t -> t.field("type").value(typeName)));
+                    b.filter(f -> f.term(t -> t.field("make.raw").value(makeKeyword)));
+                    b.filter(f -> f.term(t -> t.field("status").value(CarStatus.AVAILABLE.name())));
+                    b.filter(f -> f.term(t -> t.field("verificationStatus").value(VerificationStatus.VERIFIED.name())));
+                    b.filter(f -> f.range(r -> r.field("pricePerDay")
+                            .gte(JsonData.of(low))
+                            .lte(JsonData.of(high))));
+                    return b;
+                }))
+                .withPageable(sortedPageable)
+                .build();
+
+        SearchHits<CarDocument> hits = operations.search(query, CarDocument.class);
+        List<CarDto> content = hits.getSearchHits().stream()
+                .map(h -> mapper.toDto(Objects.requireNonNull(h.getContent())))
+                .toList();
+
+        return new PageImpl<>(content, sortedPageable, hits.getTotalHits());
     }
 
     @Override
