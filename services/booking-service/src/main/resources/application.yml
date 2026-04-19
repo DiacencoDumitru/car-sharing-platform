@@ -89,6 +89,7 @@ application:
       timeout-seconds: 3
       retry-max-attempts: 2
       retry-backoff-millis: 200
+      internal-api-key: ${USER_SERVICE_INTERNAL_API_KEY:}
   reminders:
     enabled: false
     hours-before-start: 24

@@ -73,6 +73,7 @@ class BookingServiceIntegrationTest {
             ResponseSpec responseSpec = mock(ResponseSpec.class);
             when(wc.get()).thenReturn(uriSpec);
             when(uriSpec.uri(anyString(), anyLong())).thenReturn(uriSpec);
+            when(uriSpec.headers(any())).thenReturn(uriSpec);
             when(uriSpec.retrieve()).thenReturn(responseSpec);
             when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
             when(responseSpec.bodyToMono(UserDto.class)).thenReturn(Mono.just(new UserDto()));
