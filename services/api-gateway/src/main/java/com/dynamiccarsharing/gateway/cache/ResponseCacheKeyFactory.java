@@ -34,6 +34,9 @@ public class ResponseCacheKeyFactory {
 
     public boolean isCacheable(ServerHttpRequest request) {
         String path = request.getURI().getPath();
+        if (path.contains("/bookings/") && path.contains("/messages")) {
+            return false;
+        }
         return properties.getCacheablePaths().stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
