@@ -13,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -54,6 +55,34 @@ public class WebClientUserIntegrationClient implements UserIntegrationClient {
             throw e;
         } catch (Exception e) {
             throw new ServiceException("Failed to validate user with ID " + userId, e);
+        }
+    }
+
+    @Override
+    public Optional<Long> findReferredByUserId(Long userId) {
+        try {
+            UserDto user = userWebClient.get()
+                    .uri("/api/v1/internal/users/{id}", userId)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is5xxServerError, response ->
+                            response.createException().map(ex -> new ServiceException("User service is unavailable", ex))
+                    )
+                    .bodyToMono(UserDto.class)
+                    .timeout(Duration.ofSeconds(properties.getTimeoutSeconds()))
+                    .retryWhen(
+                            Retry.backoff(properties.getRetryMaxAttempts(), Duration.ofMillis(properties.getRetryBackoffMillis()))
+                                    .filter(this::isRetriable)
+                    )
+                    .block();
+
+            if (user == null || user.getReferredByUserId() == null) {
+                return Optional.empty();
+            }
+            return Optional.of(user.getReferredByUserId());
+        } catch (WebClientResponseException.NotFound e) {
+            return Optional.empty();
+        } catch (Exception e) {
+            throw new ServiceException("Failed to load referral context for user " + userId, e);
         }
     }
 

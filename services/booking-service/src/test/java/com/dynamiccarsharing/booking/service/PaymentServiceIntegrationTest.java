@@ -3,9 +3,11 @@ package com.dynamiccarsharing.booking.service;
 import com.dynamiccarsharing.booking.dto.PaymentDto;
 import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
 import com.dynamiccarsharing.booking.model.AdminAuditAction;
+import com.dynamiccarsharing.booking.integration.client.UserIntegrationClient;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.repository.PaymentRepository;
+import com.dynamiccarsharing.booking.repository.ReferralRewardRepository;
 import com.dynamiccarsharing.booking.repository.jpa.AdminAuditLogJpaRepository;
 import com.dynamiccarsharing.contracts.enums.PaymentType;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
@@ -14,12 +16,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles({"integration", "jpa"})
@@ -37,11 +43,19 @@ class PaymentServiceIntegrationTest {
     @Autowired
     private AdminAuditLogJpaRepository adminAuditLogJpaRepository;
 
+    @Autowired
+    private ReferralRewardRepository referralRewardRepository;
+
+    @MockBean
+    private UserIntegrationClient userIntegrationClient;
+
     @BeforeEach
     void setUp() {
+        when(userIntegrationClient.findReferredByUserId(anyLong())).thenReturn(Optional.empty());
         adminAuditLogJpaRepository.deleteAll();
         paymentRepository.findAll()
                 .forEach(payment -> paymentRepository.deleteById(payment.getId()));
+        referralRewardRepository.deleteAll();
         clearBookings();
     }
 

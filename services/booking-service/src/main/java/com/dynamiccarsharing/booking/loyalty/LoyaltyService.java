@@ -11,5 +11,7 @@ public interface LoyaltyService {
     void earnPoints(Long renterId, Long paymentId, BigDecimal paidAmount);
 
     void reverseLoyaltyForPayment(Long renterId, Long paymentId);
+
+    void grantReferralRewardForFirstPaymentIfApplicable(Long refereeUserId, Long paymentId);
 }
 
