@@ -32,6 +32,12 @@ public interface UserJpaRepository extends JpaRepository<User, Long>, JpaSpecifi
     Optional<User> findByContactInfoEmail(String email);
 
     @Override
+    Optional<User> findByReferralCode(String referralCode);
+
+    @Override
+    boolean existsByReferralCode(String referralCode);
+
+    @Override
     @EntityGraph(attributePaths = {"cars"})
     Optional<User> findWithCarsById(Long id);
 

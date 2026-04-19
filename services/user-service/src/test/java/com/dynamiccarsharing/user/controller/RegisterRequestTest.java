@@ -16,7 +16,7 @@ class RegisterRequestTest {
 
     @Test
     void testAllArgsConstructor() {
-        RegisterRequest request = new RegisterRequest("John", "Doe", "john@example.com", "password");
+        RegisterRequest request = new RegisterRequest("John", "Doe", "john@example.com", "password", null);
         assertEquals("John", request.getFirstName());
         assertEquals("Doe", request.getLastName());
         assertEquals("john@example.com", request.getEmail());

@@ -94,4 +94,11 @@ public class UserController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/internal/users/{userId}")
+    public ResponseEntity<UserDto> getUserForInternalService(@PathVariable Long userId) {
+        return userService.findUserById(userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 }

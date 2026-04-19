@@ -6,7 +6,10 @@ import com.dynamiccarsharing.user.controller.AuthenticationRequest;
 import com.dynamiccarsharing.user.controller.AuthenticationResponse;
 import com.dynamiccarsharing.user.controller.RegisterRequest;
 import com.dynamiccarsharing.user.model.User;
+import com.dynamiccarsharing.user.referral.ReferralCodeAllocator;
 import com.dynamiccarsharing.user.repository.UserRepository;
+import com.dynamiccarsharing.util.exception.ValidationException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -21,6 +24,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,8 +39,16 @@ class AuthenticationServiceTest {
     @Mock
     private AuthenticationManager authenticationManager;
 
+    @Mock
+    private ReferralCodeAllocator referralCodeAllocator;
+
     @InjectMocks
     private AuthenticationService authenticationService;
+
+    @BeforeEach
+    void stubReferralCode() {
+        lenient().when(referralCodeAllocator.allocate()).thenReturn("NEWUSERREF1");
+    }
 
     @Test
     void testRegister() {
@@ -64,6 +76,45 @@ class AuthenticationServiceTest {
         assertEquals("encodedPassword", savedUser.getContactInfo().getPassword());
         assertEquals(UserRole.RENTER, savedUser.getRole());
         assertEquals(UserStatus.ACTIVE, savedUser.getStatus());
+        assertEquals("NEWUSERREF1", savedUser.getReferralCode());
+        assertNull(savedUser.getReferredByUserId());
+    }
+
+    @Test
+    void testRegister_withValidReferral_setsReferredBy() {
+        RegisterRequest request = RegisterRequest.builder()
+                .firstName("Jane")
+                .lastName("Doe")
+                .email("jane@example.com")
+                .password("password")
+                .referralCode("REFCODE99")
+                .build();
+
+        User referrer = User.builder().id(99L).referralCode("REFCODE99").build();
+        when(userRepository.findByReferralCode("REFCODE99")).thenReturn(Optional.of(referrer));
+        when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
+        when(jwtService.generateToken(any(User.class))).thenReturn("token");
+
+        authenticationService.register(request);
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        assertEquals(99L, userCaptor.getValue().getReferredByUserId());
+    }
+
+    @Test
+    void testRegister_withInvalidReferral_throws() {
+        RegisterRequest request = RegisterRequest.builder()
+                .firstName("Jane")
+                .lastName("Doe")
+                .email("jane@example.com")
+                .password("password")
+                .referralCode("BADCODE")
+                .build();
+
+        when(userRepository.findByReferralCode("BADCODE")).thenReturn(Optional.empty());
+
+        assertThrows(ValidationException.class, () -> authenticationService.register(request));
     }
 
     @Test

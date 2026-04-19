@@ -119,12 +119,14 @@ class UserTest {
         List<UserReview> reviewsByUser = new ArrayList<>();
         
         User allArgsUser = new User(
-                2L, 
-                contactInfo, 
-                UserRole.RENTER, 
-                UserStatus.SUSPENDED, 
-                reviewsOfUser, 
-                reviewsByUser
+                2L,
+                contactInfo,
+                UserRole.RENTER,
+                UserStatus.SUSPENDED,
+                reviewsOfUser,
+                reviewsByUser,
+                null,
+                null
         );
 
         assertEquals(2L, allArgsUser.getId());

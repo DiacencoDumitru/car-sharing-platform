@@ -51,6 +51,12 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "reviewer")
     private List<UserReview> reviewsByUser = new ArrayList<>();
 
+    @Column(name = "referral_code", unique = true, length = 32)
+    private String referralCode;
+
+    @Column(name = "referred_by_user_id")
+    private Long referredByUserId;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));

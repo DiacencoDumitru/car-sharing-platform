@@ -62,4 +62,19 @@ public class InMemoryUserRepositoryJdbcImpl implements UserRepository {
     public Optional<User> findWithCarsById(Long id) {
         return Optional.empty();
     }
+
+    @Override
+    public Optional<User> findByReferralCode(String referralCode) {
+        if (referralCode == null) {
+            return Optional.empty();
+        }
+        return userMap.values().stream()
+                .filter(u -> referralCode.equals(u.getReferralCode()))
+                .findFirst();
+    }
+
+    @Override
+    public boolean existsByReferralCode(String referralCode) {
+        return findByReferralCode(referralCode).isPresent();
+    }
 }

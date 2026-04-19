@@ -14,4 +14,6 @@ public class RegisterRequest {
     private String lastName;
     private String email;
     private String password;
+    /** Optional public referral code of an existing user. */
+    private String referralCode;
 }
