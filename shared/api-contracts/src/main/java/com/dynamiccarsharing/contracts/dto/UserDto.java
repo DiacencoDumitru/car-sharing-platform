@@ -11,8 +11,6 @@ public class UserDto {
     private UserStatus status;
     private ContactInfoDto contactInfo;
     private String instanceId;
-    /** Public shareable code for this user; assigned at registration. */
     private String referralCode;
-    /** User id of the referrer, if this account was created with a valid referral code. */
     private Long referredByUserId;
 }
