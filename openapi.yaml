@@ -162,6 +162,31 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /cars/{carId}/similar:
+    get:
+      tags:
+        - Cars
+      summary: Similar car listings
+      description: >-
+        Returns Elasticsearch-backed listings similar to the given car: same car type and make,
+        price per day within a configurable band around the anchor car (default ±25%),
+        status AVAILABLE and verification VERIFIED. The anchor car id is never included.
+      operationId: getSimilarCars
+      parameters:
+        - $ref: '#/components/parameters/CarId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        '200':
+          description: Paginated list of similar cars.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarPage'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /bookings:
     get:
       tags:
