@@ -15,7 +15,7 @@ The platform is composed of multiple microservices communicating via REST APIs a
 
 * **API Gateway** – single entry point for client requests and routing
 * **User Service** – user management and authentication; renter **favorite cars** at `/api/v1/users/me/favorite-cars` and `/api/v1/users/{userId}/favorite-cars` (table `favorite_cars`; **car-service** validates on add); **my bookings** at `GET /api/v1/users/me/bookings` (optional `asRole=renter|owner`, JWT) proxied to **booking-service** internal APIs; **my transactions** at `GET /api/v1/users/me/transactions` (paginated union of renter and owner-side activity via **car-service** car ids)
-* **Car Service** – car catalog management and search; optional `ownerId` on `GET /api/v1/cars` to list a user’s listed vehicles (used when resolving owner-scoped bookings and transactions); optional `minAverageRating` on the same endpoint to return only cars with a non-null average review rating at or above the given value
+* **Car Service** – car catalog management and search; optional `ownerId` on `GET /api/v1/cars` to list a user’s listed vehicles (used when resolving owner-scoped bookings and transactions); optional `minAverageRating` on the same endpoint to return only cars with a non-null average review rating at or above the given value; optional `minReviewCount` to require at least that many stored car reviews (missing counts treated as zero)
 * **Booking Service** – reservation and booking logic; **availability check** at `GET /api/v1/bookings/availability?carId=&startTime=&endTime=` (ISO-8601 query parameters) returns whether the car is listed as available and has no overlapping PENDING or APPROVED booking; **daily availability calendar** at `GET /api/v1/bookings/availability/calendar?carId=&startTime=&endTime=` returns per-day availability for the selected interval
 * **Notification Service** – consumes booking lifecycle events from Kafka, stores analytics and fraud signals, and can dispatch email/push notifications when a case needs attention (integrates with **User Service** for contact data); also consumes **`booking.reminders`** for scheduled rental start/end reminders published by **booking-service**
 * **Dispute Service** – dispute resolution between renters and owners
@@ -114,7 +114,7 @@ Infrastructure
 
 ## Key Features
 
-* Car catalog and vehicle listing; browse filters include optional **`minAverageRating`** on `GET /api/v1/cars` (cars without an average rating are omitted when this parameter is set)
+* Car catalog and vehicle listing; browse filters on `GET /api/v1/cars` include optional **`minAverageRating`** (cars without an average rating are omitted when set) and optional **`minReviewCount`** (minimum number of car reviews, treating a missing count as zero)
 * Booking and reservation management
 * Daily availability calendar for a selected car and interval
 * Dynamic pricing for bookings based on time and pickup location rules

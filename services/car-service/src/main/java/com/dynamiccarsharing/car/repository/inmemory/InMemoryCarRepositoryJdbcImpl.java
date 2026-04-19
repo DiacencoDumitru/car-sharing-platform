@@ -53,6 +53,8 @@ public class InMemoryCarRepositoryJdbcImpl implements CarRepository {
                 .filter(car -> criteria.getMinAverageRating() == null
                         || (car.getAverageRating() != null
                         && car.getAverageRating().compareTo(criteria.getMinAverageRating()) >= 0))
+                .filter(car -> criteria.getMinReviewCount() == null
+                        || (car.getReviewCount() != null ? car.getReviewCount() : 0) >= criteria.getMinReviewCount())
                 .toList();
 
         int start = (int) pageable.getOffset();

@@ -99,4 +99,27 @@ class CarJpaRepositoryImplTest {
         assertTrue(results.getContent().stream().anyMatch(c -> c.getModel().equals("Civic")));
         assertTrue(results.getContent().stream().anyMatch(c -> c.getModel().equals("Camry")));
     }
+
+    @Test
+    void findAll_withMinReviewCount_filtersByReviewCount() {
+        CarSearchCriteria criteria = CarSearchCriteria.builder()
+                .minReviewCount(2)
+                .build();
+
+        Page<Car> results = carRepository.findAll(criteria, PageRequest.of(0, 10));
+
+        assertEquals(1, results.getTotalElements());
+        assertEquals("Civic", results.getContent().get(0).getModel());
+    }
+
+    @Test
+    void findAll_withMinReviewCount_treatsNullReviewCountAsZero() {
+        CarSearchCriteria criteria = CarSearchCriteria.builder()
+                .minReviewCount(0)
+                .build();
+
+        Page<Car> results = carRepository.findAll(criteria, PageRequest.of(0, 10));
+
+        assertEquals(3, results.getTotalElements());
+    }
 }

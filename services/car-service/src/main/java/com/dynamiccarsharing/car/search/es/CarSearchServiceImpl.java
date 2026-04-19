@@ -92,6 +92,11 @@ public class CarSearchServiceImpl implements CarSearchService {
                             b.filter(f -> f.range(r -> r.field("averageRating")
                                     .gte(JsonData.of(minRating.doubleValue()))));
                         }
+                        Integer minReviews = criteria.getMinReviewCount();
+                        if (minReviews != null) {
+                            b.filter(f -> f.range(r -> r.field("reviewCount")
+                                    .gte(JsonData.of(minReviews.doubleValue()))));
+                        }
                     }
                     return b;
                 }))

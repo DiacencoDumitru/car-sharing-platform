@@ -58,7 +58,15 @@ public class CarSpecification {
                         cb.greaterThanOrEqualTo(root.get("averageRating"), min));
     }
 
-    public static Specification<Car> withCriteria(String make, String model, List<CarStatus> statusIn, Long locationId, CarType type, BigDecimal priceGreaterThan, BigDecimal priceLessThan, VerificationStatus verificationStatus, Long ownerId, BigDecimal minAverageRating) {
+    public static Specification<Car> hasMinReviewCount(Integer min) {
+        return (root, query, cb) -> min == null
+                ? null
+                : cb.greaterThanOrEqualTo(
+                        cb.coalesce(root.get("reviewCount"), cb.literal(0)),
+                        min);
+    }
+
+    public static Specification<Car> withCriteria(String make, String model, List<CarStatus> statusIn, Long locationId, CarType type, BigDecimal priceGreaterThan, BigDecimal priceLessThan, VerificationStatus verificationStatus, Long ownerId, BigDecimal minAverageRating, Integer minReviewCount) {
         return Specification
                 .where(hasMake(make))
                 .and(hasModel(model))
@@ -69,6 +77,7 @@ public class CarSpecification {
                 .and(priceLessThan(priceLessThan))
                 .and(hasVerificationStatus(verificationStatus))
                 .and(hasOwnerId(ownerId))
-                .and(hasMinAverageRating(minAverageRating));
+                .and(hasMinAverageRating(minAverageRating))
+                .and(hasMinReviewCount(minReviewCount));
     }
 }
