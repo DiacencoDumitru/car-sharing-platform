@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -93,6 +94,12 @@ public class CarDao implements CarRepository {
                         .filter(c -> criteria.getOwnerId().equals(c.getOwnerId()))
                         .toList();
             }
+            if (criteria.getMinAverageRating() != null) {
+                BigDecimal min = criteria.getMinAverageRating();
+                filteredCars = filteredCars.stream()
+                        .filter(c -> c.getAverageRating() != null && c.getAverageRating().compareTo(min) >= 0)
+                        .toList();
+            }
 
             int start = (int) pageable.getOffset();
             int end = Math.min(start + pageable.getPageSize(), filteredCars.size());
@@ -129,6 +136,12 @@ public class CarDao implements CarRepository {
                 .zipCode(rs.getString("zip_code"))
                 .build();
 
+        BigDecimal averageRating = rs.getBigDecimal("average_rating");
+        if (rs.wasNull()) {
+            averageRating = null;
+        }
+        Integer reviewCount = rs.getObject("review_count", Integer.class);
+
         return Car.builder()
                 .id(rs.getLong("id"))
                 .registrationNumber(rs.getString("registration_number"))
@@ -140,6 +153,8 @@ public class CarDao implements CarRepository {
                 .price(rs.getBigDecimal("price_per_day"))
                 .type(CarType.valueOf(rs.getString("type")))
                 .verificationStatus(VerificationStatus.valueOf(rs.getString("verification_status")))
+                .averageRating(averageRating)
+                .reviewCount(reviewCount)
                 .build();
     }
 

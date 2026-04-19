@@ -27,4 +27,6 @@ public class CarSearchCriteria {
 
     private BigDecimal priceGreaterThan;
     private BigDecimal priceLessThan;
+
+    private BigDecimal minAverageRating;
 }

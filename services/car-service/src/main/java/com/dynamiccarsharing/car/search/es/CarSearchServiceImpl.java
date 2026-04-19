@@ -17,6 +17,7 @@ import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
@@ -85,6 +86,11 @@ public class CarSearchServiceImpl implements CarSearchService {
                                 }
                                 return rr;
                             }));
+                        }
+                        BigDecimal minRating = criteria.getMinAverageRating();
+                        if (minRating != null) {
+                            b.filter(f -> f.range(r -> r.field("averageRating")
+                                    .gte(JsonData.of(minRating.doubleValue()))));
                         }
                     }
                     return b;
