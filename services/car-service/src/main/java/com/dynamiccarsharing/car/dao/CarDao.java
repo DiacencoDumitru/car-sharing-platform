@@ -100,6 +100,12 @@ public class CarDao implements CarRepository {
                         .filter(c -> c.getAverageRating() != null && c.getAverageRating().compareTo(min) >= 0)
                         .toList();
             }
+            if (criteria.getMinReviewCount() != null) {
+                int minRc = criteria.getMinReviewCount();
+                filteredCars = filteredCars.stream()
+                        .filter(c -> (c.getReviewCount() != null ? c.getReviewCount() : 0) >= minRc)
+                        .toList();
+            }
 
             int start = (int) pageable.getOffset();
             int end = Math.min(start + pageable.getPageSize(), filteredCars.size());

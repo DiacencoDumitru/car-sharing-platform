@@ -97,7 +97,7 @@ class CarSpecificationTest {
 
     @Test
     void whenFilteringWithCriteria_shouldReturnMatchingCars() {
-        Specification<Car> spec = CarSpecification.withCriteria("Honda", null, List.of(CarStatus.AVAILABLE), savedLocation.getId(), CarType.SEDAN, new BigDecimal("49.00"), new BigDecimal("51.00"), VerificationStatus.VERIFIED, null, null);
+        Specification<Car> spec = CarSpecification.withCriteria("Honda", null, List.of(CarStatus.AVAILABLE), savedLocation.getId(), CarType.SEDAN, new BigDecimal("49.00"), new BigDecimal("51.00"), VerificationStatus.VERIFIED, null, null, null);
         List<Car> results = carRepository.findAll(spec);
         assertEquals(1, results.size());
         assertEquals("Civic", results.get(0).getModel());

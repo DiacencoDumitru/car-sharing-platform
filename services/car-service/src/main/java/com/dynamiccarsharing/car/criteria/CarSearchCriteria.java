@@ -29,4 +29,6 @@ public class CarSearchCriteria {
     private BigDecimal priceLessThan;
 
     private BigDecimal minAverageRating;
+
+    private Integer minReviewCount;
 }
