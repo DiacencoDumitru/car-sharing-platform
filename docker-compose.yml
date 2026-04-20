@@ -120,6 +120,7 @@ services:
     environment:
       - EUREKA_INSTANCE_HOSTNAME=user-service-1
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:-dev-internal-api-key-change-me}
     depends_on:
       db:
         condition: service_healthy
@@ -150,6 +151,7 @@ services:
     environment:
       - EUREKA_INSTANCE_HOSTNAME=user-service-2
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:-dev-internal-api-key-change-me}
     depends_on:
       db:
         condition: service_healthy
@@ -204,6 +206,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET}
+      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:-dev-internal-api-key-change-me}
     networks:
       - microservices-network
     healthcheck:
@@ -226,6 +229,7 @@ services:
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - APPLICATION_MESSAGING_KAFKA_ENABLED=true
+      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:-dev-internal-api-key-change-me}
     depends_on:
       db:
         condition: service_healthy
