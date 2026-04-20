@@ -12,6 +12,7 @@ import com.dynamiccarsharing.user.mapper.ContactInfoMapper;
 import com.dynamiccarsharing.user.mapper.UserMapper;
 import com.dynamiccarsharing.user.model.ContactInfo;
 import com.dynamiccarsharing.user.model.User;
+import com.dynamiccarsharing.user.referral.ReferralCodeAllocator;
 import com.dynamiccarsharing.user.repository.UserRepository;
 import com.dynamiccarsharing.user.service.interfaces.UserService;
 import com.dynamiccarsharing.util.exception.ServiceException;
@@ -35,11 +36,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final ContactInfoMapper contactInfoMapper;
+    private final ReferralCodeAllocator referralCodeAllocator;
 
     @Override
     public UserDto registerUser(UserCreateRequestDto createDto) {
         User user = userMapper.toEntity(createDto);
         user.setStatus(UserStatus.ACTIVE);
+        user.setReferralCode(referralCodeAllocator.allocate());
         User savedUser = userRepository.save(user);
         return userMapper.toDto(savedUser);
     }

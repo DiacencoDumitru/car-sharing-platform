@@ -20,6 +20,8 @@ public interface UserMapper {
     @Mapping(source = "role", target = "role")
     @Mapping(target = "reviewsOfUser", ignore = true)
     @Mapping(target = "reviewsByUser", ignore = true)
+    @Mapping(target = "referralCode", ignore = true)
+    @Mapping(target = "referredByUserId", ignore = true)
     User toEntity(UserCreateRequestDto dto);
 
     @Mapping(target = "id", ignore = true)

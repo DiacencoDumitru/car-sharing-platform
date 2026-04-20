@@ -12,6 +12,7 @@ import com.dynamiccarsharing.user.mapper.ContactInfoMapper;
 import com.dynamiccarsharing.user.mapper.UserMapper;
 import com.dynamiccarsharing.user.model.ContactInfo;
 import com.dynamiccarsharing.user.model.User;
+import com.dynamiccarsharing.user.referral.ReferralCodeAllocator;
 import com.dynamiccarsharing.user.repository.UserRepository;
 import com.dynamiccarsharing.util.exception.ServiceException;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,9 @@ class UserServiceImplTest {
     @Mock
     private ContactInfoMapper contactInfoMapper;
 
+    @Mock
+    private ReferralCodeAllocator referralCodeAllocator;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -56,6 +60,7 @@ class UserServiceImplTest {
     void testRegisterUser() {
         UserCreateRequestDto createDto = new UserCreateRequestDto();
         when(userMapper.toEntity(createDto)).thenReturn(mockUser);
+        when(referralCodeAllocator.allocate()).thenReturn("ADMINREF001");
         when(userRepository.save(any(User.class))).thenReturn(mockUser);
         when(userMapper.toDto(mockUser)).thenReturn(mockUserDto);
 

@@ -12,6 +12,8 @@ create TABLE IF NOT EXISTS users (
     contact_info_id BIGINT UNIQUE,
     role VARCHAR(50) NOT NULL CHECK (role IN ('RENTER', 'CAR_OWNER', 'ADMIN', 'GUEST')),
     status VARCHAR(50) NOT NULL CHECK (status IN ('ACTIVE', 'SUSPENDED', 'BANNED')),
+    referral_code VARCHAR(32) UNIQUE,
+    referred_by_user_id BIGINT,
     CONSTRAINT fk_users_on_contact_infos FOREIGN KEY (contact_info_id) REFERENCES contact_infos(id) ON delete CASCADE
 );
 
