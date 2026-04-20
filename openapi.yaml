@@ -406,6 +406,80 @@ paths:
         '204':
           description: No booking exists for the given identifier.
 
+  /bookings/{bookingId}/messages:
+    post:
+      tags:
+        - Bookings
+      summary: Post in-app booking message
+      description: |-
+        Renter or car owner posts a message on a booking thread. Requires header X-User-Id matching the renter or the car owner.
+        Phone numbers are not exposed in this API; use this thread until the booking is confirmed off-platform policies apply.
+      operationId: postBookingMessage
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+        - name: X-User-Id
+          in: header
+          required: true
+          description: Authenticated user id of the sender; must be the renter or the car owner.
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingMessageCreateRequest'
+      responses:
+        '201':
+          description: Message stored.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Caller is not a participant of the booking.
+        '404':
+          $ref: '#/components/responses/NotFound'
+    get:
+      tags:
+        - Bookings
+      summary: List booking messages after cursor
+      description: |-
+        Returns up to 100 messages with id greater than afterId for long polling clients. Requires X-User-Id for the renter or owner.
+      operationId: listBookingMessages
+      parameters:
+        - $ref: '#/components/parameters/BookingId'
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: afterId
+          in: query
+          required: false
+          description: Return messages strictly after this id; use 0 for the first page.
+          schema:
+            type: integer
+            format: int64
+            default: 0
+      responses:
+        '200':
+          description: Ordered messages oldest-first within the page.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingMessageResponse'
+        '403':
+          description: Caller is not a participant of the booking.
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /users:
     get:
       tags:
@@ -1212,6 +1286,29 @@ components:
       $ref: 'schemas/DisputeCreateRequest.yaml'
     PaymentRequest:
       $ref: 'schemas/PaymentRequest.yaml'
+    BookingMessageCreateRequest:
+      type: object
+      required:
+        - body
+      properties:
+        body:
+          type: string
+          maxLength: 2000
+    BookingMessageResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        senderUserId:
+          type: integer
+          format: int64
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
     QuoteRequest:
       type: object
       required:
