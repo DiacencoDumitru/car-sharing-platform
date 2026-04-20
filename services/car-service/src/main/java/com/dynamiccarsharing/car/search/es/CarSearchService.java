@@ -9,6 +9,8 @@ public interface CarSearchService {
 
     Page<CarDto> search(String q, CarSearchCriteria criteria, Pageable pageable);
 
+    Page<CarDto> findSimilar(Long carId, Pageable pageable);
+
     void indexCar(Long carId);
 
     void deleteFromIndex(Long carId);

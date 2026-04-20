@@ -79,4 +79,17 @@ class CarSearchControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(1L));
     }
+
+    @Test
+    @DisplayName("Should return similar cars page")
+    void testSimilar() throws Exception {
+        when(carSearchService.findSimilar(eq(5L), any(Pageable.class))).thenReturn(carPage);
+
+        mockMvc.perform(get("/api/v1/cars/5/similar")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(1L))
+                .andExpect(jsonPath("$.content[0].instanceId").value("car-service:unknown"));
+    }
 }
