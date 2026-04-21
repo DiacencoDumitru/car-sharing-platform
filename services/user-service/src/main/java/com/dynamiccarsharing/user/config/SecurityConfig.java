@@ -36,7 +36,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(req ->
                         req.requestMatchers(
                                 "/auth/**",
-                                        "/actuator/**"
+                                        "/actuator/**",
+                                        "/api/v1/internal/**"
                                 )
                                 .permitAll()
                                 .anyRequest()

@@ -62,6 +62,11 @@ public class FavoriteCarController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/internal/cars/{carId}/favorite-users")
+    public ResponseEntity<List<Long>> listUsersByFavoriteCar(@PathVariable Long carId) {
+        return ResponseEntity.ok(favoriteCarService.listUserIdsByFavoriteCarId(carId));
+    }
+
     private static Long resolveUserId(Object principal) {
         if (principal instanceof String s) {
             try {
