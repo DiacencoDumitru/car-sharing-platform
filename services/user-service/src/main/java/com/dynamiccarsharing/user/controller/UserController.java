@@ -88,10 +88,24 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
+    @GetMapping("/internal/users/{userId}")
+    public ResponseEntity<UserDto> getUserByIdForService(@PathVariable Long userId) throws UnknownHostException {
+        String hostname = InetAddress.getLocalHost().getHostName();
+        log.info("Internal request for user {} handled by instance: {}", userId, hostname);
+
+        return userService.findUserById(userId)
+                .map(user -> {
+                    user.setInstanceId(instanceId);
+                    return ResponseEntity.ok(user);
+                })
+                .orElse(ResponseEntity.noContent().build());
+    }
+
     @GetMapping("/internal/users/by-email/{email:.+}")
     public ResponseEntity<UserDto> getUserByEmailForService(@PathVariable String email) {
         return userService.findByEmail(email)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
 }

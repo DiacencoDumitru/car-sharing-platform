@@ -106,6 +106,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         Long renterId = payment.getBooking().getRenterId();
         loyaltyService.earnPoints(renterId, payment.getId(), payment.getAmount());
+        loyaltyService.grantReferralRewardForFirstPaymentIfApplicable(renterId, payment.getId());
 
         adminAuditService.logPaymentAction(paymentId, AdminAuditAction.PAYMENT_CONFIRM, actorUserId);
 

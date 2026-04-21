@@ -89,6 +89,7 @@ application:
       timeout-seconds: 3
       retry-max-attempts: 2
       retry-backoff-millis: 200
+      internal-api-key: ${USER_SERVICE_INTERNAL_API_KEY:}
   reminders:
     enabled: false
     hours-before-start: 24
@@ -120,3 +121,5 @@ application:
       lock-ttl-seconds: 15
       wait-timeout-millis: 2500
       poll-delay-millis: 30
+  loyalty:
+    referral-bonus-points: 100

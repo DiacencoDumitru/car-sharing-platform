@@ -11,4 +11,6 @@ public class UserDto {
     private UserStatus status;
     private ContactInfoDto contactInfo;
     private String instanceId;
+    private String referralCode;
+    private Long referredByUserId;
 }

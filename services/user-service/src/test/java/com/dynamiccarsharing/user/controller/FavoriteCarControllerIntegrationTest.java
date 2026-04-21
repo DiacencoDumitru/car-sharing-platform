@@ -9,6 +9,7 @@ import com.dynamiccarsharing.user.model.ContactInfo;
 import com.dynamiccarsharing.user.model.User;
 import com.dynamiccarsharing.user.repository.jpa.FavoriteCarJpaRepository;
 import com.dynamiccarsharing.user.repository.jpa.UserJpaRepository;
+import com.dynamiccarsharing.user.security.InternalApiKeyAuthenticationFilter;
 import com.dynamiccarsharing.user.service.JwtService;
 import com.dynamiccarsharing.util.exception.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +41,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 )
 @ActiveProfiles({"test", "jpa"})
 class FavoriteCarControllerIntegrationTest {
+
+    private static final String INTERNAL_API_KEY = "test-internal-api-key-for-integration";
 
     @LocalServerPort
     private int port;
@@ -286,7 +289,7 @@ class FavoriteCarControllerIntegrationTest {
         ResponseEntity<List<Long>> response = restTemplate.exchange(
                 "http://localhost:" + port + "/api/v1/internal/cars/777/favorite-users",
                 HttpMethod.GET,
-                HttpEntity.EMPTY,
+                new HttpEntity<>(internalApiHeaders()),
                 new ParameterizedTypeReference<>() {
                 }
         );
@@ -328,6 +331,12 @@ class FavoriteCarControllerIntegrationTest {
     private static HttpHeaders bearerHeaders(String token) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
+        return headers;
+    }
+
+    private static HttpHeaders internalApiHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(InternalApiKeyAuthenticationFilter.INTERNAL_API_KEY_HEADER, INTERNAL_API_KEY);
         return headers;
     }
 

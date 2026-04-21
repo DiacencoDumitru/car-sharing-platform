@@ -1,16 +1,21 @@
 package com.dynamiccarsharing.booking.loyalty;
 
+import com.dynamiccarsharing.booking.integration.client.UserIntegrationClient;
 import com.dynamiccarsharing.booking.model.LoyaltyAccount;
 import com.dynamiccarsharing.booking.model.LoyaltyTransaction;
+import com.dynamiccarsharing.booking.model.ReferralReward;
 import com.dynamiccarsharing.booking.repository.LoyaltyAccountRepository;
 import com.dynamiccarsharing.booking.repository.LoyaltyTransactionRepository;
+import com.dynamiccarsharing.booking.repository.ReferralRewardRepository;
 import com.dynamiccarsharing.util.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +26,11 @@ public class LoyaltyServiceImpl implements LoyaltyService {
 
     private final LoyaltyAccountRepository accountRepository;
     private final LoyaltyTransactionRepository transactionRepository;
+    private final ReferralRewardRepository referralRewardRepository;
+    private final UserIntegrationClient userIntegrationClient;
+
+    @Value("${application.loyalty.referral-bonus-points:100}")
+    private BigDecimal referralBonusPoints;
 
     @Override
     public BigDecimal redeemPoints(Long renterId, Long paymentId, BigDecimal requestedPoints, BigDecimal initialAmount) {
@@ -72,6 +82,49 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                 .amount(points)
                 .earn(true)
                 .paymentId(paymentId)
+                .build();
+        transactionRepository.save(transaction);
+    }
+
+    @Override
+    public void grantReferralRewardForFirstPaymentIfApplicable(Long refereeUserId, Long paymentId) {
+        if (referralBonusPoints == null || referralBonusPoints.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        Optional<Long> referrerIdOpt = userIntegrationClient.findReferredByUserId(refereeUserId);
+        if (referrerIdOpt.isEmpty()) {
+            return;
+        }
+        Long referrerId = referrerIdOpt.get();
+        if (referrerId.equals(refereeUserId)) {
+            return;
+        }
+
+        if (referralRewardRepository.existsByRefereeUserId(refereeUserId)) {
+            return;
+        }
+
+        ReferralReward reward = ReferralReward.builder()
+                .refereeUserId(refereeUserId)
+                .referrerUserId(referrerId)
+                .paymentId(paymentId)
+                .build();
+        referralRewardRepository.save(reward);
+
+        LoyaltyAccount account = accountRepository.findByRenterId(referrerId)
+                .orElseGet(() -> LoyaltyAccount.builder()
+                        .renterId(referrerId)
+                        .balance(BigDecimal.ZERO)
+                        .build());
+        account.setBalance(account.getBalance().add(referralBonusPoints));
+        account = accountRepository.save(account);
+
+        LoyaltyTransaction transaction = LoyaltyTransaction.builder()
+                .account(account)
+                .amount(referralBonusPoints)
+                .earn(true)
+                .paymentId(null)
                 .build();
         transactionRepository.save(transaction);
     }

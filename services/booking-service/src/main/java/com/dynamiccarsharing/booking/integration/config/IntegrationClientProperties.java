@@ -11,4 +11,8 @@ public class IntegrationClientProperties {
     private long timeoutSeconds = 3;
     private long retryMaxAttempts = 2;
     private long retryBackoffMillis = 200;
+    /**
+     * Shared secret for {@code X-Internal-Api-Key} when calling user-service internal APIs.
+     */
+    private String internalApiKey = "";
 }

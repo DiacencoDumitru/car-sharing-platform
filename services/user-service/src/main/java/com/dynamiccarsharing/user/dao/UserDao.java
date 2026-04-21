@@ -38,12 +38,18 @@ public class UserDao implements UserRepository {
         ContactInfo savedContactInfo = contactInfoDao.save(user.getContactInfo());
 
         if (user.getId() == null) {
-            String insertSql = "INSERT INTO users (contact_info_id, role, status) VALUES (?, ?, ?)";
+            String insertSql = "INSERT INTO users (contact_info_id, role, status, referral_code, referred_by_user_id) VALUES (?, ?, ?, ?, ?)";
             Long newId = databaseUtil.executeUpdateWithGeneratedKeys(insertSql, statement -> {
                 try {
                     statement.setLong(1, savedContactInfo.getId());
                     statement.setString(2, user.getRole().name());
                     statement.setString(3, user.getStatus().name());
+                    statement.setString(4, user.getReferralCode());
+                    if (user.getReferredByUserId() != null) {
+                        statement.setLong(5, user.getReferredByUserId());
+                    } else {
+                        statement.setObject(5, null);
+                    }
                 } catch (SQLException e) {
                     throw new RepositoryException("Failed to save user", e);
                 }
@@ -54,8 +60,9 @@ public class UserDao implements UserRepository {
             return user;
 
         } else {
-            String updateSql = "UPDATE users SET contact_info_id = ?, role = ?, status = ? WHERE id = ?";
-            databaseUtil.execute(updateSql, savedContactInfo.getId(), user.getRole().name(), user.getStatus().name(), user.getId());
+            String updateSql = "UPDATE users SET contact_info_id = ?, role = ?, status = ?, referral_code = ?, referred_by_user_id = ? WHERE id = ?";
+            databaseUtil.execute(updateSql, savedContactInfo.getId(), user.getRole().name(), user.getStatus().name(),
+                    user.getReferralCode(), user.getReferredByUserId(), user.getId());
 
             user.setContactInfo(savedContactInfo);
             return user;
@@ -108,11 +115,16 @@ public class UserDao implements UserRepository {
                 .phoneNumber(rs.getString("phone_number"))
                 .build();
 
+        long referredBy = rs.getLong("referred_by_user_id");
+        boolean hasReferrer = !rs.wasNull();
+
         return User.builder()
                 .id(rs.getLong("id"))
                 .contactInfo(contactInfo)
                 .role(UserRole.valueOf(rs.getString("role")))
                 .status(UserStatus.valueOf(rs.getString("status")))
+                .referralCode(rs.getString("referral_code"))
+                .referredByUserId(hasReferrer ? referredBy : null)
                 .build();
     }
 
@@ -138,5 +150,25 @@ public class UserDao implements UserRepository {
     @Override
     public Optional<User> findWithCarsById(Long id) {
         return findById(id);
+    }
+
+    @Override
+    public Optional<User> findByReferralCode(String referralCode) {
+        String query = USER_CONTACT_JOIN_QUERY + " WHERE u.referral_code = ?";
+        User user = databaseUtil.findOne(query, this::mapToUser, referralCode);
+        return Optional.ofNullable(user);
+    }
+
+    @Override
+    public boolean existsByReferralCode(String referralCode) {
+        String sql = "SELECT COUNT(*) FROM users WHERE referral_code = ?";
+        Long count = databaseUtil.findOne(sql, rs -> {
+            try {
+                return rs.getLong(1);
+            } catch (SQLException e) {
+                throw new RepositoryException("Failed to count users by referral code", e);
+            }
+        }, referralCode);
+        return count != null && count > 0;
     }
 }

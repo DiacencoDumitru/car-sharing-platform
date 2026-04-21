@@ -28,4 +28,11 @@ public class CarSearchController {
         page.forEach(dto -> dto.setInstanceId(instanceId));
         return page;
     }
+
+    @GetMapping("/{carId}/similar")
+    public Page<CarDto> similar(@PathVariable Long carId, Pageable pageable) {
+        Page<CarDto> page = carSearchService.findSimilar(carId, pageable);
+        page.forEach(dto -> dto.setInstanceId(instanceId));
+        return page;
+    }
 }

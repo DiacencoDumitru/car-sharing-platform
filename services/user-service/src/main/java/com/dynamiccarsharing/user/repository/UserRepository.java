@@ -18,6 +18,10 @@ public interface UserRepository extends Repository<User, Long> {
 
     Optional<User> findByContactInfoEmail(String email);
 
+    Optional<User> findByReferralCode(String referralCode);
+
+    boolean existsByReferralCode(String referralCode);
+
     Optional<User> findWithCarsById(Long id);
 
     List<User> findByFilter(Filter<User> filter) throws SQLException;

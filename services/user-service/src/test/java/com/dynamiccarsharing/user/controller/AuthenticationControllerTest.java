@@ -40,7 +40,12 @@ class AuthenticationControllerTest {
 
     @Test
     void testRegister() throws Exception {
-        RegisterRequest request = new RegisterRequest("Test", "User", "test@example.com", "pass");
+        RegisterRequest request = RegisterRequest.builder()
+                .firstName("Test")
+                .lastName("User")
+                .email("test@example.com")
+                .password("pass")
+                .build();
         AuthenticationResponse response = new AuthenticationResponse("test.token");
 
         when(authenticationService.register(any(RegisterRequest.class))).thenReturn(response);

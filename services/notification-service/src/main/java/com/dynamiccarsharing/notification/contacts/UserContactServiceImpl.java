@@ -4,7 +4,9 @@ import com.dynamiccarsharing.contracts.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -17,14 +19,22 @@ import java.util.Optional;
 @Slf4j
 public class UserContactServiceImpl implements UserContactService {
 
+    private static final String INTERNAL_API_KEY_HEADER = "X-Internal-Api-Key";
     private final WebClient.Builder webClientBuilder;
+    @Value("${application.http.clients.internal-api-key:}")
+    private String internalApiKey;
 
     @Override
     public Optional<String> getRenterEmail(Long renterId) {
         UserDto user = webClientBuilder.baseUrl("lb://user-service")
                 .build()
                 .get()
-                .uri("/api/v1/users/{userId}", renterId)
+                .uri("/api/v1/internal/users/{userId}", renterId)
+                .headers(h -> {
+                    if (StringUtils.hasText(internalApiKey)) {
+                        h.set(INTERNAL_API_KEY_HEADER, internalApiKey);
+                    }
+                })
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, resp -> {
                     log.warn("Failed to fetch user contacts from user-service (status={}) renterId={}",
@@ -45,7 +55,12 @@ public class UserContactServiceImpl implements UserContactService {
         UserDto user = webClientBuilder.baseUrl("lb://user-service")
                 .build()
                 .get()
-                .uri("/api/v1/users/{userId}", renterId)
+                .uri("/api/v1/internal/users/{userId}", renterId)
+                .headers(h -> {
+                    if (StringUtils.hasText(internalApiKey)) {
+                        h.set(INTERNAL_API_KEY_HEADER, internalApiKey);
+                    }
+                })
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, resp -> {
                     log.warn("Failed to fetch user contacts from user-service (status={}) renterId={}",
@@ -67,6 +82,11 @@ public class UserContactServiceImpl implements UserContactService {
                 .build()
                 .get()
                 .uri("/api/v1/internal/cars/{carId}/favorite-users", carId)
+                .headers(h -> {
+                    if (StringUtils.hasText(internalApiKey)) {
+                        h.set(INTERNAL_API_KEY_HEADER, internalApiKey);
+                    }
+                })
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, resp -> {
                     log.warn("Failed to fetch favorite users from user-service (status={}) carId={}",
