@@ -39,6 +39,12 @@ public class FavoriteCarServiceImpl implements FavoriteCarService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<Long> listUserIdsByFavoriteCarId(Long carId) {
+        return favoriteCarJpaRepository.findUserIdsByCarIdOrderByUserIdAsc(carId);
+    }
+
+    @Override
     @Transactional
     public void addFavorite(Long userId, Long carId) {
         assertUserExists(userId);

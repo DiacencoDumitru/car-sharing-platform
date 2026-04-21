@@ -9,6 +9,7 @@ import com.dynamiccarsharing.user.model.ContactInfo;
 import com.dynamiccarsharing.user.model.User;
 import com.dynamiccarsharing.user.repository.jpa.FavoriteCarJpaRepository;
 import com.dynamiccarsharing.user.repository.jpa.UserJpaRepository;
+import com.dynamiccarsharing.user.security.InternalApiKeyAuthenticationFilter;
 import com.dynamiccarsharing.user.service.JwtService;
 import com.dynamiccarsharing.util.exception.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +41,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 )
 @ActiveProfiles({"test", "jpa"})
 class FavoriteCarControllerIntegrationTest {
+
+    private static final String INTERNAL_API_KEY = "test-internal-api-key-for-integration";
 
     @LocalServerPort
     private int port;
@@ -271,6 +274,30 @@ class FavoriteCarControllerIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
+    @Test
+    @DisplayName("GET /internal/cars/{carId}/favorite-users returns user IDs sorted ascending")
+    void listUsersByFavoriteCar_internalPath_returnsSortedUserIds() {
+        User user1 = saveUser("fav-a@example.com");
+        User user2 = saveUser("fav-b@example.com");
+        String user1Token = jwtService.generateToken(user1);
+        String user2Token = jwtService.generateToken(user2);
+
+        putFavoriteUserPath(user1Token, user1.getId(), 777L);
+        putFavoriteUserPath(user2Token, user2.getId(), 777L);
+        putFavoriteUserPath(user2Token, user2.getId(), 888L);
+
+        ResponseEntity<List<Long>> response = restTemplate.exchange(
+                "http://localhost:" + port + "/api/v1/internal/cars/777/favorite-users",
+                HttpMethod.GET,
+                new HttpEntity<>(internalApiHeaders()),
+                new ParameterizedTypeReference<>() {
+                }
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsExactly(user1.getId(), user2.getId());
+    }
+
     private User saveUser(String email) {
         ContactInfo contactInfo = ContactInfo.builder()
                 .firstName("Test")
@@ -304,6 +331,12 @@ class FavoriteCarControllerIntegrationTest {
     private static HttpHeaders bearerHeaders(String token) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
+        return headers;
+    }
+
+    private static HttpHeaders internalApiHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(InternalApiKeyAuthenticationFilter.INTERNAL_API_KEY_HEADER, INTERNAL_API_KEY);
         return headers;
     }
 

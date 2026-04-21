@@ -8,6 +8,8 @@ public interface FavoriteCarService {
 
     List<Long> listFavoritesForUserProfile(Long userId);
 
+    List<Long> listUserIdsByFavoriteCarId(Long carId);
+
     void addFavorite(Long userId, Long carId);
 
     void removeFavorite(Long userId, Long carId);

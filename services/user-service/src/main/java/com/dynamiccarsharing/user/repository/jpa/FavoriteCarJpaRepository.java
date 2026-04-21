@@ -3,6 +3,7 @@ package com.dynamiccarsharing.user.repository.jpa;
 import com.dynamiccarsharing.user.model.FavoriteCar;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,4 +20,7 @@ public interface FavoriteCarJpaRepository extends JpaRepository<FavoriteCar, Lon
     Optional<FavoriteCar> findByUserIdAndCarId(Long userId, Long carId);
 
     void deleteByUserIdAndCarId(Long userId, Long carId);
+
+    @Query("select fc.userId from FavoriteCar fc where fc.carId = :carId order by fc.userId asc")
+    List<Long> findUserIdsByCarIdOrderByUserIdAsc(Long carId);
 }
