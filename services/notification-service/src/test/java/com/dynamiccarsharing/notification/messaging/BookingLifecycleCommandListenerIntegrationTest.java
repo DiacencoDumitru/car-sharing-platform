@@ -18,6 +18,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,6 +55,7 @@ class BookingLifecycleCommandListenerIntegrationTest {
         repository.deleteAll();
         notificationMessageRepository.deleteAll();
 
+        Mockito.when(userContactService.getUserIdsWhoFavoritedCar(3L)).thenReturn(List.of());
         Mockito.when(userContactService.getRenterEmail(2L)).thenReturn(Optional.of("renter2@example.com"));
         Mockito.when(userContactService.getRenterPhoneNumber(2L)).thenReturn(Optional.of("+10000000002"));
 
@@ -98,6 +100,7 @@ class BookingLifecycleCommandListenerIntegrationTest {
         repository.deleteAll();
         notificationMessageRepository.deleteAll();
 
+        Mockito.when(userContactService.getUserIdsWhoFavoritedCar(5L)).thenReturn(List.of());
         Mockito.when(userContactService.getRenterEmail(4L)).thenReturn(Optional.of("renter4@example.com"));
         Mockito.when(userContactService.getRenterPhoneNumber(4L)).thenReturn(Optional.of("+10000000004"));
 
@@ -126,6 +129,7 @@ class BookingLifecycleCommandListenerIntegrationTest {
 
         Instant approvedAt = Instant.now();
 
+        Mockito.when(userContactService.getUserIdsWhoFavoritedCar(7L)).thenReturn(List.of());
         Mockito.when(userContactService.getRenterEmail(renterId)).thenReturn(Optional.of("renter6@example.com"));
         Mockito.when(userContactService.getRenterPhoneNumber(renterId)).thenReturn(Optional.of("+10000000006"));
 
@@ -166,6 +170,33 @@ class BookingLifecycleCommandListenerIntegrationTest {
         assertThat(completedSaved.isAttentionRequired()).isTrue();
         assertThat(completedSaved.isNotificationSent()).isTrue();
 
+        assertThat(notificationMessageRepository.count()).isEqualTo(4);
+    }
+
+    @Test
+    void completedEvent_notifiesUsersWhoFavoritedCar() {
+        repository.deleteAll();
+        notificationMessageRepository.deleteAll();
+
+        Mockito.when(userContactService.getUserIdsWhoFavoritedCar(9L)).thenReturn(List.of(11L, 13L));
+        Mockito.when(userContactService.getRenterEmail(11L)).thenReturn(Optional.of("fav11@example.com"));
+        Mockito.when(userContactService.getRenterPhoneNumber(11L)).thenReturn(Optional.of("+10000000011"));
+        Mockito.when(userContactService.getRenterEmail(13L)).thenReturn(Optional.of("fav13@example.com"));
+        Mockito.when(userContactService.getRenterPhoneNumber(13L)).thenReturn(Optional.of("+10000000013"));
+
+        BookingLifecycleEventDto event = BookingLifecycleEventDto.builder()
+                .bookingId(77L)
+                .renterId(5L)
+                .carId(9L)
+                .bookingStatus(TransactionStatus.COMPLETED)
+                .occurredAt(Instant.now())
+                .build();
+
+        processor.process(event);
+
+        BookingLifecycleAnalyticsEvent saved = repository.findByBookingIdAndBookingStatus(77L, TransactionStatus.COMPLETED)
+                .orElseThrow();
+        assertThat(saved.isNotificationSent()).isTrue();
         assertThat(notificationMessageRepository.count()).isEqualTo(4);
     }
 

@@ -271,6 +271,30 @@ class FavoriteCarControllerIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
+    @Test
+    @DisplayName("GET /internal/cars/{carId}/favorite-users returns user IDs sorted ascending")
+    void listUsersByFavoriteCar_internalPath_returnsSortedUserIds() {
+        User user1 = saveUser("fav-a@example.com");
+        User user2 = saveUser("fav-b@example.com");
+        String user1Token = jwtService.generateToken(user1);
+        String user2Token = jwtService.generateToken(user2);
+
+        putFavoriteUserPath(user1Token, user1.getId(), 777L);
+        putFavoriteUserPath(user2Token, user2.getId(), 777L);
+        putFavoriteUserPath(user2Token, user2.getId(), 888L);
+
+        ResponseEntity<List<Long>> response = restTemplate.exchange(
+                "http://localhost:" + port + "/api/v1/internal/cars/777/favorite-users",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<>() {
+                }
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsExactly(user1.getId(), user2.getId());
+    }
+
     private User saveUser(String email) {
         ContactInfo contactInfo = ContactInfo.builder()
                 .firstName("Test")
