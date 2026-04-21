@@ -122,6 +122,7 @@ Infrastructure
 * Promo codes and discounts applied on top of dynamic pricing
 * Loyalty points earning and redemption linked to payments
 * **Favorite cars (wishlist)** — `GET` / `PUT` / `DELETE` on `/api/v1/users/me/favorite-cars` (JWT) and the same on `/api/v1/users/{userId}/favorite-cars` when the token matches that user; **car-service** is used when adding a favorite
+* **Favorite car availability alerts** — when a booking lifecycle event marks a car as `COMPLETED` or `CANCELED`, **notification-service** can notify users who have that car in favorites via email/push (resolved through **user-service** internal endpoint)
 * **Rental reminders** — with Kafka enabled, **booking-service** runs a scheduler that publishes **`BookingReminderEventDto`** messages to topic **`booking.reminders`** when an approved booking enters the configured window before `startTime` or `endTime` (deduplicated in `booking_reminder_sent`). **notification-service** consumes the topic and dispatches email/push (idempotent dispatch log). Configure `application.reminders.*` and `application.messaging.topics.booking-reminders` in **booking-service** / **notification-service**.
 * **Car reviews with star rating** — creating a review requires `bookingId`, `rating` (1–5), and a completed booking validated via **booking-service** internal `GET /api/v1/internal/bookings/{bookingId}/for-review`; **car-service** exposes `averageRating` and `reviewCount` on **`CarDto`** (also reflected in Elasticsearch car documents).
 * **Booking summary (aggregate)** — `GET /api/v1/bookings/{bookingId}/summary` returns the **booking**, optional **payment** for that booking, and **transactions** linked to the same booking in one JSON payload (`204` when the booking does not exist); useful for detail screens without chaining multiple calls
@@ -167,8 +168,9 @@ Cache eviction for Redis read-cache still uses **after-commit** application even
 
 1. **Idempotency** – events are deduplicated using table `booking_lifecycle_analytics_events` with a unique constraint on `(booking_id, booking_status)` (at-least-once Kafka delivery).
 2. **Anti-fraud** – `SimpleAntiFraudService` assigns a risk score and `attentionRequired`; rules include heuristics on renter id and time between `APPROVED` and later `COMPLETED` / `CANCELED` (configurable window `fraud.approve-cancel-window-seconds`).
-3. **Notifications** – if `attentionRequired` is true, the service may send **email** and/or **push** via HTTP (`notifications.email.http.endpoint-url`, `notifications.push.http.endpoint-url`), resolving renter **email** and **phone** through **User Service** (`lb://user-service`, Eureka load-balanced WebClient).
-4. **Dead-letter topic** – repeated processing failures are sent to `booking.commands.dlt` (see `KafkaConfig`).
+3. **Fraud notifications** – if `attentionRequired` is true, the service may send **email** and/or **push** via HTTP (`notifications.email.http.endpoint-url`, `notifications.push.http.endpoint-url`), resolving renter **email** and **phone** through **User Service** (`lb://user-service`, Eureka load-balanced WebClient).
+4. **Favorite availability notifications** – for lifecycle statuses `COMPLETED` and `CANCELED`, the service asks **User Service** for users who favorited the car (`GET /api/v1/internal/cars/{carId}/favorite-users`) and dispatches email/push for each recipient.
+5. **Dead-letter topic** – repeated processing failures are sent to `booking.commands.dlt` (see `KafkaConfig`).
 
 **Related settings** in `services/notification-service/src/main/resources/application.yml` (and profile overrides):
 
@@ -269,6 +271,13 @@ You **do not** have to start every service manually if you use Docker Compose ab
 
 After every lifecycle status change in `booking-service` (`APPROVED`, `COMPLETED`, `CANCELED` when applicable), the service **records an outbox row** (with Kafka enabled) and the **outbox relay** publishes to Kafka topic `booking.commands`. The `car-service` consumes this command and updates the car state accordingly by calling `rentCar` / `returnCar`. **`notification-service`** consumes the same topic for analytics, fraud scoring, and optional notifications. Consumers should treat messages as **at-least-once** and stay **idempotent** where needed.
 
+### Favorite availability notifications
+
+1. User adds cars to favorites through `/api/v1/users/me/favorite-cars` or `/api/v1/users/{userId}/favorite-cars`.
+2. Booking lifecycle event with status `COMPLETED` or `CANCELED` is published to `booking.commands`.
+3. `notification-service` resolves favorite subscribers by car id through `GET /api/v1/internal/cars/{carId}/favorite-users`.
+4. `notification-service` sends email and push notifications to resolved recipients when channels are enabled.
+
 ### Payment flow
 
 1. **Create payment** — For an existing booking, `POST /api/v1/bookings/{bookingId}/payment` creates a payment (method, status `PENDING`). The **amount is calculated inside Booking Service** using:
@@ -343,6 +352,7 @@ Persisted in `favorite_cars`. Every add checks **car-service** for a real car.
 
 1. **`/api/v1/users/me/favorite-cars`** — `GET` returns a JSON array of car IDs (most recently added first). `PUT` / `DELETE` `/{carId}` are idempotent (`204`).
 2. **`/api/v1/users/{userId}/favorite-cars`** — same when the JWT subject matches `userId`; `GET` returns `{ "carIds": [ … ] }` sorted by car ID.
+3. **`/api/v1/internal/cars/{carId}/favorite-users`** — internal service endpoint used by `notification-service`; returns user IDs sorted ascending.
 
 ### Security and roles via API Gateway
 
