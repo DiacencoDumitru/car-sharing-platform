@@ -14,7 +14,7 @@ import java.time.Instant;
         name = "notification_messages",
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_booking_status_channel",
-                columnNames = {"booking_id", "booking_status", "channel"}
+                columnNames = {"booking_id", "booking_status", "channel", "recipient"}
         )
 )
 @Getter

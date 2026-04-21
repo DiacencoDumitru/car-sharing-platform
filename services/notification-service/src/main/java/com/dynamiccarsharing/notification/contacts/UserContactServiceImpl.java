@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -57,6 +59,28 @@ public class UserContactServiceImpl implements UserContactService {
             return Optional.empty();
         }
         return Optional.ofNullable(user.getContactInfo().getPhoneNumber());
+    }
+
+    @Override
+    public List<Long> getUserIdsWhoFavoritedCar(Long carId) {
+        List<Long> userIds = webClientBuilder.baseUrl("lb://user-service")
+                .build()
+                .get()
+                .uri("/api/v1/internal/cars/{carId}/favorite-users", carId)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, resp -> {
+                    log.warn("Failed to fetch favorite users from user-service (status={}) carId={}",
+                            resp.statusCode(), carId);
+                    return resp.createException().flatMap(Mono::error);
+                })
+                .bodyToFlux(Long.class)
+                .collectList()
+                .block();
+
+        if (userIds == null) {
+            return Collections.emptyList();
+        }
+        return userIds;
     }
 }
 

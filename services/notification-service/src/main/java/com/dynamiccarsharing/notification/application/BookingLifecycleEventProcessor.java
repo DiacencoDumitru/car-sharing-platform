@@ -22,6 +22,7 @@ public class BookingLifecycleEventProcessor {
     private final BookingLifecycleAnalyticsEventRepository repository;
     private final AntiFraudService antiFraudService;
     private final NotificationDispatcher notificationDispatcher;
+    private final FavoriteCarAvailabilityNotifier favoriteCarAvailabilityNotifier;
 
     @Transactional
     public void process(BookingLifecycleEventDto event) {
@@ -50,7 +51,9 @@ public class BookingLifecycleEventProcessor {
         }
 
         FraudDecision decision = antiFraudService.evaluate(eventForDecision);
-        boolean notificationSent = notificationDispatcher.dispatchIfNeeded(event, decision);
+        boolean fraudNotificationSent = notificationDispatcher.dispatchIfNeeded(event, decision);
+        boolean favoriteAvailabilityNotificationSent = favoriteCarAvailabilityNotifier.notifyIfNeeded(event);
+        boolean notificationSent = fraudNotificationSent || favoriteAvailabilityNotificationSent;
 
         BookingLifecycleAnalyticsEvent analyticsEvent = BookingLifecycleAnalyticsEvent.builder()
                 .bookingId(event.getBookingId())
