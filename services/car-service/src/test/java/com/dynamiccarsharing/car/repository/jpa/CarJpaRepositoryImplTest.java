@@ -63,8 +63,8 @@ class CarJpaRepositoryImplTest {
         CarSearchCriteria criteria = CarSearchCriteria.builder()
                 .make("Honda")
                 .statusIn(List.of(CarStatus.AVAILABLE, CarStatus.MAINTENANCE))
-                .priceGreaterThan(new BigDecimal("19.00"))
-                .priceLessThan(new BigDecimal("31.00"))
+                .minPrice(new BigDecimal("19.00"))
+                .maxPrice(new BigDecimal("31.00"))
                 .build();
 
         Page<Car> results = carRepository.findAll(criteria, PageRequest.of(0, 10));

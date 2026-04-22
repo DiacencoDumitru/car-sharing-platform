@@ -25,8 +25,8 @@ public class CarSearchCriteria {
 
     private List<CarStatus> statusIn;
 
-    private BigDecimal priceGreaterThan;
-    private BigDecimal priceLessThan;
+    private BigDecimal minPrice;
+    private BigDecimal maxPrice;
 
     private BigDecimal minAverageRating;
 
