@@ -37,6 +37,14 @@ paths:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/Size'
         - $ref: '#/components/parameters/Sort'
+        - name: make
+          in: query
+          schema:
+            type: string
+        - name: model
+          in: query
+          schema:
+            type: string
         - name: locationId
           in: query
           schema:
@@ -66,6 +74,13 @@ paths:
           schema:
             type: integer
             format: int64
+        - name: statusIn
+          in: query
+          description: Optional list of car statuses to include.
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CarStatus'
         - name: minAverageRating
           in: query
           description: When set, returns only cars that have a non-null average review rating greater than or equal to this value.
@@ -81,6 +96,97 @@ paths:
       responses:
         '200':
           description: A paginated list of available cars.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarPage'
+
+  /cars/search:
+    get:
+      tags:
+        - Cars
+      summary: Elasticsearch search for cars
+      description: >-
+        Full-text and structured search over indexed car listings.
+        Supports optional text query q plus the same structured filters as browse.
+      operationId: searchCarsElasticsearch
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/Sort'
+        - name: q
+          in: query
+          description: Optional full-text query over make, model, registration number and location fields.
+          required: false
+          schema:
+            type: string
+        - name: make
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: model
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: ownerId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: locationId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/CarType'
+        - name: verificationStatus
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/VerificationStatus'
+        - name: statusIn
+          in: query
+          required: false
+          description: Optional list of statuses to include in search results.
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CarStatus'
+        - name: minPrice
+          in: query
+          required: false
+          schema:
+            type: number
+            format: double
+        - name: maxPrice
+          in: query
+          required: false
+          schema:
+            type: number
+            format: double
+        - name: minAverageRating
+          in: query
+          required: false
+          schema:
+            type: number
+            format: double
+        - name: minReviewCount
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: A paginated list of cars from Elasticsearch search.
           content:
             application/json:
               schema:

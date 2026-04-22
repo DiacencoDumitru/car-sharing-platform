@@ -50,6 +50,8 @@ public class InMemoryCarRepositoryJdbcImpl implements CarRepository {
                 .filter(car -> criteria.getLocationId() == null || car.getLocation().getId().equals(criteria.getLocationId()))
                 .filter(car -> criteria.getType() == null || car.getType().equals(criteria.getType()))
                 .filter(car -> criteria.getVerificationStatus() == null || car.getVerificationStatus().equals(criteria.getVerificationStatus()))
+                .filter(car -> criteria.getMinPrice() == null || car.getPrice().compareTo(criteria.getMinPrice()) >= 0)
+                .filter(car -> criteria.getMaxPrice() == null || car.getPrice().compareTo(criteria.getMaxPrice()) <= 0)
                 .filter(car -> criteria.getMinAverageRating() == null
                         || (car.getAverageRating() != null
                         && car.getAverageRating().compareTo(criteria.getMinAverageRating()) >= 0))

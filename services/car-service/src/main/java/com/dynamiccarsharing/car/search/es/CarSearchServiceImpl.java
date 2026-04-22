@@ -85,14 +85,14 @@ public class CarSearchServiceImpl implements CarSearchService {
                         if (criteria.getOwnerId() != null) {
                             b.filter(f -> f.term(t -> t.field("ownerId").value(criteria.getOwnerId())));
                         }
-                        if (criteria.getPriceGreaterThan() != null || criteria.getPriceLessThan() != null) {
+                        if (criteria.getMinPrice() != null || criteria.getMaxPrice() != null) {
                             b.filter(f -> f.range(r -> {
                                 var rr = r.field("pricePerDay");
-                                if (criteria.getPriceGreaterThan() != null) {
-                                    rr.gte(JsonData.of(criteria.getPriceGreaterThan().doubleValue()));
+                                if (criteria.getMinPrice() != null) {
+                                    rr.gte(JsonData.of(criteria.getMinPrice().doubleValue()));
                                 }
-                                if (criteria.getPriceLessThan() != null) {
-                                    rr.lte(JsonData.of(criteria.getPriceLessThan().doubleValue()));
+                                if (criteria.getMaxPrice() != null) {
+                                    rr.lte(JsonData.of(criteria.getMaxPrice().doubleValue()));
                                 }
                                 return rr;
                             }));
