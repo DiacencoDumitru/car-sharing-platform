@@ -4,11 +4,13 @@ import com.dynamiccarsharing.car.exception.InvalidCarStatusException;
 import com.dynamiccarsharing.car.exception.InvalidPriceException;
 import com.dynamiccarsharing.util.exception.ConflictException;
 import com.dynamiccarsharing.util.exception.ResourceNotFoundException;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -82,6 +84,18 @@ public class GlobalExceptionHandler {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         pd.setTitle("Invalid Car Status");
         pd.setType(URI.create("/errors/car-status-conflict"));
+        return pd;
+    }
+
+    @ExceptionHandler({
+            ObjectOptimisticLockingFailureException.class,
+            OptimisticLockException.class
+    })
+    public ProblemDetail handleOptimisticLockException(RuntimeException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                "Car was modified by another request. Please retry.");
+        pd.setTitle("Concurrent Update Conflict");
+        pd.setType(URI.create("/errors/concurrent-update-conflict"));
         return pd;
     }
 

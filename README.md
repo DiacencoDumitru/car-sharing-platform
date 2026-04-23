@@ -115,6 +115,7 @@ Infrastructure
 ## Key Features
 
 * Car catalog and vehicle listing; browse filters on `GET /api/v1/cars` include optional **`minPrice`** / **`maxPrice`**, **`minAverageRating`** (cars without an average rating are omitted when set), and **`minReviewCount`** (minimum number of car reviews, treating a missing count as zero); full-text + structured Elasticsearch search is available via **`GET /api/v1/cars/search`** with optional `q`
+* Car updates in `car-service` use optimistic locking to prevent lost updates; concurrent conflicting updates return `409 Conflict`
 * Booking and reservation management; **in-app message thread** per booking (renter and owner, `X-User-Id` header; not cached at gateway for long polling)
 * Daily availability calendar for a selected car and interval
 * Dynamic pricing for bookings based on time and pickup location rules

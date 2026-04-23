@@ -73,6 +73,10 @@ public class Car {
     @Column(name = "review_count")
     private Integer reviewCount;
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @Builder.Default
     @OneToMany(mappedBy = "car")
     private List<CarReview> reviews = new ArrayList<>();
