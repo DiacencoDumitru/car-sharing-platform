@@ -16,6 +16,7 @@ import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.enums.CarStatus;
 import com.dynamiccarsharing.contracts.enums.VerificationStatus;
 import com.dynamiccarsharing.util.exception.ValidationException;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,6 +60,8 @@ class CarServiceImplTest {
 
     @Mock
     private CircuitBreakerFactory<Object, ? extends ConfigBuilder<Object>> circuitBreakerFactory;
+    @Mock
+    private EntityManager entityManager;
 
     private CarServiceImpl carService;
 
@@ -82,7 +85,8 @@ class CarServiceImplTest {
                 carMapper,
                 carSearchService,
                 carEventPublisher,
-                circuitBreakerFactory
+                circuitBreakerFactory,
+                entityManager
         );
     }
 

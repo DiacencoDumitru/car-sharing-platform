@@ -18,6 +18,7 @@ create TABLE IF NOT EXISTS cars (
     verification_status VARCHAR(50) NOT NULL CHECK (verification_status IN ('PENDING', 'VERIFIED', 'REJECTED')),
     average_rating DECIMAL(4, 2),
     review_count INTEGER,
+    version BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT fk_cars_on_locations FOREIGN KEY (location_id) REFERENCES locations(id) ON delete CASCADE
 );
 
