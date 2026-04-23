@@ -19,6 +19,7 @@ import com.dynamiccarsharing.contracts.enums.CarStatus;
 import com.dynamiccarsharing.contracts.enums.VerificationStatus;
 import com.dynamiccarsharing.util.exception.ResourceNotFoundException;
 import com.dynamiccarsharing.util.exception.ValidationException;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -48,6 +49,7 @@ public class CarServiceImpl implements CarService {
     private final CarSearchService carSearchService;
     private final CarEventPublisher carEventPublisher;
     private final CircuitBreakerFactory<?, ?> circuitBreakerFactory;
+    private final EntityManager entityManager;
 
     private void indexCarSafely(Long carId) {
         CircuitBreaker cb = circuitBreakerFactory.create("carSearch");
@@ -89,6 +91,12 @@ public class CarServiceImpl implements CarService {
         );
     }
 
+    private Car saveAndFlush(Car car) {
+        Car saved = carRepository.save(car);
+        entityManager.flush();
+        return saved;
+    }
+
     @Override
     @CachePut(cacheNames = "carById", key = "#result.id", unless = "#result == null")
     public CarDto save(CarCreateRequestDto carDto, Long ownerId) {
@@ -101,7 +109,7 @@ public class CarServiceImpl implements CarService {
         car.setReviewCount(0);
         car.setAverageRating(null);
 
-        Car savedCar = carRepository.save(car);
+        Car savedCar = saveAndFlush(car);
         CarDto dto = carMapper.toDto(savedCar);
 
         indexCarSafely(savedCar.getId());
@@ -146,7 +154,7 @@ public class CarServiceImpl implements CarService {
             throw new InvalidCarStatusException("Car can only be rented if AVAILABLE");
         }
         car.setStatus(CarStatus.RENTED);
-        Car saved = carRepository.save(car);
+        Car saved = saveAndFlush(car);
         CarDto dto = carMapper.toDto(saved);
 
         indexCarSafely(carId);
@@ -161,7 +169,7 @@ public class CarServiceImpl implements CarService {
         Car car = getCarOrThrow(carId);
         validateCarStatus(car.getStatus(), CarStatus.RENTED, "Car can only be returned if RENTED");
         car.setStatus(CarStatus.AVAILABLE);
-        Car saved = carRepository.save(car);
+        Car saved = saveAndFlush(car);
         CarDto dto = carMapper.toDto(saved);
 
         indexCarSafely(carId);
@@ -176,7 +184,7 @@ public class CarServiceImpl implements CarService {
         Car car = getCarOrThrow(carId);
         validateCarStatus(car.getStatus(), CarStatus.AVAILABLE, "Cannot set MAINTENANCE for a RENTED car");
         car.setStatus(CarStatus.MAINTENANCE);
-        Car saved = carRepository.save(car);
+        Car saved = saveAndFlush(car);
         CarDto dto = carMapper.toDto(saved);
 
         indexCarSafely(carId);
@@ -191,7 +199,7 @@ public class CarServiceImpl implements CarService {
         Car car = getCarOrThrow(carId);
         validateVerificationStatus(car.getVerificationStatus(), "Car can only be verified from PENDING status");
         car.setVerificationStatus(VerificationStatus.VERIFIED);
-        Car saved = carRepository.save(car);
+        Car saved = saveAndFlush(car);
         CarDto dto = carMapper.toDto(saved);
 
         indexCarSafely(carId);
@@ -206,7 +214,7 @@ public class CarServiceImpl implements CarService {
         Car car = getCarOrThrow(carId);
         validateVerificationStatus(car.getVerificationStatus(), "Car can only be rejected from PENDING status");
         car.setVerificationStatus(VerificationStatus.REJECTED);
-        Car saved = carRepository.save(car);
+        Car saved = saveAndFlush(car);
         CarDto dto = carMapper.toDto(saved);
 
         indexCarSafely(carId);
@@ -231,7 +239,7 @@ public class CarServiceImpl implements CarService {
             carToUpdate.setLocation(newLocation);
         }
 
-        Car saved = carRepository.save(carToUpdate);
+        Car saved = saveAndFlush(carToUpdate);
         CarDto dto = carMapper.toDto(saved);
 
         indexCarSafely(carId);
@@ -248,7 +256,7 @@ public class CarServiceImpl implements CarService {
         }
         Car car = getCarOrThrow(carId);
         car.setPrice(newPrice);
-        Car saved = carRepository.save(car);
+        Car saved = saveAndFlush(car);
         CarDto dto = carMapper.toDto(saved);
 
         indexCarSafely(carId);
