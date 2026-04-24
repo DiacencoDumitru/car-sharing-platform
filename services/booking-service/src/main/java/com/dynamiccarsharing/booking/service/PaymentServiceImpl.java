@@ -13,6 +13,7 @@ import com.dynamiccarsharing.booking.model.Payment;
 import com.dynamiccarsharing.booking.loyalty.LoyaltyService;
 import com.dynamiccarsharing.booking.pricing.PricingContext;
 import com.dynamiccarsharing.booking.pricing.PricingService;
+import com.dynamiccarsharing.booking.payment.CancellationPenaltyPolicy;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
 import com.dynamiccarsharing.booking.repository.PaymentRepository;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
@@ -25,6 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,6 +41,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentMapper paymentMapper;
     private final BookingRepository bookingRepository;
     private final PricingService pricingService;
+    private final CancellationPenaltyPolicy cancellationPenaltyPolicy;
     private final LoyaltyService loyaltyService;
     private final AdminAuditService adminAuditService;
 
@@ -127,6 +132,27 @@ public class PaymentServiceImpl implements PaymentService {
         adminAuditService.logPaymentAction(paymentId, AdminAuditAction.PAYMENT_REFUND, actorUserId);
 
         return paymentMapper.toDto(refundedPayment);
+    }
+
+    @Override
+    public void applyCancellationPolicy(Long bookingId) {
+        paymentRepository.findByBookingId(bookingId)
+                .filter(payment -> payment.getStatus() == TransactionStatus.COMPLETED)
+                .ifPresent(payment -> {
+                    BigDecimal refundRatio = cancellationPenaltyPolicy.resolveRefundRatio(
+                            payment.getBooking().getStartTime(),
+                            LocalDateTime.now()
+                    );
+                    BigDecimal refundAmount = payment.getAmount()
+                            .multiply(refundRatio)
+                            .setScale(2, RoundingMode.HALF_UP);
+                    BigDecimal penaltyAmount = payment.getAmount()
+                            .subtract(refundAmount)
+                            .setScale(2, RoundingMode.HALF_UP);
+                    payment.setCancellationRefundAmount(refundAmount);
+                    payment.setCancellationPenaltyAmount(penaltyAmount);
+                    paymentRepository.save(payment);
+                });
     }
 
     private Payment getPaymentOrThrow(Long paymentId) {

@@ -21,6 +21,8 @@ public interface PaymentService {
 
     PaymentDto refundPayment(Long paymentId, Long actorUserId);
 
+    void applyCancellationPolicy(Long bookingId);
+
     Optional<PaymentDto> findByBookingId(Long bookingId);
 
     List<PaymentDto> searchPayments(PaymentSearchCriteria criteria);

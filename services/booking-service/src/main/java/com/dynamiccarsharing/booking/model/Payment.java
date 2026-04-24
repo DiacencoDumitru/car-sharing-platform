@@ -40,6 +40,12 @@ public class Payment {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    @Column(name = "cancellation_penalty_amount")
+    private BigDecimal cancellationPenaltyAmount;
+
+    @Column(name = "cancellation_refund_amount")
+    private BigDecimal cancellationRefundAmount;
+
     @NotNull(message = "Status must be not null.")
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)

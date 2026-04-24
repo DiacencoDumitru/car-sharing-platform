@@ -3,8 +3,10 @@ package com.dynamiccarsharing.booking.service;
 import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
 import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
 import com.dynamiccarsharing.booking.model.Booking;
+import com.dynamiccarsharing.booking.model.Payment;
 import com.dynamiccarsharing.booking.BookingApplication;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
+import com.dynamiccarsharing.booking.repository.PaymentRepository;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import com.dynamiccarsharing.contracts.dto.CarDto;
@@ -49,6 +51,8 @@ class BookingServiceIntegrationTest {
 
     @Autowired
     private BookingRepository bookingRepository;
+    @Autowired
+    private PaymentRepository paymentRepository;
 
     @TestConfiguration
     static class MockWebClientConfig {
@@ -168,6 +172,30 @@ class BookingServiceIntegrationTest {
         var result = bookingService.completeBooking(booking.getId());
 
         org.assertj.core.api.Assertions.assertThat(result.getStatus()).isEqualTo(TransactionStatus.COMPLETED);
+    }
+
+    @Test
+    @DisplayName("Cancel approved booking applies cancellation penalty policy to completed payment")
+    void cancelApprovedBooking_appliesPenaltyPolicy() {
+        Booking booking = savePendingBooking(9L, 909L, 9090L);
+        booking.setStartTime(LocalDateTime.now().plusHours(10));
+        booking = bookingRepository.save(booking);
+        bookingService.approveBooking(booking.getId());
+
+        Payment payment = Payment.builder()
+                .booking(booking)
+                .amount(new BigDecimal("100.00"))
+                .paymentMethod(PaymentType.CREDIT_CARD)
+                .status(TransactionStatus.COMPLETED)
+                .createdAt(LocalDateTime.now().minusHours(1))
+                .build();
+        paymentRepository.save(payment);
+
+        bookingService.cancelBooking(booking.getId());
+
+        var updatedPayment = paymentRepository.findByBookingId(booking.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(updatedPayment.getCancellationRefundAmount()).isEqualByComparingTo("50.00");
+        org.assertj.core.api.Assertions.assertThat(updatedPayment.getCancellationPenaltyAmount()).isEqualByComparingTo("50.00");
     }
 
     private Booking savePendingBooking(Long renterId, Long carId, Long pickupLocationId) {

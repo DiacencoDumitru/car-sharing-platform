@@ -12,6 +12,8 @@ public class PaymentDto {
     private Long id;
     private Long bookingId;
     private BigDecimal amount;
+    private BigDecimal cancellationPenaltyAmount;
+    private BigDecimal cancellationRefundAmount;
     private TransactionStatus status;
     private PaymentType paymentMethod;
     private LocalDateTime createdAt;

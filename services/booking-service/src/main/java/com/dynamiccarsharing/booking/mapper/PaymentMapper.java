@@ -15,6 +15,8 @@ public interface PaymentMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", constant = "PENDING")
+    @Mapping(target = "cancellationPenaltyAmount", ignore = true)
+    @Mapping(target = "cancellationRefundAmount", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(source = "bookingId", target = "booking")

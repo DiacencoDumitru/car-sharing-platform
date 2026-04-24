@@ -152,6 +152,7 @@ public class BookingServiceImpl implements BookingService {
         validateBookingStatus(booking.getStatus(), List.of(TransactionStatus.PENDING, APPROVED), "Cannot cancel a completed booking");
         booking.setStatus(CANCELED);
         Booking updatedBooking = bookingRepository.save(booking);
+        paymentService.applyCancellationPolicy(bookingId);
 
         if (shouldReturnCar) {
             publishLifecycleSideEffects(buildEvent(updatedBooking));
