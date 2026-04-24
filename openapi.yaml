@@ -363,6 +363,75 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /bookings/waitlist:
+    post:
+      tags:
+        - Bookings
+      summary: Join booking waitlist
+      description: Adds renter to waitlist for an already occupied car time range.
+      operationId: joinBookingWaitlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingWaitlistCreateRequest'
+      responses:
+        '201':
+          description: Waitlist entry created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingWaitlistEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /bookings/waitlist/{waitlistId}:
+    get:
+      tags:
+        - Bookings
+      summary: Get active waitlist entry
+      operationId: getBookingWaitlistEntry
+      parameters:
+        - name: waitlistId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Active waitlist entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingWaitlistEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /bookings/waitlist/{waitlistId}/cancel:
+    patch:
+      tags:
+        - Bookings
+      summary: Cancel waitlist entry
+      operationId: cancelBookingWaitlistEntry
+      parameters:
+        - name: waitlistId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Waitlist entry canceled.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingWaitlistEntry'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
   /bookings/availability:
     get:
       tags:
@@ -1411,6 +1480,64 @@ components:
           format: int64
         body:
           type: string
+        createdAt:
+          type: string
+          format: date-time
+    BookingWaitlistCreateRequest:
+      type: object
+      required:
+        - renterId
+        - carId
+        - startTime
+        - endTime
+        - pickupLocationId
+      properties:
+        renterId:
+          type: integer
+          format: int64
+        carId:
+          type: integer
+          format: int64
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        pickupLocationId:
+          type: integer
+          format: int64
+        promoCode:
+          type: string
+    BookingWaitlistEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        renterId:
+          type: integer
+          format: int64
+        carId:
+          type: integer
+          format: int64
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        pickupLocationId:
+          type: integer
+          format: int64
+        promoCode:
+          type: string
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - CANCELED
+            - PROMOTED
         createdAt:
           type: string
           format: date-time
