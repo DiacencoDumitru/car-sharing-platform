@@ -6,6 +6,7 @@ import com.dynamiccarsharing.booking.dto.PaymentDto;
 import com.dynamiccarsharing.booking.mapper.BookingMapper;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
+import com.dynamiccarsharing.booking.repository.BookingWaitlistRepository;
 import com.dynamiccarsharing.booking.messaging.outbox.BookingLifecycleOutboxWriter;
 import com.dynamiccarsharing.booking.integration.client.CarIntegrationClient;
 import com.dynamiccarsharing.booking.integration.client.UserIntegrationClient;
@@ -42,6 +43,8 @@ class BookingServiceImplTest {
     @Mock
     private BookingMapper bookingMapper;
     @Mock
+    private BookingWaitlistRepository bookingWaitlistRepository;
+    @Mock
     private PaymentService paymentService;
     @Mock
     private BookingCreationGuard bookingCreationGuard;
@@ -60,6 +63,7 @@ class BookingServiceImplTest {
     void setUp() {
         bookingService = new BookingServiceImpl(
                 bookingRepository,
+                bookingWaitlistRepository,
                 bookingMapper,
                 paymentService,
                 bookingCreationGuard,

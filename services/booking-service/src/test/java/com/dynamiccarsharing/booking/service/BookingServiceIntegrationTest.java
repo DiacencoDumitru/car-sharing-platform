@@ -1,11 +1,15 @@
 package com.dynamiccarsharing.booking.service;
 
 import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
+import com.dynamiccarsharing.booking.dto.BookingWaitlistCreateRequestDto;
 import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
 import com.dynamiccarsharing.booking.model.Booking;
+import com.dynamiccarsharing.booking.model.BookingWaitlistStatus;
 import com.dynamiccarsharing.booking.BookingApplication;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
+import com.dynamiccarsharing.booking.repository.BookingWaitlistRepository;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
+import com.dynamiccarsharing.booking.service.interfaces.BookingWaitlistService;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
@@ -49,6 +53,12 @@ class BookingServiceIntegrationTest {
 
     @Autowired
     private BookingRepository bookingRepository;
+
+    @Autowired
+    private BookingWaitlistService bookingWaitlistService;
+
+    @Autowired
+    private BookingWaitlistRepository bookingWaitlistRepository;
 
     @TestConfiguration
     static class MockWebClientConfig {
@@ -168,6 +178,68 @@ class BookingServiceIntegrationTest {
         var result = bookingService.completeBooking(booking.getId());
 
         org.assertj.core.api.Assertions.assertThat(result.getStatus()).isEqualTo(TransactionStatus.COMPLETED);
+    }
+
+    @Test
+    @DisplayName("Join waitlist succeeds when overlapping booking exists")
+    void joinWaitlist_whenOverlappingBookingExists_succeeds() {
+        LocalDateTime start = LocalDateTime.now().plusDays(3);
+        LocalDateTime end = LocalDateTime.now().plusDays(4);
+
+        BookingCreateRequestDto existing = new BookingCreateRequestDto();
+        existing.setRenterId(1L);
+        existing.setCarId(101L);
+        existing.setStartTime(start);
+        existing.setEndTime(end);
+        existing.setPickupLocationId(10L);
+        bookingService.save(existing);
+
+        BookingWaitlistCreateRequestDto request = new BookingWaitlistCreateRequestDto();
+        request.setRenterId(2L);
+        request.setCarId(101L);
+        request.setStartTime(start.plusHours(1));
+        request.setEndTime(end.minusHours(1));
+        request.setPickupLocationId(10L);
+
+        var response = bookingWaitlistService.joinWaitlist(request);
+
+        org.assertj.core.api.Assertions.assertThat(response.getId()).isNotNull();
+        org.assertj.core.api.Assertions.assertThat(response.getStatus()).isEqualTo(BookingWaitlistStatus.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("Canceling approved booking promotes first overlapping waitlist entry")
+    void cancelApprovedBooking_promotesFirstWaitlistEntry() {
+        LocalDateTime start = LocalDateTime.now().plusDays(5);
+        LocalDateTime end = LocalDateTime.now().plusDays(6);
+
+        BookingCreateRequestDto initial = new BookingCreateRequestDto();
+        initial.setRenterId(3L);
+        initial.setCarId(303L);
+        initial.setStartTime(start);
+        initial.setEndTime(end);
+        initial.setPickupLocationId(33L);
+        var activeBooking = bookingService.save(initial);
+        bookingService.approveBooking(activeBooking.getId());
+
+        BookingWaitlistCreateRequestDto waitlist = new BookingWaitlistCreateRequestDto();
+        waitlist.setRenterId(4L);
+        waitlist.setCarId(303L);
+        waitlist.setStartTime(start.plusHours(2));
+        waitlist.setEndTime(end.minusHours(2));
+        waitlist.setPickupLocationId(33L);
+        var waitlistEntry = bookingWaitlistService.joinWaitlist(waitlist);
+
+        bookingService.cancelBooking(activeBooking.getId());
+
+        var promotedBooking = bookingRepository.findAll().stream()
+                .filter(b -> b.getRenterId().equals(4L) && b.getCarId().equals(303L))
+                .findFirst();
+        org.assertj.core.api.Assertions.assertThat(promotedBooking).isPresent();
+        org.assertj.core.api.Assertions.assertThat(promotedBooking.get().getStatus()).isEqualTo(TransactionStatus.PENDING);
+
+        var updatedWaitlist = bookingWaitlistRepository.findById(waitlistEntry.getId()).orElseThrow();
+        org.assertj.core.api.Assertions.assertThat(updatedWaitlist.getStatus()).isEqualTo(BookingWaitlistStatus.PROMOTED);
     }
 
     private Booking savePendingBooking(Long renterId, Long carId, Long pickupLocationId) {
