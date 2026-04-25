@@ -7,6 +7,7 @@ import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.booking.dto.BookingSummaryResponseDto;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
 import com.dynamiccarsharing.booking.service.interfaces.BookingSummaryService;
+import com.dynamiccarsharing.booking.service.interfaces.BookingWaitlistService;
 import com.dynamiccarsharing.booking.service.interfaces.CarAvailabilityService;
 import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
 import com.dynamiccarsharing.booking.service.interfaces.QuoteService;
@@ -50,6 +51,8 @@ class BookingControllerTest {
     private BookingService bookingService;
     @MockBean
     private BookingSummaryService bookingSummaryService;
+    @MockBean
+    private BookingWaitlistService bookingWaitlistService;
     @MockBean
     private IdempotencyService idempotencyService;
     @MockBean

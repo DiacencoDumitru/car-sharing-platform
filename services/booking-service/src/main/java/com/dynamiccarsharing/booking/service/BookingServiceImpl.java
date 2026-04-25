@@ -8,7 +8,10 @@ import com.dynamiccarsharing.booking.exception.InvalidBookingStatusException;
 import com.dynamiccarsharing.booking.filter.BookingFilter;
 import com.dynamiccarsharing.booking.mapper.BookingMapper;
 import com.dynamiccarsharing.booking.model.Booking;
+import com.dynamiccarsharing.booking.model.BookingWaitlistEntry;
+import com.dynamiccarsharing.booking.model.BookingWaitlistStatus;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
+import com.dynamiccarsharing.booking.repository.BookingWaitlistRepository;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
 import com.dynamiccarsharing.booking.messaging.outbox.BookingLifecycleOutboxWriter;
 import com.dynamiccarsharing.booking.service.interfaces.BookingCreationGuard;
@@ -46,6 +49,7 @@ import static com.dynamiccarsharing.contracts.enums.TransactionStatus.*;
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
+    private final BookingWaitlistRepository bookingWaitlistRepository;
     private final BookingMapper bookingMapper;
     private final PaymentService paymentService;
     private final BookingCreationGuard bookingCreationGuard;
@@ -156,6 +160,7 @@ public class BookingServiceImpl implements BookingService {
 
         if (shouldReturnCar) {
             publishLifecycleSideEffects(buildEvent(updatedBooking));
+            promoteNextWaitlistEntry(updatedBooking);
         }
         return bookingMapper.toDto(updatedBooking);
     }
@@ -250,6 +255,33 @@ public class BookingServiceImpl implements BookingService {
                 .isPresent();
         if (!hasCompletedPayment) {
             throw new ValidationException("Booking cannot be completed without a completed payment.");
+        }
+    }
+
+    private void promoteNextWaitlistEntry(Booking canceledBooking) {
+        List<BookingWaitlistEntry> candidates = bookingWaitlistRepository.findOverlappingByCarAndStatus(
+                canceledBooking.getCarId(),
+                canceledBooking.getStartTime(),
+                canceledBooking.getEndTime(),
+                BookingWaitlistStatus.ACTIVE
+        );
+        for (BookingWaitlistEntry candidate : candidates) {
+            if (bookingRepository.hasOverlappingBooking(candidate.getCarId(), candidate.getStartTime(), candidate.getEndTime())) {
+                continue;
+            }
+            Booking promotedBooking = Booking.builder()
+                    .renterId(candidate.getRenterId())
+                    .carId(candidate.getCarId())
+                    .startTime(candidate.getStartTime())
+                    .endTime(candidate.getEndTime())
+                    .pickupLocationId(candidate.getPickupLocationId())
+                    .promoCode(candidate.getPromoCode())
+                    .status(TransactionStatus.PENDING)
+                    .build();
+            bookingRepository.save(promotedBooking);
+            candidate.setStatus(BookingWaitlistStatus.PROMOTED);
+            bookingWaitlistRepository.save(candidate);
+            return;
         }
     }
 }

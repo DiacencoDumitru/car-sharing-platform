@@ -6,10 +6,13 @@ import com.dynamiccarsharing.booking.dto.BookingStatusUpdateRequestDto;
 import com.dynamiccarsharing.booking.dto.CarAvailabilityCalendarResponseDto;
 import com.dynamiccarsharing.booking.dto.CarAvailabilityResponseDto;
 import com.dynamiccarsharing.booking.dto.BookingSummaryResponseDto;
+import com.dynamiccarsharing.booking.dto.BookingWaitlistCreateRequestDto;
+import com.dynamiccarsharing.booking.dto.BookingWaitlistResponseDto;
 import com.dynamiccarsharing.booking.dto.QuoteRequestDto;
 import com.dynamiccarsharing.booking.dto.QuoteResponseDto;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
 import com.dynamiccarsharing.booking.service.interfaces.BookingSummaryService;
+import com.dynamiccarsharing.booking.service.interfaces.BookingWaitlistService;
 import com.dynamiccarsharing.booking.service.interfaces.CarAvailabilityService;
 import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
 import com.dynamiccarsharing.booking.service.interfaces.QuoteService;
@@ -33,6 +36,7 @@ public class BookingController {
 
     private final BookingService bookingService;
     private final BookingSummaryService bookingSummaryService;
+    private final BookingWaitlistService bookingWaitlistService;
     private final IdempotencyService idempotencyService;
     private final QuoteService quoteService;
     private final CarAvailabilityService carAvailabilityService;
@@ -79,6 +83,21 @@ public class BookingController {
                 () -> bookingService.save(createDto)
         );
         return new ResponseEntity<>(savedBooking, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/waitlist")
+    public ResponseEntity<BookingWaitlistResponseDto> joinWaitlist(@Valid @RequestBody BookingWaitlistCreateRequestDto requestDto) {
+        return new ResponseEntity<>(bookingWaitlistService.joinWaitlist(requestDto), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/waitlist/{waitlistId}")
+    public ResponseEntity<BookingWaitlistResponseDto> getWaitlistEntry(@PathVariable Long waitlistId) {
+        return ResponseEntity.ok(bookingWaitlistService.getActiveById(waitlistId));
+    }
+
+    @PatchMapping("/waitlist/{waitlistId}/cancel")
+    public ResponseEntity<BookingWaitlistResponseDto> cancelWaitlistEntry(@PathVariable Long waitlistId) {
+        return ResponseEntity.ok(bookingWaitlistService.cancel(waitlistId));
     }
 
     @PostMapping("/quote")
