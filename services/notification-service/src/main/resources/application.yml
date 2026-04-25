@@ -60,9 +60,23 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db,ping
+        liveness:
+          include: livenessState,ping
   metrics:
     tags:
       application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:notification-service},%X{traceId:-},%X{spanId:-}]"
 
 application:
   http:

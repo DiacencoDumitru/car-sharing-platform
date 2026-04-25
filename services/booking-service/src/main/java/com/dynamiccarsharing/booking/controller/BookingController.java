@@ -10,6 +10,7 @@ import com.dynamiccarsharing.booking.dto.BookingWaitlistCreateRequestDto;
 import com.dynamiccarsharing.booking.dto.BookingWaitlistResponseDto;
 import com.dynamiccarsharing.booking.dto.QuoteRequestDto;
 import com.dynamiccarsharing.booking.dto.QuoteResponseDto;
+import com.dynamiccarsharing.booking.exception.BookingNotFoundException;
 import com.dynamiccarsharing.booking.service.interfaces.BookingService;
 import com.dynamiccarsharing.booking.service.interfaces.BookingSummaryService;
 import com.dynamiccarsharing.booking.service.interfaces.BookingWaitlistService;
@@ -46,12 +47,10 @@ public class BookingController {
 
     @GetMapping("/{bookingId}")
     public ResponseEntity<BookingDto> getBookingById(@PathVariable("bookingId") Long bookingId) {
-        return bookingService.findById(bookingId)
-                .map(booking -> {
-                    booking.setInstanceId(instanceId);
-                    return ResponseEntity.ok(booking);
-                })
-                .orElseGet(() -> ResponseEntity.noContent().build());
+        BookingDto booking = bookingService.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException("Booking with ID " + bookingId + " not found."));
+        booking.setInstanceId(instanceId);
+        return ResponseEntity.ok(booking);
     }
 
     @GetMapping("/{bookingId}/summary")

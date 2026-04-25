@@ -3,6 +3,7 @@ package com.dynamiccarsharing.booking.controller;
 import com.dynamiccarsharing.booking.criteria.PaymentSearchCriteria;
 import com.dynamiccarsharing.booking.dto.PaymentDto;
 import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
+import com.dynamiccarsharing.util.exception.ResourceNotFoundException;
 import com.dynamiccarsharing.booking.service.interfaces.IdempotencyService;
 import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
 import jakarta.validation.Valid;
@@ -37,9 +38,9 @@ public class PaymentController {
 
     @GetMapping("/admin/payments/{paymentId}")
     public ResponseEntity<PaymentDto> getPaymentById(@PathVariable Long paymentId) {
-        return paymentService.findPaymentById(paymentId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.noContent().build());
+        PaymentDto paymentDto = paymentService.findPaymentById(paymentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment with ID " + paymentId + " not found."));
+        return ResponseEntity.ok(paymentDto);
     }
 
 

@@ -65,10 +65,10 @@ class BookingControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/bookings/{id} returns 204 when booking does not exist")
-    void getBookingById_whenNotExists_returnsNoContent() {
+    @DisplayName("GET /api/v1/bookings/{id} returns 404 when booking does not exist")
+    void getBookingById_whenNotExists_returnsNotFound() {
         ResponseEntity<Map> response = restTemplate.getForEntity(baseUrl + "/999", Map.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
