@@ -50,11 +50,11 @@ class TransactionControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void getTransactionById_whenNotExists_shouldReturnNoContent() throws Exception {
+    void getTransactionById_whenNotExists_shouldReturnNotFound() throws Exception {
         when(transactionService.findTransactionById(999L)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/v1/admin/transactions/{id}", 999L))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isNotFound());
     }
 
     @Test

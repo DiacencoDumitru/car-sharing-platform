@@ -41,7 +41,7 @@ class GlobalExceptionHandlerTest {
         FieldError fieldError = new FieldError("car", "model", "Model cannot be null");
 
         when(ex.getBindingResult()).thenReturn(bindingResult);
-        when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError));
+        when(bindingResult.getAllErrors()).thenReturn(List.of(fieldError));
 
         ProblemDetail problemDetail = exceptionHandler.handleMethodArgumentNotValidException(ex);
 
@@ -84,15 +84,14 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleAccessDenied() {
-        String errorMessage = "User is not authorized to perform this action";
-        AccessDeniedException ex = new AccessDeniedException(errorMessage);
+        AccessDeniedException ex = new AccessDeniedException("User is not authorized to perform this action");
 
         ProblemDetail problemDetail = exceptionHandler.handleAccessDenied(ex);
 
-        assertEquals(HttpStatus.UNAUTHORIZED.value(), problemDetail.getStatus());
-        assertEquals("Unauthorized", problemDetail.getTitle());
-        assertEquals(errorMessage, problemDetail.getDetail());
-        assertEquals(URI.create("/errors/unauthorized"), problemDetail.getType());
+        assertEquals(HttpStatus.FORBIDDEN.value(), problemDetail.getStatus());
+        assertEquals("Forbidden", problemDetail.getTitle());
+        assertEquals("You do not have permission to perform this action.", problemDetail.getDetail());
+        assertEquals(URI.create("/errors/forbidden"), problemDetail.getType());
     }
 
     @Test

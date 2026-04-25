@@ -3,11 +3,8 @@ package com.dynamiccarsharing.user.exception;
 import com.dynamiccarsharing.user.exception.handler.GlobalExceptionHandler;
 import com.dynamiccarsharing.util.exception.ConflictException;
 import com.dynamiccarsharing.util.exception.ResourceNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -23,46 +20,40 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.when;
 
 class GlobalExceptionHandlerTest {
 
     private GlobalExceptionHandler exceptionHandler;
 
-    @Mock
-    private HttpServletRequest mockRequest;
-
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         exceptionHandler = new GlobalExceptionHandler();
-        when(mockRequest.getRequestURI()).thenReturn("/test-uri");
     }
 
     @Test
     void handleAccessDenied() {
         AccessDeniedException ex = new AccessDeniedException("Access Denied");
 
-        ProblemDetail problemDetail = exceptionHandler.handleAccessDenied(ex, mockRequest);
+        ProblemDetail problemDetail = exceptionHandler.handleAccessDenied(ex);
 
         assertEquals(HttpStatus.FORBIDDEN.value(), problemDetail.getStatus());
         assertEquals("Forbidden", problemDetail.getTitle());
         assertEquals("You do not have permission to perform this action.", problemDetail.getDetail());
         assertEquals(URI.create("/errors/forbidden"), problemDetail.getType());
-        assertEquals(URI.create("/test-uri"), problemDetail.getInstance());
+        assertEquals(null, problemDetail.getInstance());
     }
 
     @Test
     void handleNoCreds() {
         AuthenticationCredentialsNotFoundException ex = new AuthenticationCredentialsNotFoundException("No creds");
 
-        ProblemDetail problemDetail = exceptionHandler.handleNoCreds(ex, mockRequest);
+        ProblemDetail problemDetail = exceptionHandler.handleAccessDenied(ex);
 
         assertEquals(HttpStatus.FORBIDDEN.value(), problemDetail.getStatus());
         assertEquals("Forbidden", problemDetail.getTitle());
-        assertEquals("Authentication is required for this action.", problemDetail.getDetail());
+        assertEquals("You do not have permission to perform this action.", problemDetail.getDetail());
         assertEquals(URI.create("/errors/forbidden"), problemDetail.getType());
-        assertEquals(URI.create("/test-uri"), problemDetail.getInstance());
+        assertEquals(null, problemDetail.getInstance());
     }
 
     @Test

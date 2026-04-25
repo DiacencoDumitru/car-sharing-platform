@@ -65,10 +65,10 @@ class BookingControllerTest {
 
     @Test
     @WithMockUser
-    void getBookingById_whenNotExists_shouldReturnNotContent() throws Exception {
+    void getBookingById_whenNotExists_shouldReturnNotFound() throws Exception {
         when(bookingService.findById(999L)).thenReturn(Optional.empty());
         mockMvc.perform(get("/api/v1/bookings/{bookingId}", 999L))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isNotFound());
     }
 
     @Test
