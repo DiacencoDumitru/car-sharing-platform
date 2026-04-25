@@ -1,39 +1,38 @@
 package com.dynamiccarsharing.booking.service;
 
+import com.dynamiccarsharing.booking.application.usecase.BookingCreationUseCase;
+import com.dynamiccarsharing.booking.application.usecase.BookingStatusUseCase;
 import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
-import com.dynamiccarsharing.booking.dto.PaymentDto;
+import com.dynamiccarsharing.booking.integration.client.CarIntegrationClient;
 import com.dynamiccarsharing.booking.mapper.BookingMapper;
 import com.dynamiccarsharing.booking.model.Booking;
 import com.dynamiccarsharing.booking.repository.BookingRepository;
-import com.dynamiccarsharing.booking.repository.BookingWaitlistRepository;
-import com.dynamiccarsharing.booking.messaging.outbox.BookingLifecycleOutboxWriter;
-import com.dynamiccarsharing.booking.integration.client.CarIntegrationClient;
-import com.dynamiccarsharing.booking.integration.client.UserIntegrationClient;
-import com.dynamiccarsharing.booking.service.interfaces.PaymentService;
-import com.dynamiccarsharing.booking.service.interfaces.BookingCreationGuard;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.context.ApplicationEventPublisher;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BookingServiceImplTest {
@@ -43,17 +42,9 @@ class BookingServiceImplTest {
     @Mock
     private BookingMapper bookingMapper;
     @Mock
-    private BookingWaitlistRepository bookingWaitlistRepository;
+    private BookingCreationUseCase bookingCreationUseCase;
     @Mock
-    private PaymentService paymentService;
-    @Mock
-    private BookingCreationGuard bookingCreationGuard;
-    @Mock
-    private BookingLifecycleOutboxWriter bookingLifecycleOutboxWriter;
-    @Mock
-    private ApplicationEventPublisher applicationEventPublisher;
-    @Mock
-    private UserIntegrationClient userIntegrationClient;
+    private BookingStatusUseCase bookingStatusUseCase;
     @Mock
     private CarIntegrationClient carIntegrationClient;
 
@@ -63,21 +54,11 @@ class BookingServiceImplTest {
     void setUp() {
         bookingService = new BookingServiceImpl(
                 bookingRepository,
-                bookingWaitlistRepository,
                 bookingMapper,
-                paymentService,
-                bookingCreationGuard,
-                bookingLifecycleOutboxWriter,
-                applicationEventPublisher,
-                userIntegrationClient,
+                bookingCreationUseCase,
+                bookingStatusUseCase,
                 carIntegrationClient
         );
-
-        lenient().when(bookingCreationGuard.executeWithCarLock(any(), any())).thenAnswer(invocation -> {
-            java.util.function.Supplier<?> supplier = invocation.getArgument(1);
-            return supplier.get();
-        });
-
     }
 
     private BookingCreateRequestDto createTestBookingDto() {
@@ -87,58 +68,34 @@ class BookingServiceImplTest {
         return dto;
     }
 
-    private Booking createTestBooking(Long id, TransactionStatus status) {
-        return Booking.builder()
-                .id(id)
-                .renterId(100L)
-                .carId(200L)
-                .pickupLocationId(300L)
-                .startTime(LocalDateTime.now())
-                .endTime(LocalDateTime.now().plusHours(2))
-                .status(status)
-                .build();
-    }
-
     @Test
-    @DisplayName("save() should create booking when user and car are valid")
+    @DisplayName("save() delegates booking creation use case")
     void save_whenValid_shouldMapAndReturnDto() {
         BookingCreateRequestDto createDto = createTestBookingDto();
-        Booking bookingEntity = createTestBooking(null, TransactionStatus.PENDING);
-        Booking savedBookingEntity = createTestBooking(1L, TransactionStatus.PENDING);
         BookingDto expectedDto = new BookingDto();
         expectedDto.setId(1L);
-
-        doNothing().when(userIntegrationClient).assertUserExists(createDto.getRenterId());
-        doNothing().when(carIntegrationClient).assertCarAvailable(createDto.getCarId());
-
-        when(bookingMapper.toEntity(createDto)).thenReturn(bookingEntity);
-        when(bookingRepository.hasOverlappingBooking(any(), any(), any())).thenReturn(false);
-        when(bookingRepository.save(bookingEntity)).thenReturn(savedBookingEntity);
-        when(bookingMapper.toDto(savedBookingEntity)).thenReturn(expectedDto);
+        when(bookingCreationUseCase.createBooking(createDto)).thenReturn(expectedDto);
 
         BookingDto resultDto = bookingService.save(createDto);
 
         assertNotNull(resultDto);
         assertEquals(1L, resultDto.getId());
-
-        verify(userIntegrationClient).assertUserExists(createDto.getRenterId());
-        verify(carIntegrationClient).assertCarAvailable(createDto.getCarId());
+        verify(bookingCreationUseCase).createBooking(createDto);
     }
 
     @Test
-    @DisplayName("save() should throw exception when user does not exist")
+    @DisplayName("save() should propagate use case exception")
     void save_whenUserNotFound_shouldThrowException() {
         BookingCreateRequestDto createDto = createTestBookingDto();
-        doThrow(new RuntimeException("user not found")).when(userIntegrationClient).assertUserExists(createDto.getRenterId());
+        doThrow(new RuntimeException("user not found")).when(bookingCreationUseCase).createBooking(createDto);
         assertThrows(RuntimeException.class, () -> bookingService.save(createDto));
     }
 
     @Test
-    @DisplayName("save() should throw exception when car is not available")
+    @DisplayName("save() should propagate use case exception")
     void save_whenCarNotAvailable_shouldThrowException() {
         BookingCreateRequestDto createDto = createTestBookingDto();
-        doNothing().when(userIntegrationClient).assertUserExists(createDto.getRenterId());
-        doThrow(new RuntimeException("car unavailable")).when(carIntegrationClient).assertCarAvailable(createDto.getCarId());
+        doThrow(new RuntimeException("car unavailable")).when(bookingCreationUseCase).createBooking(createDto);
         assertThrows(RuntimeException.class, () -> bookingService.save(createDto));
     }
 
@@ -175,28 +132,22 @@ class BookingServiceImplTest {
     @Test
     void completeBooking_withApprovedStatusAndCompletedPayment_shouldSucceed() {
         Long bookingId = 1L;
-        Booking approvedBooking = createTestBooking(bookingId, TransactionStatus.APPROVED);
-        PaymentDto completedPayment = new PaymentDto();
-        completedPayment.setStatus(TransactionStatus.COMPLETED);
-
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(approvedBooking));
-        when(paymentService.findByBookingId(bookingId)).thenReturn(Optional.of(completedPayment));
-        ArgumentCaptor<Booking> bookingCaptor = ArgumentCaptor.forClass(Booking.class);
-        when(bookingRepository.save(bookingCaptor.capture())).thenReturn(new Booking());
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setStatus(TransactionStatus.COMPLETED);
+        when(bookingStatusUseCase.completeBooking(bookingId)).thenReturn(bookingDto);
 
         assertDoesNotThrow(() -> bookingService.completeBooking(bookingId));
-
-        assertEquals(TransactionStatus.COMPLETED, bookingCaptor.getValue().getStatus());
+        verify(bookingStatusUseCase).completeBooking(bookingId);
     }
 
     @Test
     void cancelBooking_withPendingStatus_shouldSucceed() {
         Long bookingId = 1L;
-        Booking pendingBooking = createTestBooking(bookingId, TransactionStatus.PENDING);
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(pendingBooking));
-        when(bookingRepository.save(any(Booking.class))).thenReturn(new Booking());
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setStatus(TransactionStatus.CANCELED);
+        when(bookingStatusUseCase.cancelBooking(bookingId)).thenReturn(bookingDto);
 
         assertDoesNotThrow(() -> bookingService.cancelBooking(bookingId));
+        verify(bookingStatusUseCase).cancelBooking(bookingId);
     }
-
 }

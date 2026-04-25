@@ -3,6 +3,7 @@ package com.dynamiccarsharing.booking.controller;
 import com.dynamiccarsharing.booking.criteria.TransactionSearchCriteria;
 import com.dynamiccarsharing.booking.dto.TransactionDto;
 import com.dynamiccarsharing.booking.service.interfaces.TransactionService;
+import com.dynamiccarsharing.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,9 +22,9 @@ public class TransactionController {
 
     @GetMapping("/{id}")
     public ResponseEntity<TransactionDto> getTransactionById(@PathVariable Long id) {
-        return transactionService.findTransactionById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.noContent().build());
+        TransactionDto transactionDto = transactionService.findTransactionById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction with ID " + id + " not found."));
+        return ResponseEntity.ok(transactionDto);
     }
 
     @GetMapping
