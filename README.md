@@ -291,6 +291,7 @@ After every lifecycle status change in `booking-service` (`APPROVED`, `COMPLETED
    * optional loyalty points redemption.
 2. **Confirm** — `PATCH /api/v1/admin/payments/{paymentId}/confirm` sets payment to `COMPLETED`. At this moment, the renter **earns loyalty points** based on the paid amount. The action is **audited** in `admin_audit_log` (payment id, action `PAYMENT_CONFIRM`, optional actor from header `X-User-Id`).
 3. **Refund** — `PATCH /api/v1/admin/payments/{paymentId}/refund` is allowed only for `COMPLETED` payments. **Loyalty is reversed** for that payment: points earned on confirmation are deducted, and points redeemed when the payment was created are credited back to the renter’s loyalty account. If the account balance is insufficient to deduct earned points (for example, the renter spent points elsewhere after the payment), the refund fails with a validation error. The action is **audited** in `admin_audit_log` (action `PAYMENT_REFUND`, optional `X-User-Id`).
+4. **Cancellation policy** — when an **approved** booking is canceled and a completed payment exists, booking-service calculates `cancellationRefundAmount` and `cancellationPenaltyAmount` from time to start: `>=24h` full refund, `1h..24h` 50/50 split, `<1h` no refund.
 
 ### Quote flow
 

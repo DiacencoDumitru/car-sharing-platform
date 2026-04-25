@@ -1421,7 +1421,33 @@ components:
     CarReview:
       $ref: 'schemas/CarReview.yaml'
     Payment:
-      $ref: 'schemas/Payment.yaml'
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        bookingId:
+          type: integer
+          format: int64
+        amount:
+          type: number
+          format: double
+        cancellationPenaltyAmount:
+          type: number
+          format: double
+        cancellationRefundAmount:
+          type: number
+          format: double
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentType'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     Transaction:
       $ref: 'schemas/Transaction.yaml'
     BookingSummary:
