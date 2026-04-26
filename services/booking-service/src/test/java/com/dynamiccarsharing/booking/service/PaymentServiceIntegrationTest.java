@@ -75,6 +75,22 @@ class PaymentServiceIntegrationTest {
     }
 
     @Test
+    @DisplayName("createPayment ignores client provided bookingId and amount")
+    void createPayment_ignoresClientProvidedDerivedFields() {
+        Booking booking = saveBooking();
+
+        PaymentRequestDto requestDto = new PaymentRequestDto();
+        requestDto.setBookingId(booking.getId() + 999);
+        requestDto.setAmount(new BigDecimal("0.01"));
+        requestDto.setPaymentMethod(PaymentType.CREDIT_CARD);
+
+        PaymentDto paymentDto = paymentService.createPayment(booking.getId(), requestDto);
+
+        assertThat(paymentDto.getBookingId()).isEqualTo(booking.getId());
+        assertThat(paymentDto.getAmount()).isGreaterThan(new BigDecimal("0.01"));
+    }
+
+    @Test
     @DisplayName("confirmPayment changes status to COMPLETED")
     void confirmPayment_changesStatusToCompleted() {
         Booking booking = saveBooking();
