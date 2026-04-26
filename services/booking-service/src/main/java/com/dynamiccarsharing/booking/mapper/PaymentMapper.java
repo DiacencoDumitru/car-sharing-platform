@@ -1,7 +1,6 @@
 package com.dynamiccarsharing.booking.mapper;
 
 import com.dynamiccarsharing.booking.dto.PaymentDto;
-import com.dynamiccarsharing.booking.dto.PaymentRequestDto;
 import com.dynamiccarsharing.booking.model.Payment;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -12,13 +11,4 @@ public interface PaymentMapper {
 
     @Mapping(source = "booking.id", target = "bookingId")
     PaymentDto toDto(Payment entity);
-
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "status", constant = "PENDING")
-    @Mapping(target = "cancellationPenaltyAmount", ignore = true)
-    @Mapping(target = "cancellationRefundAmount", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(source = "bookingId", target = "booking")
-    Payment toEntity(PaymentRequestDto dto);
 }

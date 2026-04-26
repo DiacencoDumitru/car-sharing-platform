@@ -5,16 +5,13 @@ import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.enums.CarStatus;
 import com.dynamiccarsharing.util.exception.ServiceException;
 import com.dynamiccarsharing.util.exception.ValidationException;
+import com.dynamiccarsharing.util.web.ResilientWebClientExecutor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.util.retry.Retry;
-
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -24,11 +21,15 @@ import java.util.Objects;
 public class WebClientCarIntegrationClient implements CarIntegrationClient {
 
     private final WebClient carWebClient;
-    private final IntegrationClientProperties properties;
+    private final ResilientWebClientExecutor resilientExecutor;
 
     public WebClientCarIntegrationClient(WebClient.Builder webClientBuilder, IntegrationClientProperties properties) {
         this.carWebClient = webClientBuilder.baseUrl("lb://car-service").build();
-        this.properties = properties;
+        this.resilientExecutor = new ResilientWebClientExecutor(
+                properties.getTimeoutSeconds(),
+                properties.getRetryMaxAttempts(),
+                properties.getRetryBackoffMillis()
+        );
     }
 
     @Override
@@ -42,19 +43,14 @@ public class WebClientCarIntegrationClient implements CarIntegrationClient {
     @Override
     public CarDto getCarById(Long carId) {
         try {
-            CarDto car = carWebClient.get()
-                    .uri("/api/v1/cars/{id}", carId)
-                    .retrieve()
-                    .onStatus(HttpStatusCode::is5xxServerError, response ->
-                            response.createException().map(ex -> new ServiceException("Car service is unavailable", ex))
-                    )
-                    .bodyToMono(CarDto.class)
-                    .timeout(Duration.ofSeconds(properties.getTimeoutSeconds()))
-                    .retryWhen(
-                            Retry.backoff(properties.getRetryMaxAttempts(), Duration.ofMillis(properties.getRetryBackoffMillis()))
-                                    .filter(this::isRetriable)
-                    )
-                    .block();
+            CarDto car = resilientExecutor.execute(() -> carWebClient.get()
+                            .uri("/api/v1/cars/{id}", carId)
+                            .retrieve()
+                            .onStatus(HttpStatusCode::is5xxServerError, response ->
+                                    response.createException().map(ex -> new ServiceException("Car service is unavailable", ex))
+                            )
+                            .bodyToMono(CarDto.class),
+                    "Failed to get car with ID " + carId);
 
             if (car == null) {
                 throw new ValidationException("Car with ID " + carId + " does not exist or is unavailable.");
@@ -65,8 +61,8 @@ public class WebClientCarIntegrationClient implements CarIntegrationClient {
             throw new ValidationException("Car with ID " + carId + " does not exist or is unavailable.");
         } catch (ValidationException e) {
             throw e;
-        } catch (Exception e) {
-            throw new ServiceException("Failed to get car with ID " + carId, e);
+        } catch (ServiceException e) {
+            throw e;
         }
     }
 
@@ -77,20 +73,15 @@ public class WebClientCarIntegrationClient implements CarIntegrationClient {
         Integer totalPages = null;
         do {
             final int p = pageIndex;
-            CarPageResponse body = carWebClient.get()
-                    .uri(uriBuilder -> uriBuilder.path("/api/v1/cars")
-                            .queryParam("ownerId", ownerId)
-                            .queryParam("size", 100)
-                            .queryParam("page", p)
-                            .build())
-                    .retrieve()
-                    .bodyToMono(CarPageResponse.class)
-                    .timeout(Duration.ofSeconds(properties.getTimeoutSeconds()))
-                    .retryWhen(
-                            Retry.backoff(properties.getRetryMaxAttempts(), Duration.ofMillis(properties.getRetryBackoffMillis()))
-                                    .filter(this::isRetriable)
-                    )
-                    .block();
+            CarPageResponse body = resilientExecutor.execute(() -> carWebClient.get()
+                            .uri(uriBuilder -> uriBuilder.path("/api/v1/cars")
+                                    .queryParam("ownerId", ownerId)
+                                    .queryParam("size", 100)
+                                    .queryParam("page", p)
+                                    .build())
+                            .retrieve()
+                            .bodyToMono(CarPageResponse.class),
+                    "Failed to list cars for owner " + ownerId);
             if (body == null || body.getContent() == null || body.getContent().isEmpty()) {
                 break;
             }
@@ -99,11 +90,6 @@ public class WebClientCarIntegrationClient implements CarIntegrationClient {
             pageIndex++;
         } while (totalPages != null && pageIndex < totalPages);
         return ids;
-    }
-
-    private boolean isRetriable(Throwable throwable) {
-        return throwable instanceof WebClientRequestException
-                || throwable instanceof ServiceException;
     }
 
     @Data

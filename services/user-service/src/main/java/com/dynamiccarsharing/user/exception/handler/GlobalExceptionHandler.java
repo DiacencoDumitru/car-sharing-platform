@@ -13,6 +13,11 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends AbstractGlobalExceptionHandler {
 
+    @Override
+    protected String serviceName() {
+        return "user-service";
+    }
+
     @ExceptionHandler(UserNotFoundException.class)
     public ProblemDetail handleUserNotFoundException(UserNotFoundException ex) {
         return problem(NOT_FOUND, "User Not Found", ex.getMessage(), "/errors/user-not-found");

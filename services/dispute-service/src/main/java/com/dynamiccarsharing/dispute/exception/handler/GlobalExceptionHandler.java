@@ -13,6 +13,11 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends AbstractGlobalExceptionHandler {
 
+    @Override
+    protected String serviceName() {
+        return "dispute-service";
+    }
+
     @ExceptionHandler(DisputeNotFoundException.class)
     public ProblemDetail handleDisputeNotFoundException(DisputeNotFoundException ex) {
         return problem(NOT_FOUND, "Dispute Not Found", ex.getMessage(), "/errors/dispute-not-found");

@@ -44,13 +44,13 @@ public class PaymentServiceImpl implements PaymentService {
     private final CancellationPenaltyPolicy cancellationPenaltyPolicy;
     private final LoyaltyService loyaltyService;
     private final AdminAuditService adminAuditService;
+    private final PaymentLifecyclePolicy paymentLifecyclePolicy;
+    private final PaymentCreationFactory paymentCreationFactory;
 
     @Override
     public PaymentDto createPayment(Long bookingId, PaymentRequestDto requestDto) {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new BookingNotFoundException("Booking with ID " + bookingId + " not found."));
-        if (booking.getStatus() == TransactionStatus.CANCELED || booking.getStatus() == TransactionStatus.COMPLETED) {
-            throw new ValidationException("Payment cannot be created for a canceled or completed booking.");
-        }
+        paymentLifecyclePolicy.ensureBookingAllowsPaymentCreation(booking);
 
         PricingContext context = new PricingContext(
                 booking.getId(),
@@ -63,9 +63,8 @@ public class PaymentServiceImpl implements PaymentService {
                 booking.getPromoCode()
         );
 
-        requestDto.setBookingId(bookingId);
-        requestDto.setAmount(pricingService.calculateTotalPrice(context));
-        Payment payment = paymentMapper.toEntity(requestDto);
+        BigDecimal calculatedAmount = pricingService.calculateTotalPrice(context);
+        Payment payment = paymentCreationFactory.buildPendingPayment(booking, calculatedAmount, requestDto.getPaymentMethod());
         Payment savedPayment = paymentRepository.save(payment);
         if (requestDto.getLoyaltyPointsToUse() != null) {
             var discount = loyaltyService.redeemPoints(
@@ -103,9 +102,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentDto confirmPayment(Long paymentId, Long actorUserId) {
         Payment payment = getPaymentOrThrow(paymentId);
-        if (payment.getStatus() != TransactionStatus.PENDING) {
-            throw new IllegalStateException("Payment must be PENDING to be confirmed.");
-        }
+        paymentLifecyclePolicy.ensureCanConfirm(payment);
         payment.setStatus(TransactionStatus.COMPLETED);
         payment = paymentRepository.save(payment);
 
@@ -121,9 +118,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentDto refundPayment(Long paymentId, Long actorUserId) {
         Payment payment = getPaymentOrThrow(paymentId);
-        if (payment.getStatus() != TransactionStatus.COMPLETED) {
-            throw new IllegalStateException("Payment must be COMPLETED to be refunded.");
-        }
+        paymentLifecyclePolicy.ensureCanRefund(payment);
         Long renterId = payment.getBooking().getRenterId();
         loyaltyService.reverseLoyaltyForPayment(renterId, paymentId);
         payment.setStatus(TransactionStatus.REFUNDED);

@@ -18,6 +18,8 @@ import java.util.Map;
 
 public abstract class AbstractGlobalExceptionHandler {
 
+    protected abstract String serviceName();
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         ProblemDetail problemDetail = problem(HttpStatus.BAD_REQUEST, "Validation Failed",
@@ -67,6 +69,7 @@ public abstract class AbstractGlobalExceptionHandler {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, detail);
         problemDetail.setTitle(title);
         problemDetail.setType(URI.create(type));
+        problemDetail.setProperty("service", serviceName());
         return problemDetail;
     }
 }
