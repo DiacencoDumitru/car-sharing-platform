@@ -3,7 +3,6 @@ package com.dynamiccarsharing.booking.exception.handler;
 import com.dynamiccarsharing.booking.exception.BookingNotFoundException;
 import com.dynamiccarsharing.booking.exception.InvalidBookingStatusException;
 import com.dynamiccarsharing.util.web.AbstractGlobalExceptionHandler;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -14,11 +13,14 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends AbstractGlobalExceptionHandler {
 
+    @Override
+    protected String serviceName() {
+        return "booking-service";
+    }
+
     @ExceptionHandler(BookingNotFoundException.class)
     public ProblemDetail handleBookingNotFoundException(BookingNotFoundException ex) {
-        ProblemDetail problemDetail = problem(NOT_FOUND, "Booking Not Found", ex.getMessage(), "/errors/booking-not-found");
-        problemDetail.setProperty("service", "booking-service");
-        return problemDetail;
+        return problem(NOT_FOUND, "Booking Not Found", ex.getMessage(), "/errors/booking-not-found");
     }
 
     @ExceptionHandler(InvalidBookingStatusException.class)

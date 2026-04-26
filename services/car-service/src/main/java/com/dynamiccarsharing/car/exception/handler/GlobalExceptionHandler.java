@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends AbstractGlobalExceptionHandler {
 
+    @Override
+    protected String serviceName() {
+        return "car-service";
+    }
+
     public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
         return super.handleAccessDenied(ex);
     }
