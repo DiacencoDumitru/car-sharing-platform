@@ -5,14 +5,12 @@ import com.dynamiccarsharing.car.dto.CarCreateRequestDto;
 import com.dynamiccarsharing.car.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.car.exception.CarNotFoundException;
 import com.dynamiccarsharing.car.exception.InvalidCarStatusException;
-import com.dynamiccarsharing.car.exception.InvalidVerificationStatusException;
 import com.dynamiccarsharing.car.mapper.CarMapper;
 import com.dynamiccarsharing.car.model.Car;
 import com.dynamiccarsharing.car.model.Location;
 import com.dynamiccarsharing.car.repository.CarRepository;
 import com.dynamiccarsharing.car.repository.LocationRepository;
 import com.dynamiccarsharing.car.search.es.CarSearchService;
-import com.dynamiccarsharing.car.messaging.CarEventPublisher;
 import com.dynamiccarsharing.car.service.interfaces.CarService;
 import com.dynamiccarsharing.contracts.dto.CarDto;
 import com.dynamiccarsharing.contracts.enums.CarStatus;
@@ -31,11 +29,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
-import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
-
 import java.math.BigDecimal;
-import java.util.function.Supplier;
 
 @Service("carService")
 @Transactional
@@ -47,49 +41,9 @@ public class CarServiceImpl implements CarService {
     private final LocationRepository locationRepository;
     private final CarMapper carMapper;
     private final CarSearchService carSearchService;
-    private final CarEventPublisher carEventPublisher;
-    private final CircuitBreakerFactory<?, ?> circuitBreakerFactory;
+    private final CarSideEffectsOrchestrator sideEffectsOrchestrator;
+    private final CarStateTransitionPolicy transitionPolicy;
     private final EntityManager entityManager;
-
-    private void indexCarSafely(Long carId) {
-        CircuitBreaker cb = circuitBreakerFactory.create("carSearch");
-        cb.run(() -> {
-                    carSearchService.indexCar(carId);
-                    return null;
-                },
-                ex -> {
-                    log.warn("carSearch CB fallback: indexing car {} failed: {}", carId, ex.toString());
-                    return null;
-                }
-        );
-    }
-
-    private void deleteIndexSafely(Long carId) {
-        CircuitBreaker cb = circuitBreakerFactory.create("carSearch");
-        cb.run(() -> {
-                    carSearchService.deleteFromIndex(carId);
-                    return null;
-                },
-                ex -> {
-                    log.warn("carSearch CB fallback: delete index for car {} failed: {}", carId, ex.toString());
-                    return null;
-                }
-        );
-    }
-
-    private void publishEventSafely(Supplier<Void> publisher, String action, Long carId) {
-        CircuitBreaker cb = circuitBreakerFactory.create("carEvents");
-        cb.run(
-                () -> {
-                    publisher.get();
-                    return null;
-                },
-                ex -> {
-                    log.warn("carEvents CB fallback: publishing {} for car {} failed: {}", action, carId, ex.toString());
-                    return null;
-                }
-        );
-    }
 
     private Car saveAndFlush(Car car) {
         Car saved = carRepository.save(car);
@@ -112,9 +66,8 @@ public class CarServiceImpl implements CarService {
         Car savedCar = saveAndFlush(car);
         CarDto dto = carMapper.toDto(savedCar);
 
-        indexCarSafely(savedCar.getId());
-        publishEventSafely(() -> { carEventPublisher.publishCarCreated(savedCar); return null; },
-                "CarCreated", savedCar.getId());
+        sideEffectsOrchestrator.reindexCarSafely(savedCar.getId());
+        sideEffectsOrchestrator.publishCarCreated(savedCar);
 
         return dto;
     }
@@ -132,9 +85,8 @@ public class CarServiceImpl implements CarService {
         if (carRepository.findById(id).isPresent()) {
             carRepository.deleteById(id);
 
-            deleteIndexSafely(id);
-            publishEventSafely(() -> { carEventPublisher.publishCarDeleted(id); return null; },
-                    "CarDeleted", id);
+            sideEffectsOrchestrator.deleteIndexSafely(id);
+            sideEffectsOrchestrator.publishCarDeleted(id);
         } else {
             throw new CarNotFoundException("Car with ID " + id + " not found.");
         }
@@ -150,16 +102,13 @@ public class CarServiceImpl implements CarService {
     @CachePut(cacheNames = "carById", key = "#carId")
     public CarDto rentCar(Long carId) {
         Car car = getCarOrThrow(carId);
-        if (car.getStatus() != CarStatus.AVAILABLE) {
-            throw new InvalidCarStatusException("Car can only be rented if AVAILABLE");
-        }
+        transitionPolicy.ensureCurrentStatus(car.getStatus(), CarStatus.AVAILABLE, "Car can only be rented if AVAILABLE");
         car.setStatus(CarStatus.RENTED);
         Car saved = saveAndFlush(car);
         CarDto dto = carMapper.toDto(saved);
 
-        indexCarSafely(carId);
-        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
-                "CarUpdated", carId);
+        sideEffectsOrchestrator.reindexCarSafely(carId);
+        sideEffectsOrchestrator.publishCarUpdated(saved);
         return dto;
     }
 
@@ -167,14 +116,13 @@ public class CarServiceImpl implements CarService {
     @CachePut(cacheNames = "carById", key = "#carId")
     public CarDto returnCar(Long carId) {
         Car car = getCarOrThrow(carId);
-        validateCarStatus(car.getStatus(), CarStatus.RENTED, "Car can only be returned if RENTED");
+        transitionPolicy.ensureCurrentStatus(car.getStatus(), CarStatus.RENTED, "Car can only be returned if RENTED");
         car.setStatus(CarStatus.AVAILABLE);
         Car saved = saveAndFlush(car);
         CarDto dto = carMapper.toDto(saved);
 
-        indexCarSafely(carId);
-        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
-                "CarUpdated", carId);
+        sideEffectsOrchestrator.reindexCarSafely(carId);
+        sideEffectsOrchestrator.publishCarUpdated(saved);
         return dto;
     }
 
@@ -182,14 +130,13 @@ public class CarServiceImpl implements CarService {
     @CachePut(cacheNames = "carById", key = "#carId")
     public CarDto setMaintenance(Long carId) {
         Car car = getCarOrThrow(carId);
-        validateCarStatus(car.getStatus(), CarStatus.AVAILABLE, "Cannot set MAINTENANCE for a RENTED car");
+        transitionPolicy.ensureCurrentStatus(car.getStatus(), CarStatus.AVAILABLE, "Cannot set MAINTENANCE for a RENTED car");
         car.setStatus(CarStatus.MAINTENANCE);
         Car saved = saveAndFlush(car);
         CarDto dto = carMapper.toDto(saved);
 
-        indexCarSafely(carId);
-        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
-                "CarUpdated", carId);
+        sideEffectsOrchestrator.reindexCarSafely(carId);
+        sideEffectsOrchestrator.publishCarUpdated(saved);
         return dto;
     }
 
@@ -197,14 +144,13 @@ public class CarServiceImpl implements CarService {
     @CachePut(cacheNames = "carById", key = "#carId")
     public CarDto verifyCar(Long carId) {
         Car car = getCarOrThrow(carId);
-        validateVerificationStatus(car.getVerificationStatus(), "Car can only be verified from PENDING status");
+        transitionPolicy.ensurePendingVerification(car.getVerificationStatus(), "Car can only be verified from PENDING status");
         car.setVerificationStatus(VerificationStatus.VERIFIED);
         Car saved = saveAndFlush(car);
         CarDto dto = carMapper.toDto(saved);
 
-        indexCarSafely(carId);
-        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
-                "CarUpdated", carId);
+        sideEffectsOrchestrator.reindexCarSafely(carId);
+        sideEffectsOrchestrator.publishCarUpdated(saved);
         return dto;
     }
 
@@ -212,14 +158,13 @@ public class CarServiceImpl implements CarService {
     @CachePut(cacheNames = "carById", key = "#carId")
     public CarDto rejectVerification(Long carId) {
         Car car = getCarOrThrow(carId);
-        validateVerificationStatus(car.getVerificationStatus(), "Car can only be rejected from PENDING status");
+        transitionPolicy.ensurePendingVerification(car.getVerificationStatus(), "Car can only be rejected from PENDING status");
         car.setVerificationStatus(VerificationStatus.REJECTED);
         Car saved = saveAndFlush(car);
         CarDto dto = carMapper.toDto(saved);
 
-        indexCarSafely(carId);
-        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
-                "CarUpdated", carId);
+        sideEffectsOrchestrator.reindexCarSafely(carId);
+        sideEffectsOrchestrator.publishCarUpdated(saved);
         return dto;
     }
 
@@ -242,9 +187,8 @@ public class CarServiceImpl implements CarService {
         Car saved = saveAndFlush(carToUpdate);
         CarDto dto = carMapper.toDto(saved);
 
-        indexCarSafely(carId);
-        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
-                "CarUpdated", carId);
+        sideEffectsOrchestrator.reindexCarSafely(carId);
+        sideEffectsOrchestrator.publishCarUpdated(saved);
         return dto;
     }
 
@@ -259,9 +203,8 @@ public class CarServiceImpl implements CarService {
         Car saved = saveAndFlush(car);
         CarDto dto = carMapper.toDto(saved);
 
-        indexCarSafely(carId);
-        publishEventSafely(() -> { carEventPublisher.publishCarUpdated(saved); return null; },
-                "CarUpdated", carId);
+        sideEffectsOrchestrator.reindexCarSafely(carId);
+        sideEffectsOrchestrator.publishCarUpdated(saved);
         return dto;
     }
 
@@ -269,15 +212,4 @@ public class CarServiceImpl implements CarService {
         return carRepository.findById(carId).orElseThrow(() -> new CarNotFoundException("Car with ID " + carId + " not found"));
     }
 
-    private void validateCarStatus(CarStatus currentStatus, CarStatus expectedStatus, String message) {
-        if (currentStatus != expectedStatus) {
-            throw new InvalidCarStatusException(message);
-        }
-    }
-
-    private void validateVerificationStatus(VerificationStatus currentStatus, String message) {
-        if (currentStatus != VerificationStatus.PENDING) {
-            throw new InvalidVerificationStatusException(message);
-        }
-    }
 }

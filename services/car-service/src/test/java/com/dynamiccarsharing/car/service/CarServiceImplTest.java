@@ -6,7 +6,6 @@ import com.dynamiccarsharing.car.dto.CarUpdateRequestDto;
 import com.dynamiccarsharing.car.exception.CarNotFoundException;
 import com.dynamiccarsharing.car.exception.InvalidVerificationStatusException;
 import com.dynamiccarsharing.car.mapper.CarMapper;
-import com.dynamiccarsharing.car.messaging.CarEventPublisher;
 import com.dynamiccarsharing.car.model.Car;
 import com.dynamiccarsharing.car.model.Location;
 import com.dynamiccarsharing.car.repository.CarRepository;
@@ -24,9 +23,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
-import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
-import org.springframework.cloud.client.circuitbreaker.ConfigBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -35,8 +31,6 @@ import org.springframework.security.access.AccessDeniedException;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -56,36 +50,24 @@ class CarServiceImplTest {
     @Mock
     private CarSearchService carSearchService;
     @Mock
-    private CarEventPublisher carEventPublisher;
-
-    @Mock
-    private CircuitBreakerFactory<Object, ? extends ConfigBuilder<Object>> circuitBreakerFactory;
+    private CarSideEffectsOrchestrator sideEffectsOrchestrator;
     @Mock
     private EntityManager entityManager;
 
     private CarServiceImpl carService;
+    private CarStateTransitionPolicy transitionPolicy;
 
     @BeforeEach
     void setUp() {
-        CircuitBreaker noopBreaker = new CircuitBreaker() {
-            @Override
-            public <T> T run(Supplier<T> toRun, Function<Throwable, T> fallback) {
-                try {
-                    return toRun.get();
-                } catch (Throwable t) {
-                    return (fallback != null) ? fallback.apply(t) : null;
-                }
-            }
-        };
-        lenient().when(circuitBreakerFactory.create(anyString())).thenReturn(noopBreaker);
+        transitionPolicy = new CarStateTransitionPolicy();
 
         carService = new CarServiceImpl(
                 carRepository,
                 locationRepository,
                 carMapper,
                 carSearchService,
-                carEventPublisher,
-                circuitBreakerFactory,
+                sideEffectsOrchestrator,
+                transitionPolicy,
                 entityManager
         );
     }
@@ -125,7 +107,8 @@ class CarServiceImplTest {
         assertEquals(location, carEntity.getLocation());
         verify(carMapper).toEntity(createDto, ownerId);
         verify(carRepository).save(carEntity);
-        verify(carSearchService).indexCar(1L);
+        verify(sideEffectsOrchestrator).reindexCarSafely(1L);
+        verify(sideEffectsOrchestrator).publishCarCreated(savedCar);
     }
 
     @Test
@@ -154,7 +137,8 @@ class CarServiceImplTest {
         assertDoesNotThrow(() -> carService.deleteById(carId));
 
         verify(carRepository).deleteById(carId);
-        verify(carSearchService).deleteFromIndex(carId);
+        verify(sideEffectsOrchestrator).deleteIndexSafely(carId);
+        verify(sideEffectsOrchestrator).publishCarDeleted(carId);
     }
 
     @Test
@@ -181,7 +165,8 @@ class CarServiceImplTest {
 
         assertEquals(CarStatus.AVAILABLE, result.getStatus());
         verify(carRepository).save(argThat(c -> c.getStatus() == CarStatus.AVAILABLE));
-        verify(carSearchService).indexCar(carId);
+        verify(sideEffectsOrchestrator).reindexCarSafely(carId);
+        verify(sideEffectsOrchestrator).publishCarUpdated(rented);
     }
 
     @Test
@@ -193,7 +178,8 @@ class CarServiceImplTest {
 
         assertDoesNotThrow(() -> carService.setMaintenance(carId));
         verify(carRepository).save(argThat(c -> c.getStatus() == CarStatus.MAINTENANCE));
-        verify(carSearchService).indexCar(carId);
+        verify(sideEffectsOrchestrator).reindexCarSafely(carId);
+        verify(sideEffectsOrchestrator).publishCarUpdated(available);
     }
 
     @Test
@@ -205,7 +191,8 @@ class CarServiceImplTest {
 
         assertDoesNotThrow(() -> carService.verifyCar(carId));
         verify(carRepository).save(argThat(c -> c.getVerificationStatus() == VerificationStatus.VERIFIED));
-        verify(carSearchService).indexCar(carId);
+        verify(sideEffectsOrchestrator).reindexCarSafely(carId);
+        verify(sideEffectsOrchestrator).publishCarUpdated(pending);
     }
 
     @Test
@@ -237,7 +224,8 @@ class CarServiceImplTest {
         assertNotNull(result);
         verify(carMapper).updateCarFromDto(updateDto, car);
         verify(carRepository).save(car);
-        verify(carSearchService).indexCar(carId);
+        verify(sideEffectsOrchestrator).reindexCarSafely(carId);
+        verify(sideEffectsOrchestrator).publishCarUpdated(car);
     }
 
     @Test
