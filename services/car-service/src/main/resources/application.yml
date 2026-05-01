@@ -1,10 +1,10 @@
 server:
   port: 8081
   error:
-    include-message: ALWAYS
-    include-binding-errors: ALWAYS
-    include-exception: true
-    include-stacktrace: ALWAYS
+    include-message: ${SERVER_ERROR_INCLUDE_MESSAGE:never}
+    include-binding-errors: ${SERVER_ERROR_INCLUDE_BINDING_ERRORS:never}
+    include-exception: ${SERVER_ERROR_INCLUDE_EXCEPTION:false}
+    include-stacktrace: ${SERVER_ERROR_INCLUDE_STACKTRACE:never}
 
 spring:
   application:
@@ -54,8 +54,8 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -130,10 +130,11 @@ application:
       timeout-seconds: 3
       retry-max-attempts: 2
       retry-backoff-millis: 200
+      internal-api-key: ${USER_SERVICE_INTERNAL_API_KEY:}
   security:
     jwt:
-      secret-key: ${JWT_SECRET:E0nD6k7s3yq0s5jD8L3Qw3N8jH2rVg7w1vYJ3p6xKf0U=}
-      expiration: 3600000
+      secret-key: ${JWT_SECRET}
+      expiration: ${JWT_EXPIRATION_MS:3600000}
   search:
     index-name: cars
     indexing-enabled: true

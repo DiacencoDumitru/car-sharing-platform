@@ -30,6 +30,10 @@ spring:
       port: ${test.redis.port}
 
 application:
+  security:
+    jwt:
+      secret-key: NDM0YjVmNjM1MTY0NWE3NDc3Mzg3YTMzNjE1MTQxNTg0NTUxNDg0ZjU0N2IzYjRmNmE1YjdhNmE0ZDQxNjM1Mg==
+      expiration: 3600000
   cache:
     response:
       enabled: true

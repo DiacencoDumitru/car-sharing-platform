@@ -9,7 +9,7 @@ import com.dynamiccarsharing.user.model.ContactInfo;
 import com.dynamiccarsharing.user.model.User;
 import com.dynamiccarsharing.user.repository.jpa.FavoriteCarJpaRepository;
 import com.dynamiccarsharing.user.repository.jpa.UserJpaRepository;
-import com.dynamiccarsharing.user.security.InternalApiKeyAuthenticationFilter;
+import com.dynamiccarsharing.util.security.InternalApiKeyAuthenticationFilter;
 import com.dynamiccarsharing.user.service.JwtService;
 import com.dynamiccarsharing.util.exception.ValidationException;
 import org.junit.jupiter.api.BeforeEach;

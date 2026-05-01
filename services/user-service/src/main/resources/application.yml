@@ -43,8 +43,8 @@ application:
   security:
     internal-api-key: ${USER_SERVICE_INTERNAL_API_KEY:}
     jwt:
-      secret-key: NDM0YjVmNjM1MTY0NWE3NDc3Mzg3YTMzNjE1MTQxNTg0NTUxNDg0ZjU0N2IzYjRmNmE1YjdhNmE0ZDQxNjM1Mg==
-      expiration: 3600000
+      secret-key: ${JWT_SECRET}
+      expiration: ${JWT_EXPIRATION_MS:3600000}
 
 eureka:
   client:

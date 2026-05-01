@@ -6,7 +6,7 @@ import com.dynamiccarsharing.user.UserApplication;
 import com.dynamiccarsharing.user.model.ContactInfo;
 import com.dynamiccarsharing.user.model.User;
 import com.dynamiccarsharing.user.repository.jpa.UserJpaRepository;
-import com.dynamiccarsharing.user.security.InternalApiKeyAuthenticationFilter;
+import com.dynamiccarsharing.util.security.InternalApiKeyAuthenticationFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

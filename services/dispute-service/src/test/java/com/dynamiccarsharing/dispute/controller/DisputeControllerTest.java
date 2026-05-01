@@ -2,13 +2,16 @@ package com.dynamiccarsharing.dispute.controller;
 
 import com.dynamiccarsharing.contracts.dto.DisputeDto;
 import com.dynamiccarsharing.contracts.enums.DisputeStatus;
+import com.dynamiccarsharing.dispute.config.SecurityConfig;
 import com.dynamiccarsharing.dispute.dto.DisputeCreateRequestDto;
 import com.dynamiccarsharing.dispute.service.interfaces.DisputeService;
+import com.dynamiccarsharing.util.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(DisputeController.class)
+@Import(SecurityConfig.class)
 class DisputeControllerTest {
 
     @Autowired
@@ -31,6 +35,9 @@ class DisputeControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockBean
+    private JwtUtil jwtUtil;
 
     @MockBean
     private DisputeService disputeService;

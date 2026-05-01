@@ -4,8 +4,9 @@ import com.dynamiccarsharing.contracts.dto.ContactInfoDto;
 import com.dynamiccarsharing.contracts.dto.UserDto;
 import com.dynamiccarsharing.contracts.enums.UserRole;
 import com.dynamiccarsharing.contracts.enums.UserStatus;
+import com.dynamiccarsharing.user.config.InternalApiKeyFilterConfiguration;
 import com.dynamiccarsharing.user.config.SecurityConfig;
-import com.dynamiccarsharing.user.security.InternalApiKeyAuthenticationFilter;
+import com.dynamiccarsharing.util.security.InternalApiKeyAuthenticationFilter;
 import com.dynamiccarsharing.user.dto.ContactInfoCreateRequestDto;
 import com.dynamiccarsharing.user.dto.ContactInfoUpdateRequestDto;
 import com.dynamiccarsharing.user.dto.UserCreateRequestDto;
@@ -50,7 +51,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "eureka.instance.instance-id=test-instance-1",
         "application.security.internal-api-key=test-internal-api-key-for-integration"
 })
-@Import({SecurityConfig.class, InternalApiKeyAuthenticationFilter.class, UserControllerTest.PassThroughJwtFilterConfig.class})
+@Import({SecurityConfig.class, InternalApiKeyFilterConfiguration.class, UserControllerTest.PassThroughJwtFilterConfig.class})
 @ActiveProfiles("test")
 class UserControllerTest {
 

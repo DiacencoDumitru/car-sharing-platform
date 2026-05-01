@@ -1,8 +1,10 @@
 package com.dynamiccarsharing.booking.controller;
 
+import com.dynamiccarsharing.booking.config.InternalApiKeyFilterConfiguration;
 import com.dynamiccarsharing.booking.config.SecurityConfig;
 import com.dynamiccarsharing.booking.dto.TransactionDto;
 import com.dynamiccarsharing.booking.service.interfaces.TransactionService;
+import com.dynamiccarsharing.util.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TransactionController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, InternalApiKeyFilterConfiguration.class})
 class TransactionControllerTest {
 
     @Autowired
@@ -29,6 +31,9 @@ class TransactionControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockBean
+    private JwtUtil jwtUtil;
 
     @MockBean
     private TransactionService transactionService;

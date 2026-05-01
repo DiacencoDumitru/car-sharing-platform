@@ -40,8 +40,8 @@ spring:
 application:
   security:
     jwt:
-      secret-key: NDM0YjVmNjM1MTY0NWE3NDc3Mzg3YTMzNjE1MTQxNTg0NTUxNDg0ZjU0N2IzYjRmNmE1YjdhNmE0ZDQxNjM1Mg==
-      expiration: 3600000
+      secret-key: ${JWT_SECRET}
+      expiration: ${JWT_EXPIRATION_MS:3600000}
   cache:
     response:
       enabled: true
@@ -85,13 +85,13 @@ management:
         include: "health,info,prometheus"
   endpoint:
     health:
-      show-details: always
+      show-details: when_authorized
   metrics:
     tags:
       application: ${spring.application.name}
   tracing:
     sampling:
-      probability: 1.0
+      probability: 0.1
     propagation:
       type: B3
   zipkin:

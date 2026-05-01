@@ -4,10 +4,14 @@ import com.dynamiccarsharing.user.dto.me.BookingPageResponse;
 import com.dynamiccarsharing.user.dto.me.TransactionPageResponse;
 import com.dynamiccarsharing.user.integration.config.IntegrationClientProperties;
 import com.dynamiccarsharing.util.exception.ServiceException;
+import com.dynamiccarsharing.util.security.InternalApiKeyAuthenticationFilter;
 import com.dynamiccarsharing.util.web.ResilientWebClientExecutor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
 import java.util.function.Function;
@@ -17,9 +21,15 @@ public class WebClientBookingMeClient implements BookingMeClient {
 
     private final WebClient bookingWebClient;
     private final ResilientWebClientExecutor resilientExecutor;
+    private final String internalApiKey;
 
-    public WebClientBookingMeClient(WebClient.Builder webClientBuilder, IntegrationClientProperties properties) {
+    public WebClientBookingMeClient(
+            WebClient.Builder webClientBuilder,
+            IntegrationClientProperties properties,
+            @Value("${application.security.internal-api-key:}") String internalApiKey
+    ) {
         this.bookingWebClient = webClientBuilder.baseUrl("lb://booking-service").build();
+        this.internalApiKey = internalApiKey;
         this.resilientExecutor = new ResilientWebClientExecutor(
                 properties.getTimeoutSeconds(),
                 properties.getRetryMaxAttempts(),
@@ -31,6 +41,7 @@ public class WebClientBookingMeClient implements BookingMeClient {
     public BookingPageResponse getUserBookings(Long userId, String asRole, Pageable pageable) {
         BookingPageResponse response = resilientExecutor.execute(() -> bookingWebClient.get()
                         .uri(internalUserBookingsUri(userId, asRole, pageable))
+                        .headers(this::applyInternalApiKeyIfConfigured)
                         .retrieve()
                         .bodyToMono(BookingPageResponse.class),
                 "Booking service request for user bookings failed");
@@ -44,6 +55,7 @@ public class WebClientBookingMeClient implements BookingMeClient {
     public TransactionPageResponse getUserTransactions(Long userId, Pageable pageable) {
         TransactionPageResponse response = resilientExecutor.execute(() -> bookingWebClient.get()
                         .uri(internalUserTransactionsUri(userId, pageable))
+                        .headers(this::applyInternalApiKeyIfConfigured)
                         .retrieve()
                         .bodyToMono(TransactionPageResponse.class),
                 "Booking service request for user transactions failed");
@@ -78,5 +90,11 @@ public class WebClientBookingMeClient implements BookingMeClient {
             }
             return ub.build(userId);
         };
+    }
+
+    private void applyInternalApiKeyIfConfigured(HttpHeaders headers) {
+        if (StringUtils.hasText(internalApiKey)) {
+            headers.set(InternalApiKeyAuthenticationFilter.INTERNAL_API_KEY_HEADER, internalApiKey);
+        }
     }
 }
