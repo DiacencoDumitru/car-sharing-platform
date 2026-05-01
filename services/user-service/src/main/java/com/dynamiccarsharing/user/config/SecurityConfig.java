@@ -1,6 +1,6 @@
 package com.dynamiccarsharing.user.config;
 
-import com.dynamiccarsharing.user.security.InternalApiKeyAuthenticationFilter;
+import com.dynamiccarsharing.util.security.InternalApiKeyAuthenticationFilter;
 import com.dynamiccarsharing.util.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

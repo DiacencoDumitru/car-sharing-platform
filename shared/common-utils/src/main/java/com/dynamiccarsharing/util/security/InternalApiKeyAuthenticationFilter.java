@@ -1,15 +1,13 @@
-package com.dynamiccarsharing.user.security;
+package com.dynamiccarsharing.util.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -18,7 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
 
-@Component
 public class InternalApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
     public static final String INTERNAL_API_KEY_HEADER = "X-Internal-Api-Key";
@@ -27,9 +24,7 @@ public class InternalApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
     private final String configuredInternalApiKey;
 
-    public InternalApiKeyAuthenticationFilter(
-            @Value("${application.security.internal-api-key:}") String configuredInternalApiKey
-    ) {
+    public InternalApiKeyAuthenticationFilter(String configuredInternalApiKey) {
         this.configuredInternalApiKey = configuredInternalApiKey;
     }
 

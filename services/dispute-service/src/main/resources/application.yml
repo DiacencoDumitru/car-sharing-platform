@@ -79,6 +79,10 @@ logging:
     org.springframework.cloud.client.discovery: DEBUG
 
 application:
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET}
+      expiration: 3600000
   http:
     clients:
       timeout-seconds: 3

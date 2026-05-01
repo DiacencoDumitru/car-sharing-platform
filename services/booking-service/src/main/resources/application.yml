@@ -84,6 +84,11 @@ management:
     port: ${server.port}
 
 application:
+  security:
+    internal-api-key: ${USER_SERVICE_INTERNAL_API_KEY:}
+    jwt:
+      secret-key: ${JWT_SECRET}
+      expiration: 3600000
   http:
     clients:
       timeout-seconds: 3

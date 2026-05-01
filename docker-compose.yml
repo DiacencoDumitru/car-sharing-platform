@@ -99,6 +99,7 @@ services:
         condition: service_started
     environment:
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
     networks:
       - microservices-network
     healthcheck:
@@ -115,12 +116,11 @@ services:
       dockerfile: services/user-service/Dockerfile
     image: user-service
     container_name: user-service-1
-    ports:
-      - "8080:8080"
     environment:
       - EUREKA_INSTANCE_HOSTNAME=user-service-1
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
-      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:-dev-internal-api-key-change-me}
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
+      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:?Set USER_SERVICE_INTERNAL_API_KEY in .env (see .env.example)}
     depends_on:
       db:
         condition: service_healthy
@@ -146,12 +146,11 @@ services:
       dockerfile: services/user-service/Dockerfile
     image: user-service
     container_name: user-service-2
-    ports:
-      - "8088:8080"
     environment:
       - EUREKA_INSTANCE_HOSTNAME=user-service-2
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
-      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:-dev-internal-api-key-change-me}
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
+      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:?Set USER_SERVICE_INTERNAL_API_KEY in .env (see .env.example)}
     depends_on:
       db:
         condition: service_healthy
@@ -177,8 +176,6 @@ services:
       dockerfile: services/car-service/Dockerfile
     image: car-service
     container_name: car-service
-    ports:
-      - "8081:8081"
     depends_on:
       db:
         condition: service_healthy
@@ -205,8 +202,8 @@ services:
       - APPLICATION_MESSAGING_KAFKA_ENABLED=true
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=${JWT_SECRET}
-      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:-dev-internal-api-key-change-me}
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
+      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:?Set USER_SERVICE_INTERNAL_API_KEY in .env (see .env.example)}
     networks:
       - microservices-network
     healthcheck:
@@ -223,13 +220,12 @@ services:
       dockerfile: services/booking-service/Dockerfile
     image: booking-service
     container_name: booking-service
-    ports:
-      - "8082:8082"
     environment:
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - APPLICATION_MESSAGING_KAFKA_ENABLED=true
-      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:-dev-internal-api-key-change-me}
+      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:?Set USER_SERVICE_INTERNAL_API_KEY in .env (see .env.example)}
     depends_on:
       db:
         condition: service_healthy
@@ -255,8 +251,6 @@ services:
       dockerfile: services/notification-service/Dockerfile
     image: notification-service
     container_name: notification-service
-    ports:
-      - "8084:8084"
     environment:
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
       - SPRING_PROFILES_ACTIVE=local-docker
@@ -264,6 +258,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - USER_SERVICE_INTERNAL_API_KEY=${USER_SERVICE_INTERNAL_API_KEY:?Set USER_SERVICE_INTERNAL_API_KEY in .env (see .env.example)}
     depends_on:
       db:
         condition: service_healthy
@@ -291,10 +286,9 @@ services:
       dockerfile: services/dispute-service/Dockerfile
     image: dispute-service
     container_name: dispute-service
-    ports:
-      - "8083:8083"
     environment:
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
     depends_on:
       db:
         condition: service_healthy

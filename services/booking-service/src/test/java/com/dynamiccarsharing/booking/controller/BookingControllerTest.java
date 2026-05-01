@@ -1,5 +1,6 @@
 package com.dynamiccarsharing.booking.controller;
 
+import com.dynamiccarsharing.booking.config.InternalApiKeyFilterConfiguration;
 import com.dynamiccarsharing.booking.config.SecurityConfig;
 import com.dynamiccarsharing.booking.criteria.BookingSearchCriteria;
 import com.dynamiccarsharing.booking.dto.BookingCreateRequestDto;
@@ -14,6 +15,7 @@ import com.dynamiccarsharing.booking.service.interfaces.QuoteService;
 import com.dynamiccarsharing.contracts.dto.BookingDto;
 import com.dynamiccarsharing.contracts.enums.TransactionStatus;
 import com.dynamiccarsharing.util.exception.ValidationException;
+import com.dynamiccarsharing.util.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,11 +43,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BookingController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, InternalApiKeyFilterConfiguration.class})
 class BookingControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private JwtUtil jwtUtil;
 
     @MockBean
     private BookingService bookingService;

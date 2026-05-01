@@ -1,5 +1,6 @@
 package com.dynamiccarsharing.user.controller;
 
+import com.dynamiccarsharing.user.config.InternalApiKeyFilterConfiguration;
 import com.dynamiccarsharing.user.config.SecurityConfig;
 import com.dynamiccarsharing.user.service.AuthenticationService;
 import com.dynamiccarsharing.user.service.UserServiceImpl;
@@ -20,7 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthenticationController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, InternalApiKeyFilterConfiguration.class})
 @AutoConfigureMockMvc(addFilters = false)
 class AuthenticationControllerTest {
 

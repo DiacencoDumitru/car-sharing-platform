@@ -11,4 +11,5 @@ public class BookingIntegrationClientProperties {
     private int timeoutSeconds = 3;
     private int retryMaxAttempts = 2;
     private int retryBackoffMillis = 200;
+    private String internalApiKey = "";
 }
