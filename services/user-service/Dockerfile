@@ -2,6 +2,7 @@ FROM maven:3.9-eclipse-temurin-17-focal AS builder
 WORKDIR /app
 
 COPY pom.xml .
+COPY spotbugs-exclude.xml .
 COPY shared/api-contracts/pom.xml shared/api-contracts/
 COPY shared/common-utils/pom.xml shared/common-utils/
 COPY services/eureka-server/pom.xml services/eureka-server/
@@ -26,8 +27,8 @@ COPY services/dispute-service/src services/dispute-service/src
 COPY services/notification-service/src services/notification-service/src
 COPY services/api-gateway/src services/api-gateway/src
 
-RUN mvn clean install -pl api-contracts,common-utils -DskipTests
-RUN mvn clean package -pl user-service -DskipTests
+RUN mvn clean install -pl shared/api-contracts,shared/common-utils -DskipTests
+RUN mvn clean package -pl services/user-service -DskipTests
 
 FROM eclipse-temurin:17-jre-focal
 WORKDIR /app

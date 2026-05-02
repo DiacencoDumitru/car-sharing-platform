@@ -14,8 +14,8 @@ build:
   stage: build
   image: maven:3.9-eclipse-temurin-17-focal
   script:
-    - mvn clean install -pl api-contracts,common-utils -DskipTests
-    - mvn clean package -pl car-service -am -DskipTests
+    - mvn clean install -pl shared/api-contracts,shared/common-utils -DskipTests
+    - mvn clean package -pl services/car-service -am -DskipTests
   rules:
     - if: $CI_COMMIT_BRANCH
 
